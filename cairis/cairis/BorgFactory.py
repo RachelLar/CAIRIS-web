@@ -81,3 +81,63 @@ def initialise():
     b.logger.warning('Unable to find DocBook schemes. Check if DocBook is correctly installed.')
 
   b.mainFrame = None
+
+def dInitialise(configFile):
+  b = Borg()
+  b.logger = logging.getLogger('CAIRIS')
+
+  homeDir = os.getenv("HOME")
+  if homeDir is not None:
+    cairisRoot = os.path.join(homeDir, "CAIRIS/cairis")
+  else:
+    raise RuntimeError('The HOME environment variable is not defined.')
+
+  cfgFileName = ''
+  try:
+    cfgFileName = os.environ['CAIRIS_CFG']
+  except KeyError:
+    cfgFileName = cairisRoot + '/cairis/config/cairis.cnf'
+
+  if configFile is not '':
+    if os.path.exists(configFile):
+      cfgFileName = configFile
+    else:
+      raise IOError('''Unable to locate configuration file at the following location:
+  '''+configFile)
+
+  try:
+    cfgFile = open(cfgFileName)
+    for cfgLine in cfgFile.readlines():
+      cfgTuple = cfgLine.split('=')
+      cfgKey = strip(cfgTuple[0])
+      cfgVal = strip(cfgTuple[1])
+
+      if cfgKey == 'tmp_dir':
+        b.tmpDir = cfgVal
+      elif cfgKey == 'root':
+        b.cairisRoot = cfgVal
+      elif cfgKey == 'web_port':
+        try:
+          b.webPort = int(cfgVal)
+        except TypeError, ex:
+          b.logger.error(str(ex.message))
+          b.webPort = 0
+      elif cfgKey == 'log_level':
+        b.logLevel = cfgVal
+      elif cfgKey == 'web_static_dir':
+        b.staticDir = cfgVal
+
+    cfgFile.close()
+  except IOError as ex:
+    print('Unable to read config file: %s' % ex.strerror)
+    exit(5)
+
+  b.imageDir = b.cairisRoot + '/cairis/images'
+  b.configDir = os.path.dirname(cfgFileName)
+  b.exampleDir = os.path.join(b.cairisRoot, 'examples')
+
+  b.docBookDir = 'http://www.docbook.org/sgml/4.5'
+  if os.path.exists('/usr/share/sgml/docbook/dtd/4.5'):
+    b.docBookDir = '/usr/share/sgml/docbook/dtd/4.5'
+  else:
+    b.logger.warning('Unable to find DocBook schemes. Check if DocBook is correctly installed.')

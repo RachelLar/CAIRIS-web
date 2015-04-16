@@ -15,11 +15,21 @@
 #  KIND, either express or implied.  See the License for the
 #  specific language governing permissions and limitations
 #  under the License.
+import sys
 
-
-
-from IRISApp import IRISApp
+from IRISDaemon import IRISDaemon
+import WebInitializer
 
 if __name__ == '__main__':
-  cairisApp = IRISApp()
-  cairisApp.MainLoop()
+  options = {
+    'loggingLevel': 'warning',
+    'port': 0
+  }
+
+  if len(sys.argv) > 1:
+    for arg in sys.argv[1:]:
+      if arg == '-d':
+        options['loggingLevel'] = 'debug'
+
+  IRISDaemon(options)
+  WebInitializer.start()
