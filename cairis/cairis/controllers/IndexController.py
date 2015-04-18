@@ -17,4 +17,4 @@ class IndexController(object):
                 raise KeyError('Not logged in!')
         except KeyError, ex:
             b.logger.info(str(ex.message))
-            raise cherrypy.HTTPRedirect('/login/')
+            raise cherrypy.HTTPRedirect('/user/login')

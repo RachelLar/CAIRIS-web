@@ -309,16 +309,24 @@ REFERENCE_DIM_COL = 3
 collectedIds = set([])
 
 class MySQLDatabaseProxy(DatabaseProxy.DatabaseProxy):
-  def __init__(self):
+  def __init__(self, host=None, port=None, user=None, passwd=None, db=None):
     DatabaseProxy.DatabaseProxy.__init__(self)
     self.theGrid = 0
-    try:
+
+    if (host is None or port is None or user is None or passwd is None or db is None):
       b = Borg()
-      self.conn = MySQLdb.connect(host=b.dbHost,port=b.dbPort,user=b.dbUser,passwd=b.dbPasswd,db=b.dbName)
+      host = b.dbHost
+      port = b.dbPort
+      user = b.dbUser
+      passwd = b.dbPasswd
+      db = b.dbName
+
+    try:
+      self.conn = MySQLdb.connect(host=host,port=port,user=user,passwd=passwd,db=db)
     except _mysql_exceptions.DatabaseError, e:
       id,msg = e
-      exceptionText = 'MySQL error connecting to the IRIS database on host ' + b.dbHost + ' at port ' + str(b.dbPort) + ' with user ' + b.dbUser + ' (id:' + str(id) + ',message:' + msg
-      raise DatabaseProxyException(exceptionText) 
+      exceptionText = 'MySQL error connecting to the IRIS database on host ' + host + ' at port ' + str(port) + ' with user ' + user + ' (id:' + str(id) + ',message:' + msg
+      raise DatabaseProxyException(exceptionText)
     self.theDimIdLookup, self.theDimNameLookup = self.buildDimensionLookup()
 
   def reconnect(self,closeConn = True):

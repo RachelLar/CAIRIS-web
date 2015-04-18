@@ -20,6 +20,8 @@ import os
 import logging
 import DatabaseProxyFactory
 from string import strip
+from TemplateFactory import TemplateGenerator
+
 
 def initialise():
   b = Borg()
@@ -84,7 +86,7 @@ def initialise():
 
 def dInitialise(configFile):
   b = Borg()
-  b.logger = logging.getLogger('CAIRIS')
+  b.logger = logging.getLogger('cairisd')
 
   homeDir = os.getenv("HOME")
   if homeDir is not None:
@@ -135,6 +137,8 @@ def dInitialise(configFile):
   b.imageDir = b.cairisRoot + '/cairis/images'
   b.configDir = os.path.dirname(cfgFileName)
   b.exampleDir = os.path.join(b.cairisRoot, 'examples')
+
+  b.template_generator = TemplateGenerator()
 
   b.docBookDir = 'http://www.docbook.org/sgml/4.5'
   if os.path.exists('/usr/share/sgml/docbook/dtd/4.5'):
