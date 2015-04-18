@@ -1,4 +1,4 @@
-= CAIRIS =
+= CAIRIS-web =
 
 CAIRIS (Computer Aided Integration of Requirements and Information Security) is a Requirements Management tool for specifying secure and usable systems. CAIRIS was built from the ground-up to support the elements necessary for usability, requirements, and risk analysis. CAIRIS features include: 
 
@@ -10,11 +10,29 @@ CAIRIS (Computer Aided Integration of Requirements and Information Security) is 
 * Automatic visualisation of models, and quantitative/quantative scoring of security and usability data 
 * Automatic document generation of a VOLERE compliant requirements specification.
 
+CAIRIS-web is a fork of the original CAIRIS. CAIRIS-web separates the business layers from the UI and provides easy access by providing a HTML based UI. It also provides a RESTful API which can be used by other applications.
+
 == Getting Started ==
+The client side version of CAIRIS-web relies on HTML5, CSS3 and jQuery 2. Any browser which supports these technologies should be able to run the web UI.
 
-CAIRIS should run on most recent flavours of Linux.  The dependencies that need to be pre-installed are described in the manual.
-Sadly, the manual itself is a little out-of-date but, from our experience, people who understand the concepts used by the tool can usally get up and running pretty quickly.
+The application server of CAIRIS-web should be able to run on most flavours of Linux. There are however some dependencies that need to be installed in order to get CAIRIS-web running:
 
+* dblatex (0.3 or higher)
+* DocBook (4.5 or higher)
+* GraphViz (2.20 or higher)
+* MySQL Server and Client (5.1 or higher)
+* Python (2.6 or higher)
+
+Besides the application dependencies, there are also some Python extensions that are required:
+
+* cherrypy
+* Mako
+* python-numpy
+* python-mysqldb
+* pyparsing 1.5.7
+* pydot
+
+A full step-by-step installation guide will be available soon. Please consult the installation guide of the original CAIRIS for the time being.
 
 == Get in Touch ==
 
