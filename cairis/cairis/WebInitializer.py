@@ -41,13 +41,13 @@ def start():
 
     # Requirement routes
     dispatcher.connect('requirements-all', '/requirements/all', requirement_controller.all)
-    dispatcher.connect('requirement-by-id', '/requirements/{id}', requirement_controller.get_requirement)
+    dispatcher.connect('requirement-by-id', '/requirements/id/{id}', requirement_controller.get_requirement)
 
     # User routes
     dispatcher.connect('config', '/user/config', user_controller.set_db)
 
     # For development
-    b.staticDir = '/home/student/Documents/CAIRIS-web/cairis/cairis/public'
+    #b.staticDir = '/home/student/Documents/CAIRIS-web/cairis/cairis/public'
 
     conf = {
         '/': {

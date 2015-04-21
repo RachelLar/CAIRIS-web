@@ -24,7 +24,6 @@ class RequirementController(object):
         return json.dumps(json.loads(json_serialize(reqs)), indent=4)
         return json_serialize(reqs)
 
-    @cherrypy.tools.accept(media=['text/plain', 'application/json'])
     def get_requirement(self, id=-1, conf=None):
         accept_header = cherrypy.request.headers.get('Accept', None)
         if accept_header.find('application/json')+accept_header.find('text/plain') > -2:
@@ -35,6 +34,6 @@ class RequirementController(object):
             CairisHTTPError(msg='Not Acceptable', code=406, status='Not Acceptable')
 
         db_proxy = validate_proxy(cherrypy.session, conf)
-        req = db_proxy.getRequirement(id)
+        req = db_proxy.getRequirement(int(id))
         return json.dumps(json.loads(json_serialize(req)), indent=4)
         return json_serialize(req)
