@@ -17,12 +17,12 @@
 
 
 from Borg import Borg
-import DotTrace
+# import DotTrace
 import pydot
-import wx
+#import wx
 import os
-import ARM
-import gtk
+#import ARM
+#import gtk
 
 class AssetModel:
   def __init__(self,associations,envName,assetName = '',hideConcerns = False, graphName='asset.dot', db_proxy=None, fontName=None, fontSize=None):
