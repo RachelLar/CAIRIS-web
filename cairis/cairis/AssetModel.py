@@ -25,18 +25,24 @@ import ARM
 import gtk
 
 class AssetModel:
-  def __init__(self,associations,envName,assetName = '',hideConcerns = False):
+  def __init__(self,associations,envName,assetName = '',hideConcerns = False, graphName='asset.dot', db_proxy=None, fontName=None, fontSize=None):
     self.theAssociations = associations
     self.theEnvironmentName = envName
     self.theAssetName = assetName
     b = Borg()
-    self.dbProxy = b.dbProxy
+    self.dbProxy = db_proxy
+    self.fontName = fontName
+    self.fontSize = fontSize
+
+    if db_proxy is None or fontName is None or fontSize is None:
+      self.dbProxy = b.dbProxy
+      self.fontName = b.fontName
+      self.fontSize = b.fontSize
+
     self.theGraph = pydot.Dot()
-    self.fontName = b.fontName
-    self.fontSize = b.fontSize
     self.hideConcerns = hideConcerns
     self.nodeList= set([])
-    self.theGraphName = b.tmpDir + '/asset.dot'
+    self.theGraphName = os.path.join(b.tmpDir, graphName)
 
   def size(self):
     return len(self.theAssociations)

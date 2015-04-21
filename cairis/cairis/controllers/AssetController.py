@@ -1,25 +1,35 @@
 import cherrypy
 from cherrypy import expose, popargs
 from json import dumps as json_serialize
+from AssetModel import AssetModel
+from Borg import Borg
 from MySQLDatabaseProxy import MySQLDatabaseProxy
+from SessionValidator import validate_proxy, validate_fonts
 
 __author__ = 'Robin Quetin'
 
-@popargs('name')
+# noinspection PyMethodMayBeStatic
 class AssetController(object):
-    def all(self):
-        '''db_proxy = MySQLDatabaseProxy('127.0.0.1', 3306, 'cairis', 'cairis123', 'cairis')
-        cherrypy.session['dbProxy'] = db_proxy'''
-        db_proxy = cherrypy.session.get('dbProxy', None)
-        if db_proxy is None:
-            return 'The method is not callable without setting up a database connection.'
-        elif isinstance(db_proxy, MySQLDatabaseProxy):
-            assets = db_proxy.getDimensionNames('asset')
-            return json_serialize(assets)
-        else:
-            return "Error!"
+    def __init__(self):
+        b = Borg()
+        self.model_generator = b.model_generator
 
-    def get_asset(self, name=None):
+    def all(self, conf=None):
+        db_proxy = validate_proxy(cherrypy.session, conf)
+        assets = db_proxy.getDimensionNames('asset')
+        return json_serialize(assets)
+
+    def get_asset(self, name=None, conf=None):
+        db_proxy = validate_proxy(cherrypy.session, conf)
         if name is not None:
             return 'Name: '+name
         return 'Name not set!'
+
+    def view_asset_model(self, environment, conf=None):
+        db_proxy = validate_proxy(cherrypy.session, conf)
+        fontName, fontSize, apFontName = validate_fonts(cherrypy.session, conf)
+        environmentName = environment
+        associationDictionary = db_proxy.classModel(environmentName)
+        associations = AssetModel(associationDictionary.values(), environmentName, db_proxy=db_proxy, fontName=fontName, fontSize=fontSize)
+        dot_code = associations.graph()
+        return self.model_generator.generate(dot_code)

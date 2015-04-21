@@ -1,56 +1,46 @@
-import json
 import cherrypy
+from urllib import quote
+from cherrypy import HTTPRedirect
+from jsonpickle import encode as json_serialize
+from jsonpickle import decode as json_deserialize
 from Borg import Borg
-from MySQLDatabaseProxy import MySQLDatabaseProxy
+from CairisHTTPError import CairisHTTPError
+from SessionValidator import validate_proxy
 
 __author__ = 'student'
 
+
 class UserController(object):
-    @cherrypy.expose
-    def login(self):
-        b = Borg()
-        b.logger.info('Method: '+cherrypy.request.method)
-
-        if cherrypy.request.method == 'POST':
-            cherrypy.session['IsLoggedIn'] = 1
-            return 'It works! You should be logged in now!'
-        elif cherrypy.request.method == 'GET':
-            cherrypy.response.headers['Content-Type'] = 'text/html'
-            return b.template_generator.serve_result('login_get', action_url=cherrypy.request.path_info)
-        else:
-            return 'Error'
-
-    def logout(self):
-        cherrypy.session.clear()
-        return "It worked! You should be logged out now!"
-
-    def setdb(self, conf=None, host=None, port=None, user=None, passwd=None, db=None):
+    def set_db(self, conf=None, host=None, port=None, user=None, passwd=None, db=None):
         if cherrypy.request.method == 'POST':
             if conf is not None:
-                dbconf = json.loads(conf)
-                return self.setdbproxy(host=dbconf['host'], port=int(dbconf['port']), user=dbconf['user'], passwd=dbconf['passwd'], db=dbconf['db'])
+                dbconf = json_deserialize(conf)
+                msg = self.set_dbproxy(dbconf)
+                code = 200
+                status = 'OK'
+                return json_serialize({'message': msg, 'code': code, 'status': status})
             elif host is not None and port is not None and user is not None and passwd is not None and db is not None:
-                return self.setdbproxy(host, int(port), user, passwd, db)
+                conf = {
+                    'host': host,
+                    'port': int(port),
+                    'user': user,
+                    'passwd': passwd,
+                    'db': db
+                }
+                return self.set_dbproxy(conf)
+            else:
+                CairisHTTPError(msg='One or more settings are missing')
         elif cherrypy.request.method == 'GET':
             b = Borg()
-            return b.template_generator.serve_result('setdb', action_url=cherrypy.request.path_info)
+            return b.template_generator.serve_result('user_config', action_url=cherrypy.request.path_info)
 
-    def test_json(self):
-        dbProxy = {
-            'host': 'localhost',
-            'port': 3306,
-            'user': 'cairis',
-            'passwd': 'cairis123',
-            'db': 'cairis'
-        }
-        return json.dumps(dbProxy)
+    def set_dbproxy(self, conf):
+        db_proxy = validate_proxy(None, conf)
+        pSettings = db_proxy.getProjectSettings()
 
-    def setdbproxy(self, host, port, user, passwd, db):
-        dbProxy = MySQLDatabaseProxy(host=host, port=port, user=user, passwd=passwd, db=db)
-        if dbProxy is not None:
-            cherrypy.session['dbProxy'] = dbProxy
-            cherrypy.response.status = 200
-            return 'Configuration successfully applied'
-        else:
-            cherrypy.response.status = 400
-            return 'Failed to configure the database connection'
+        cherrypy.session['dbProxy'] = db_proxy
+        cherrypy.session['fontSize'] = pSettings['Font Size']
+        cherrypy.session['apFontSize'] = pSettings['AP Font Size']
+        cherrypy.session['fontName'] = pSettings['Font Name']
+
+        return 'Configuration successfully applied'

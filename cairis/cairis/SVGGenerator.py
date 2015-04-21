@@ -1,0 +1,32 @@
+import os
+from subprocess import check_output as cmd
+from tempfile import mkstemp as make_tempfile
+
+
+__author__ = 'student'
+
+
+class SVGGenerator(object):
+    def __init__(self):
+        self.extension = 'svg'
+
+    def generate(self, dot_code):
+        fd, temp_abspath = make_tempfile(suffix=self.extension)
+        temp_file = open(temp_abspath, 'wb')
+        temp_file.write(dot_code)
+        temp_file.close()
+        os.close(fd)
+        output = cmd(['dot', '-Tsvg', temp_abspath])
+        os.remove(temp_abspath)
+        return str(output)
+
+    def generate_file(self, dot_code, output_file):
+        output = self.generate(dot_code)
+
+        try:
+            fs_output = open(output_file, 'rb')
+            fs_output.write(output)
+            fs_output.close()
+        except Exception, ex:
+            fs_output.close()
+            raise ex

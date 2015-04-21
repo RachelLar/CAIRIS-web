@@ -20,7 +20,8 @@ import os
 import logging
 import DatabaseProxyFactory
 from string import strip
-from TemplateFactory import TemplateGenerator
+from GraphicsGenerator import GraphicsGenerator
+from TemplateGenerator import TemplateGenerator
 
 
 def initialise():
@@ -139,6 +140,7 @@ def dInitialise(configFile):
   b.exampleDir = os.path.join(b.cairisRoot, 'examples')
 
   b.template_generator = TemplateGenerator()
+  b.model_generator = GraphicsGenerator('svg')
 
   b.docBookDir = 'http://www.docbook.org/sgml/4.5'
   if os.path.exists('/usr/share/sgml/docbook/dtd/4.5'):

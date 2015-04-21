@@ -2,7 +2,10 @@ import os
 import cherrypy
 from Borg import Borg
 from controllers.AssetController import AssetController
+from controllers.EnvironmentController import EnvironmentController
+from controllers.ExceptionController import ExceptionController
 from controllers.IndexController import IndexController
+from controllers.RequirementController import RequirementController
 from controllers.UserController import UserController
 
 __author__ = 'Robin Quetin'
@@ -13,19 +16,35 @@ def start():
     b = Borg()
 
     asset_controller = AssetController()
-    user_controller = UserController()
+    environment_controller = EnvironmentController()
+    exception_controller = ExceptionController()
     index_controller = IndexController()
+    requirement_controller = RequirementController()
+    user_controller = UserController()
 
     dispatcher = cherrypy.dispatch.RoutesDispatcher()
 
-    # Define the different routes
+    # Asset routes
     dispatcher.connect('assets-all', '/assets/all', asset_controller.all)
-    dispatcher.connect('asset-by-name', '/assets/{name}', asset_controller.get_asset)
-    dispatcher.connect('db-set', '/user/db/set', user_controller.setdb)
-    dispatcher.connect('db-jsontest', '/user/db/jsontest', user_controller.test_json)
-    dispatcher.connect('login', '/user/login', user_controller.login)
-    dispatcher.connect('logout', '/user/logout', user_controller.logout)
+    dispatcher.connect('asset-by-name', '/assets/name/{name}', asset_controller.get_asset)
+    dispatcher.connect('asset-view-model', '/assets/view', asset_controller.view_asset_model)
+
+    # Index route
     dispatcher.connect('index', '/', index_controller.index)
+
+    # Environment routes
+    dispatcher.connect('environments-all', '/environments/all', environment_controller.all)
+    dispatcher.connect('environments-all-names', '/environments/all/names', environment_controller.all_names)
+
+    # Exception route
+    dispatcher.connect('exception', '/exception', exception_controller.handle_exception)
+
+    # Requirement routes
+    dispatcher.connect('requirements-all', '/requirements/all', requirement_controller.all)
+    dispatcher.connect('requirement-by-id', '/requirements/{id}', requirement_controller.get_requirement)
+
+    # User routes
+    dispatcher.connect('config', '/user/config', user_controller.set_db)
 
     # For development
     b.staticDir = '/home/student/Documents/CAIRIS-web/cairis/cairis/public'
@@ -42,8 +61,6 @@ def start():
             'tools.staticdir.root': b.staticDir,
             'request.dispatch': dispatcher
         },
-        '/assets': {},
-        '/user': {},
         '/bootstrap': {
             'tools.staticdir.on': True,
             'tools.staticdir.dir': 'bootstrap'
@@ -60,9 +77,9 @@ def start():
             'tools.staticdir.on': True,
             'tools.staticdir.dir': 'plugins'
         },
-        '/index.mako': {
+        '/index.html': {
             'tools.staticfile.on': True,
-            'tools.staticfile.filename': os.path.join(b.staticDir, 'index.mako')
+            'tools.staticfile.filename': os.path.join(b.staticDir, 'index.html')
         },
     }
 

@@ -9,12 +9,12 @@ class IndexController(object):
     def index(self):
         b = Borg()
         try:
-            isLoggedIn = cherrypy.session.get('IsLoggedIn', 0)
-            b.logger.info('IsLoggedIn: '+str(isLoggedIn))
-            if isLoggedIn == 1:
+            dbProxyConfigured = cherrypy.session.get('dbProxy', False)
+            b.logger.info('Database configured: '+str(dbProxyConfigured))
+            if dbProxyConfigured:
                 return "It works!"
             else:
-                raise KeyError('Not logged in!')
+                raise KeyError('Not configured!')
         except KeyError, ex:
             b.logger.info(str(ex.message))
-            raise cherrypy.HTTPRedirect('/user/login')
+            raise cherrypy.HTTPRedirect('/user/config')
