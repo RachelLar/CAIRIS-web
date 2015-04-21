@@ -83,6 +83,9 @@ def start():
         },
     }
 
-    cherrypy.config.update({'server.socket_port': b.webPort})
+    cherrypy.config.update({
+        'server.socket_port': b.webPort,
+        'server.socket_host': '0.0.0.0'
+    })
     cherrypy.tree.mount(None, "/", config=conf)
     cherrypy.quickstart(None, config=conf)
