@@ -18,8 +18,13 @@
 </head>
 <body>
     <div class="container">
-        <h1>${code} ${title}</h1>
-        <p>${msg}</p>
+        <div>
+            <h1>${code} ${title}</h1>
+            <p>${msg}</p>
+        </div>
+        <div>
+            <p><a href="/">Back to home</a></p>
+        </div>
     </div>
     <!-- jQuery 2.1.3 -->
     <script src="/plugins/jQuery/jQuery-2.1.3.min.js"></script>
