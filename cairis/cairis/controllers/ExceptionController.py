@@ -3,7 +3,7 @@ from Borg import Borg
 from json import dumps as json_serialize
 from TemplateGenerator import TemplateGenerator
 
-__author__ = 'student'
+__author__ = 'Robin Quetin'
 
 
 class ExceptionController(object):

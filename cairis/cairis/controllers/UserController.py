@@ -1,13 +1,14 @@
 import cherrypy
-from urllib import quote
-from cherrypy import HTTPRedirect
+from json import loads, dumps
 from jsonpickle import encode as json_serialize
 from jsonpickle import decode as json_deserialize
 from Borg import Borg
 from CairisHTTPError import CairisHTTPError
 from SessionValidator import validate_proxy
+from urllib2 import quote
 
-__author__ = 'student'
+
+__author__ = 'Robin Quetin'
 
 
 class UserController(object):
@@ -27,7 +28,18 @@ class UserController(object):
                     'passwd': passwd,
                     'db': db
                 }
-                return self.set_dbproxy(conf)
+                result = self.set_dbproxy(conf)
+                conf['fontName'] = cherrypy.session['fontName']
+                conf['fontSize'] = cherrypy.session['fontSize']
+                conf['apFontSize'] = cherrypy.session['apFontSize']
+
+                cherrypy.response.headers['Content-Type'] = 'text/plain'
+                return '{0}\nSession vars:\n{1}\nQuery string:\n{2}'.format(
+                    result,
+                    dumps(loads(json_serialize(conf)), indent=4),
+                    quote(json_serialize(conf))
+                )
+                return result
             else:
                 CairisHTTPError(msg='One or more settings are missing')
         elif cherrypy.request.method == 'GET':

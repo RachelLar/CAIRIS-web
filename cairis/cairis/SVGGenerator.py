@@ -3,7 +3,7 @@ from subprocess import check_output as cmd
 from tempfile import mkstemp as make_tempfile
 
 
-__author__ = 'student'
+__author__ = 'Robin Quetin'
 
 
 class SVGGenerator(object):

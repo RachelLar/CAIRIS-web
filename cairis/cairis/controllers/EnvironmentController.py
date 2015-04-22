@@ -2,7 +2,7 @@ import cherrypy
 from SessionValidator import validate_proxy
 from jsonpickle import encode as json_serialize
 
-__author__ = 'student'
+__author__ = 'Robin Quetin'
 
 
 class EnvironmentController(object):

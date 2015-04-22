@@ -1,7 +1,7 @@
 from SVGGenerator import SVGGenerator
 from AssetModel import AssetModel
 
-__author__ = 'student'
+__author__ = 'Robin Quetin'
 
 class GraphicsGenerator(object):
     def __init__(self, output_format='svg'):

@@ -1,4 +1,4 @@
-__author__ = 'student'
+__author__ = 'Robin Quetin'
 from cherrypy import HTTPRedirect
 from urllib2 import quote
 

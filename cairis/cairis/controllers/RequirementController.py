@@ -5,7 +5,7 @@ from CairisHTTPError import CairisHTTPError
 from MySQLDatabaseProxy import MySQLDatabaseProxy
 from SessionValidator import validate_proxy
 
-__author__ = 'student'
+__author__ = 'Robin Quetin'
 
 
 # noinspection PyMethodMayBeStatic

@@ -1,7 +1,8 @@
 from CairisHTTPError import CairisHTTPError
+from jsonpickle import decode as json_deserialize
 from MySQLDatabaseProxy import MySQLDatabaseProxy
 
-__author__ = 'student'
+__author__ = 'Robin Quetin'
 
 
 def validate_proxy(session, conf):
@@ -14,6 +15,12 @@ def validate_proxy(session, conf):
         else:
             CairisHTTPError(msg='The database connection was not properly set up. Please try to reset the connection.')
     else:
+        if not isinstance(conf, dict):
+            try:
+                conf = json_deserialize(conf)
+            except Exception, e:
+                CairisHTTPError(msg=str(e.message))
+
         db_proxy = MySQLDatabaseProxy(conf['host'], conf['port'], conf['user'], conf['passwd'], conf['db'])
         if db_proxy is not None:
             return db_proxy

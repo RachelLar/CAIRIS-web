@@ -5,14 +5,13 @@ __author__ = 'Robin Quetin'
 
 
 class IndexController(object):
-    @cherrypy.expose
     def index(self):
         b = Borg()
         try:
             dbProxyConfigured = cherrypy.session.get('dbProxy', False)
             b.logger.info('Database configured: '+str(dbProxyConfigured))
             if dbProxyConfigured:
-                return "It works!"
+                raise cherrypy.HTTPRedirect('/index.html')
             else:
                 raise KeyError('Not configured!')
         except KeyError, ex:
