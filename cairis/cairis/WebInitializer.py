@@ -11,9 +11,12 @@ from controllers.UserController import UserController
 __author__ = 'Robin Quetin'
 ''' This module uses CherryPy (tested using 3.6.0) & Routes (tested using 1.13) '''
 
+def CORS():
+    cherrypy.response.headers["Access-Control-Allow-Origin"] = "*"
 
 def start():
     b = Borg()
+    cherrypy.tools.CORS = cherrypy.Tool('before_handler', CORS)
 
     asset_controller = AssetController()
     environment_controller = EnvironmentController()
@@ -42,6 +45,7 @@ def start():
     # Requirement routes
     dispatcher.connect('requirements-all', '/requirements/all', requirement_controller.all)
     dispatcher.connect('requirement-by-id', '/requirements/id/{id}', requirement_controller.get_requirement)
+    dispatcher.connect('requirement-update', '/requirements/update', requirement_controller.update_requirement)
 
     # User routes
     dispatcher.connect('config', '/user/config', user_controller.set_db)
@@ -53,6 +57,7 @@ def start():
         '/': {
             'tools.sessions.on': True,
             'tools.sessions.storage_type': 'ram',
+            'tools.CORS.on': True,
             'tools.response_headers.on': True,
             'tools.response_headers.headers': [('Content-Type', 'text/html'),
                                                ('Cache-Control', 'no-cache, no-store, must-revalidate'),
@@ -85,7 +90,7 @@ def start():
 
     cherrypy.config.update({
         'server.socket_port': b.webPort,
-        'server.socket_host': '0.0.0.0'
+        'server.socket_host': '0.0.0.0',
     })
     cherrypy.tree.mount(None, "/", config=conf)
     cherrypy.quickstart(None, config=conf)

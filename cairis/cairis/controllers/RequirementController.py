@@ -1,8 +1,9 @@
 import cherrypy
 import json
+import JsonToObjectConverter
 from jsonpickle import encode as json_serialize
+from jsonpickle import decode as json_deserialize
 from CairisHTTPError import CairisHTTPError
-from MySQLDatabaseProxy import MySQLDatabaseProxy
 from SessionValidator import validate_proxy
 
 __author__ = 'Robin Quetin'
@@ -24,7 +25,7 @@ class RequirementController(object):
         return json.dumps(json.loads(json_serialize(reqs)), indent=4)
         return json_serialize(reqs)
 
-    def get_requirement(self, id=-1, conf=None):
+    def get_requirement(self, id, conf=None):
         accept_header = cherrypy.request.headers.get('Accept', None)
         if accept_header.find('application/json')+accept_header.find('text/plain') > -2:
             cherrypy.response.headers['Content-Type'] = accept_header
@@ -34,6 +35,12 @@ class RequirementController(object):
             CairisHTTPError(msg='Not Acceptable', code=406, status='Not Acceptable')
 
         db_proxy = validate_proxy(cherrypy.session, conf)
-        req = db_proxy.getRequirement(int(id))
+        req = db_proxy.getRequirement(id)
         return json.dumps(json.loads(json_serialize(req)), indent=4)
         return json_serialize(req)
+
+    def update_requirement(self, requirement, conf=None):
+        db_proxy = validate_proxy(cherrypy.session, conf)
+        reqDict = json_deserialize(requirement)
+        reqObj = JsonToObjectConverter.convert(reqDict, 'requirement')
+        #db_proxy.updateRequirement(reqObj)
