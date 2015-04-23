@@ -33,7 +33,7 @@ from ProcessesContentHandler import ProcessesContentHandler
 from Borg import Borg
 import xml.sax
 
-def importSecurityPatterns(importFile, id=None):
+def importSecurityPatterns(importFile, session_id=None):
   parser = xml.sax.make_parser()
   handler = SecurityPatternContentHandler()
   parser.setContentHandler(handler)
@@ -67,9 +67,9 @@ def importSecurityPatterns(importFile, id=None):
       msgStr =  'Imported ' + str(noOfTaps) + ' template assets and ' + str(noOfSpps) + ' security patterns'
   return msgStr
 
-def importAttackPattern(importFile, id=None):
+def importAttackPattern(importFile, session_id=None):
   parser = xml.sax.make_parser()
-  handler = AttackPatternContentHandler(id=id)
+  handler = AttackPatternContentHandler(session_id=session_id)
   parser.setContentHandler(handler)
   parser.setEntityResolver(handler)
   parser.parse(importFile)
@@ -85,18 +85,18 @@ def importAttackPattern(importFile, id=None):
   assocTxt = importAssociations([],handler.obstacleAssociations(),[])
   return obsTxt + assocTxt + raTxt
 
-def importTVTypeFile(importFile,isOverwrite=1, id=None):
+def importTVTypeFile(importFile, isOverwrite=1, session_id=None):
   parser = xml.sax.make_parser()
   handler = TVTypeContentHandler()
   parser.setContentHandler(handler)
   parser.setEntityResolver(handler)
   parser.parse(importFile)
   vulTypes,threatTypes = handler.types()
-  return importTVTypes(vulTypes,threatTypes,isOverwrite, id=id)
+  return importTVTypes(vulTypes,threatTypes,isOverwrite, session_id=session_id)
  
-def importTVTypes(vulTypes,threatTypes,isOverwrite, id):
+def importTVTypes(vulTypes,threatTypes,isOverwrite, session_id):
   b = Borg()
-  db_proxy = b.get_dbproxy(id)
+  db_proxy = b.get_dbproxy(session_id)
 
   noOfVts = len(vulTypes)
   noOfTts = len(threatTypes)
@@ -113,7 +113,7 @@ def importTVTypes(vulTypes,threatTypes,isOverwrite, id):
   msgStr = 'Imported ' + str(noOfVts) + ' vulnerability types and ' + str(noOfTts) + ' threat types.'
   return msgStr
 
-def importDirectoryFile(importFile,isOverwrite=1, id=None):
+def importDirectoryFile(importFile,isOverwrite=1, session_id=None):
   parser = xml.sax.make_parser()
   handler = DirectoryContentHandler()
   parser.setContentHandler(handler)
@@ -123,7 +123,7 @@ def importDirectoryFile(importFile,isOverwrite=1, id=None):
   vdSize = len(vulDir)
   tdSize = len(threatDir)
   b = Borg()
-  db_proxy = b.get_dbproxy(id)
+  db_proxy = b.get_dbproxy(session_id)
 
   if (vdSize > 0):
     db_proxy.addVulnerabilityDirectory(vulDir,isOverwrite)
@@ -133,17 +133,17 @@ def importDirectoryFile(importFile,isOverwrite=1, id=None):
   return msgStr
 
 
-def importRequirementsFile(importFile, id=None):
+def importRequirementsFile(importFile, session_id=None):
   parser = xml.sax.make_parser()
-  handler = GoalsContentHandler()
+  handler = GoalsContentHandler(session_id=session_id)
   parser.setContentHandler(handler)
   parser.setEntityResolver(handler)
   parser.parse(importFile)
-  return importRequirements(handler.domainProperties(),handler.goals(),handler.obstacles(),handler.requirements(),handler.countermeasures(), id=id)
+  return importRequirements(handler.domainProperties(),handler.goals(),handler.obstacles(),handler.requirements(),handler.countermeasures(), session_id=session_id)
 
-def importRequirements(dpParameterSet,goalParameterSet,obsParameterSet,reqParameterSet,cmParameterSet, id):
+def importRequirements(dpParameterSet,goalParameterSet,obsParameterSet,reqParameterSet,cmParameterSet, session_id):
   b = Borg()
-  db_proxy = b.get_dbproxy(id)
+  db_proxy = b.get_dbproxy(session_id)
 
   dpCount = 0
   for dpParameters in dpParameterSet:
@@ -199,17 +199,17 @@ def importRequirements(dpParameterSet,goalParameterSet,obsParameterSet,reqParame
   msgStr = 'Imported ' + str(dpCount) + ' domain properties, ' + str(goalCount) + ' goals, ' + str(obsCount) + ' obstacles, ' + str(reqCount) + ' requirements, and ' + str(cmCount) + ' countermeasures.'
   return msgStr
 
-def importRiskAnalysisFile(importFile, id=None):
+def importRiskAnalysisFile(importFile, session_id=None):
   parser = xml.sax.make_parser()
   handler = RiskAnalysisContentHandler()
   parser.setContentHandler(handler)
   parser.setEntityResolver(handler)
   parser.parse(importFile)
-  return importRiskAnalysis(handler.roles(),handler.assets(),handler.vulnerabilities(),handler.attackers(),handler.threats(),handler.risks(),handler.responses(),handler.associations(), id=id)
+  return importRiskAnalysis(handler.roles(),handler.assets(),handler.vulnerabilities(),handler.attackers(),handler.threats(),handler.risks(),handler.responses(),handler.associations(), session_id=session_id)
 
-def importRiskAnalysis(roleParameterSet,assetParameterSet,vulParameterSet,attackerParameterSet,threatParameterSet,riskParameterSet,responseParameterSet,assocParameterSet, id):
+def importRiskAnalysis(roleParameterSet,assetParameterSet,vulParameterSet,attackerParameterSet,threatParameterSet,riskParameterSet,responseParameterSet,assocParameterSet, session_id):
   b = Borg()
-  db_proxy = b.get_dbproxy(id)
+  db_proxy = b.get_dbproxy(session_id)
 
   roleCount = 0
   for roleParameters in roleParameterSet:
@@ -289,18 +289,18 @@ def importRiskAnalysis(roleParameterSet,assetParameterSet,vulParameterSet,attack
   msgStr = 'Imported ' + str(roleCount) + ' roles, ' + str(assetCount) + ' assets, ' + str(vulCount) + ' vulnerabilities, ' + str(attackerCount) + ' attackers, ' + str(threatCount) + ' threats, ' + str(riskCount) + ' risks, ' + str(responseCount) + ' responses, and ' + str(rshipCount) + ' asset associations.'
   return msgStr
 
-def importUsabilityFile(importFile, id=None):
+def importUsabilityFile(importFile, session_id=None):
   parser = xml.sax.make_parser()
   handler = UsabilityContentHandler()
   parser.setContentHandler(handler)
   parser.setEntityResolver(handler)
   parser.parse(importFile)
-  return importUsability(handler.personas(),handler.externalDocuments(),handler.documentReferences(),handler.conceptReferences(),handler.personaCharacteristics(),handler.taskCharacteristics(),handler.tasks(),handler.usecases(), id=id)
+  return importUsability(handler.personas(),handler.externalDocuments(),handler.documentReferences(),handler.conceptReferences(),handler.personaCharacteristics(),handler.taskCharacteristics(),handler.tasks(),handler.usecases(), session_id=session_id)
 
 
-def importUsability(personaParameterSet,edParameterSet,drParameterSet,crParameterSet,pcParameterSet,tcParameterSet,taskParameterSet,ucParameterSet, id):
+def importUsability(personaParameterSet,edParameterSet,drParameterSet,crParameterSet,pcParameterSet,tcParameterSet,taskParameterSet,ucParameterSet, session_id):
   b = Borg()
-  db_proxy = b.get_dbproxy(id)
+  db_proxy = b.get_dbproxy(session_id)
 
   personaCount = 0
   for personaParameters in personaParameterSet:
@@ -379,17 +379,17 @@ def importUsability(personaParameterSet,edParameterSet,drParameterSet,crParamete
   msgStr = 'Imported ' + str(personaCount) + ' personas, ' + str(edCount) + ' external documents, ' + str(drCount) + ' document references, ' + str(crCount) + ' concept references, ' + str(pcCount) + ' persona characteristics, ' + str(tcCount) + ' task characteristics, ' + str(taskCount) + ' tasks, and ' + str(ucCount) + ' use cases.'
   return msgStr
 
-def importAssociationsFile(importFile, id=None):
+def importAssociationsFile(importFile, session_id=None):
   parser = xml.sax.make_parser()
-  handler = AssociationsContentHandler()
+  handler = AssociationsContentHandler(session_id=session_id)
   parser.setContentHandler(handler)
   parser.setEntityResolver(handler)
   parser.parse(importFile)
-  return importAssociations(handler.manualAssociations(),handler.goalAssociations(),handler.dependencyAssociations(), id=id)
+  return importAssociations(handler.manualAssociations(),handler.goalAssociations(),handler.dependencyAssociations(), session_id=session_id)
   
-def importAssociations(maParameterSet,gaParameterSet,depParameterSet, id):
+def importAssociations(maParameterSet,gaParameterSet,depParameterSet, session_id):
   b = Borg()
-  db_proxy = b.get_dbproxy(id)
+  db_proxy = b.get_dbproxy(session_id)
 
   maCount = 0
   for tTable,fromId,toId,refType in maParameterSet:
@@ -406,7 +406,7 @@ def importAssociations(maParameterSet,gaParameterSet,depParameterSet, id):
   msgStr = 'Imported ' + str(maCount) + ' manual associations, ' + str(gaCount) + ' goal associations, and ' + str(depCount) + ' dependency associations.'
   return msgStr
 
-def importProjectFile(importFile, id=None):
+def importProjectFile(importFile, session_id=None):
   parser = xml.sax.make_parser()
   handler = CairisContentHandler()
   parser.setContentHandler(handler)
@@ -414,11 +414,11 @@ def importProjectFile(importFile, id=None):
   parser.parse(importFile)
   pSettings = handler.settings()
   envParameterSet = handler.environments()
-  return importProjectData(pSettings,envParameterSet, id=id)
+  return importProjectData(pSettings,envParameterSet, session_id=session_id)
 
-def importProjectData(pSettings,envParameterSet, id):
+def importProjectData(pSettings,envParameterSet, session_id):
   b = Borg()
-  db_proxy = b.get_dbproxy(id)
+  db_proxy = b.get_dbproxy(session_id)
 
   if (pSettings != None):
     db_proxy.updateSettings(pSettings[0],pSettings[1],pSettings[2],pSettings[3],pSettings[4],pSettings[5],pSettings[6],pSettings[7])
@@ -437,16 +437,16 @@ def importProjectData(pSettings,envParameterSet, id):
     msgText += '.'
   return msgText
 
-def importComponentViewFile(importFile, id=None):
+def importComponentViewFile(importFile, session_id=None):
   parser = xml.sax.make_parser()
   handler = ArchitecturalPatternContentHandler()
   parser.setContentHandler(handler)
   parser.setEntityResolver(handler)
   parser.parse(importFile)
   view = handler.view()
-  return importComponentViewData(view, id=id)
+  return importComponentViewData(view, session_id=session_id)
 
-def importAssetsFile(importFile, id=None):
+def importAssetsFile(importFile, session_id=None):
   parser = xml.sax.make_parser()
   handler = TemplateAssetsContentHandler()
   parser.setContentHandler(handler)
@@ -454,9 +454,9 @@ def importAssetsFile(importFile, id=None):
   parser.parse(importFile)
   return importAssets(handler.valueTypes(),handler.assets())
 
-def importAssets(valueTypes,assets, id):
+def importAssets(valueTypes,assets, session_id):
   b = Borg()
-  db_proxy = b.get_dbproxy(id)
+  db_proxy = b.get_dbproxy(session_id)
 
   vtCount = 0
   taCount = 0
@@ -473,17 +473,17 @@ def importAssets(valueTypes,assets, id):
       taCount += 1
   return 'Imported ' + str(vtCount) + ' value types, and ' + str(taCount) + ' template assets.'
 
-def importComponentViewData(view, id):
+def importComponentViewData(view, session_id):
   b = Borg()
-  db_proxy = b.get_dbproxy(id)
+  db_proxy = b.get_dbproxy(session_id)
 
   db_proxy.addComponentView(view)
   msgStr = 'Imported architectural pattern'
   return msgStr
 
-def importSynopsesFile(importFile, id=None):
+def importSynopsesFile(importFile, session_id=None):
   parser = xml.sax.make_parser()
-  handler = SynopsesContentHandler(id=id)
+  handler = SynopsesContentHandler(session_id=session_id)
   parser.setContentHandler(handler)
   parser.setEntityResolver(handler)
   parser.parse(importFile)
@@ -492,11 +492,11 @@ def importSynopsesFile(importFile, id=None):
   stepSyns = handler.stepSynopses()
   refConts = handler.referenceContributions()
   ucConts = handler.useCaseContributions()
-  return importSynopses(charSyns,refSyns,stepSyns,refConts,ucConts, id)
+  return importSynopses(charSyns,refSyns,stepSyns,refConts,ucConts, session_id=session_id)
 
-def importSynopses(charSyns,refSyns,stepSyns,refConts,ucConts, id):
+def importSynopses(charSyns,refSyns,stepSyns,refConts,ucConts, session_id):
   b = Borg()
-  db_proxy = b.get_dbproxy(id)
+  db_proxy = b.get_dbproxy(session_id)
 
   for cs in charSyns:
     db_proxy.addCharacteristicSynopsis(cs)
@@ -513,16 +513,16 @@ def importSynopses(charSyns,refSyns,stepSyns,refConts,ucConts, id):
   msgStr = 'Imported ' + str(len(charSyns)) + ' characteristic synopses, ' + str(len(refSyns)) + ' reference synopses, ' + str(len(stepSyns)) + ' step synopses, ' + str(len(refConts)) + ' reference contributions, and ' + str(len(ucConts)) + ' use case contributions.'
   return msgStr
 
-def importDomainValuesFile(importFile, id=None):
+def importDomainValuesFile(importFile, session_id=None):
   parser = xml.sax.make_parser()
   handler = DomainValueContentHandler()
   parser.setContentHandler(handler)
   parser.setEntityResolver(handler)
   parser.parse(importFile)
   tvValues,rvValues,cvValues,svValues,lvValues,capValues,motValues = handler.values()
-  return importDomainValues(tvValues,rvValues,cvValues,svValues,lvValues,capValues,motValues, id=id)
+  return importDomainValues(tvValues,rvValues,cvValues,svValues,lvValues,capValues,motValues, session_id=session_id)
 
-def importDomainValues(tvValues,rvValues,cvValues,svValues,lvValues,capValues,motValues, id):
+def importDomainValues(tvValues,rvValues,cvValues,svValues,lvValues,capValues,motValues, session_id):
   noOfTvs = len(tvValues)
   noOfRvs = len(rvValues)
   noOfCvs = len(cvValues)
@@ -532,7 +532,7 @@ def importDomainValues(tvValues,rvValues,cvValues,svValues,lvValues,capValues,mo
   noOfMotVs = len(motValues)
  
   b = Borg()
-  db_proxy = b.get_dbproxy(id)
+  db_proxy = b.get_dbproxy(session_id)
 
   tId = 0
   if (noOfTvs > 0):
@@ -574,7 +574,7 @@ def importDomainValues(tvValues,rvValues,cvValues,svValues,lvValues,capValues,mo
   msgStr = 'Imported domain values'
   return msgStr
 
-def importProcessesFile(importFile, id=None):
+def importProcessesFile(importFile, session_id=None):
   parser = xml.sax.make_parser()
   handler = ProcessesContentHandler()
   parser.setContentHandler(handler)
@@ -589,9 +589,9 @@ def importProcessesFile(importFile, id=None):
   ics = handler.impliedCharacteristics()
   intentions = handler.intentions()
   contributions = handler.contributions()
-  return importProcesses(docs,codes,memos,quotations,codeNetworks,processes,ics,intentions,contributions, id=id)
+  return importProcesses(docs,codes,memos,quotations,codeNetworks,processes,ics,intentions,contributions, session_id=session_id)
 
-def importProcesses(docs,codes,memos,quotations,codeNetworks,processes,ics,intentions,contributions, id):
+def importProcesses(docs,codes,memos,quotations,codeNetworks,processes,ics,intentions,contributions, session_id):
   noOfDocs = len(docs)
   noOfCodes = len(codes)
   noOfMemos = len(memos)
@@ -603,7 +603,7 @@ def importProcesses(docs,codes,memos,quotations,codeNetworks,processes,ics,inten
   noOfContributions = len(contributions)
 
   b = Borg()
-  db_proxy = b.get_dbproxy(id)
+  db_proxy = b.get_dbproxy(session_id)
 
   for dp in docs:
     db_proxy.addInternalDocument(dp)
@@ -643,19 +643,19 @@ def importProcesses(docs,codes,memos,quotations,codeNetworks,processes,ics,inten
   msgStr = 'Imported ' + str(noOfDocs) + ' internal documents, ' + str(noOfCodes) + ' codes, ' + str(noOfMemos) + ' memos, ' + str(noOfQuotations) + ' quotations, ' + str(noOfCNs) + ' code relationships, ' + str(noOfProcs) + ' implied processes, ' + str(noOfIntentions) + ' intentions, and ' + str(noOfContributions) + ' contributions.'
   return msgStr
 
-def importModelFile(importFile,isOverwrite = 1, id=None):
+def importModelFile(importFile, isOverwrite=1, session_id=None):
   b = Borg()
-  db_proxy = b.get_dbproxy(id)
+  db_proxy = b.get_dbproxy(session_id)
 
   modelTxt = ''
   if isOverwrite == 1:
-    db_proxy.clearDatabase(id)
-    modelTxt += importTVTypeFile(importFile) + '  '
-  modelTxt += importDomainValuesFile(importFile) + ' '
-  modelTxt += importProjectFile(importFile) + ' '
-  modelTxt += importRiskAnalysisFile(importFile) + ' '
-  modelTxt += importUsabilityFile(importFile) + ' '
-  modelTxt += importRequirementsFile(importFile) + ' '
-  modelTxt += importAssociationsFile(importFile) + ' '
-  modelTxt += importSynopsesFile(importFile)
+    db_proxy.clearDatabase(session_id)
+    modelTxt += importTVTypeFile(importFile, session_id=session_id) + '  '
+  modelTxt += importDomainValuesFile(importFile, session_id=session_id) + ' '
+  modelTxt += importProjectFile(importFile, session_id=session_id) + ' '
+  modelTxt += importRiskAnalysisFile(importFile, session_id=session_id) + ' '
+  modelTxt += importUsabilityFile(importFile, session_id=session_id) + ' '
+  modelTxt += importRequirementsFile(importFile, session_id=session_id) + ' '
+  modelTxt += importAssociationsFile(importFile, session_id=session_id) + ' '
+  modelTxt += importSynopsesFile(importFile, session_id=session_id)
   return modelTxt

@@ -1,9 +1,7 @@
+from tools.JsonConverter import json_serialize
 import cherrypy
-from cherrypy import expose, popargs
-from json import dumps as json_serialize
 from AssetModel import AssetModel
 from Borg import Borg
-from MySQLDatabaseProxy import MySQLDatabaseProxy
 from SessionValidator import validate_proxy, validate_fonts
 
 __author__ = 'Robin Quetin'
@@ -17,7 +15,7 @@ class AssetController(object):
     def all(self, session_id=None):
         db_proxy = validate_proxy(cherrypy.session, session_id)
         assets = db_proxy.getDimensionNames('asset')
-        return json_serialize(assets)
+        return json_serialize(assets, pretty_printing=True)
 
     def get_asset(self, name=None, session_id=None):
         db_proxy = validate_proxy(cherrypy.session, session_id)

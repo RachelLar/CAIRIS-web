@@ -2,7 +2,7 @@ import os
 import cherrypy
 from Borg import Borg
 from controllers.AssetController import AssetController
-#from controllers.CImportController import CImportController
+from controllers.CImportController import CImportController
 from controllers.EnvironmentController import EnvironmentController
 from controllers.ExceptionController import ExceptionController
 from controllers.IndexController import IndexController
@@ -20,7 +20,7 @@ def start():
     cherrypy.tools.CORS = cherrypy.Tool('before_handler', CORS)
 
     asset_controller = AssetController()
-    #cimport_controller = CImportController()
+    cimport_controller = CImportController()
     environment_controller = EnvironmentController()
     exception_controller = ExceptionController()
     index_controller = IndexController()
@@ -35,7 +35,7 @@ def start():
     dispatcher.connect('asset-view-model', '/api/assets/view', asset_controller.view_asset_model)
 
     # CImport
-    #dispatcher.connect('cimport', '/api/cimport', cimport_controller.cimport)
+    dispatcher.connect('cimport', '/api/cimport', cimport_controller.cimport)
 
     # Index route
     dispatcher.connect('index', '/', index_controller.index)

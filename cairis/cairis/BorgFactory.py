@@ -140,7 +140,7 @@ def dInitialise(configFile):
     exit(5)
 
   b.imageDir = b.cairisRoot + '/cairis/images'
-  b.configDir = os.path.dirname(cfgFileName)
+  b.configDir = os.path.join(b.cairisRoot, 'cairis/config')
   b.exampleDir = os.path.join(b.cairisRoot, 'examples')
 
   b.template_generator = TemplateGenerator()
@@ -157,5 +157,16 @@ def dInitialise(configFile):
     'fontSize': '13',
     'fontName': 'Times New Roman',
     'apFontSize': '7.5',
-    'dbProxy': MySQLDatabaseProxy(host='127.0.0.1', port=3306, user='cairis', passwd='cairis123', db='cairis')
+    'dbHost': '127.0.0.1',
+    'dbPort': 3306,
+    'dbUser': 'cairis',
+    'dbPasswd': 'cairis123',
+    'dbName': 'cairis'
   }
+  b.settings['test']['dbProxy'] = MySQLDatabaseProxy(
+    b.settings['test']['dbHost'],
+    b.settings['test']['dbPort'],
+    b.settings['test']['dbUser'],
+    b.settings['test']['dbPasswd'],
+    b.settings['test']['dbName']
+  )

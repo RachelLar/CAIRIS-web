@@ -24,6 +24,45 @@ import BorgFactory
 from ModelImport import *
 from ARM import *
 
+def file_import(importFile, mFormat, overwriteFlag, session_id=None):
+  if overwriteFlag == None:
+    overwriteFlag = 1
+
+  msgStr = ''
+  if (mFormat == 'securitypattern'):
+    msgStr += importSecurityPatterns(importFile, session_id=session_id)
+  if (mFormat == 'attackpattern'):
+    msgStr += importAttackPattern(importFile, session_id=session_id)
+  elif (mFormat == 'tvtypes'):
+    msgStr += importTVTypeFile(importFile,int(overwriteFlag), session_id=session_id)
+  elif (mFormat == 'directory'):
+    msgStr += importDirectoryFile(importFile,int(overwriteFlag), session_id=session_id)
+  elif (mFormat == 'requirements'):
+    msgStr += importRequirementsFile(importFile, session_id=session_id)
+  elif (mFormat == 'riskanalysis'):
+    msgStr += importRiskAnalysisFile(importFile, session_id=session_id)
+  elif (mFormat == 'usability'):
+    msgStr += importUsabilityFile(importFile, session_id=session_id)
+  elif (mFormat == 'associations'):
+    msgStr += importAssociationsFile(importFile, session_id=session_id)
+  elif (mFormat == 'project'):
+    msgStr += importProjectFile(importFile, session_id=session_id)
+  elif (mFormat == 'domainvalues'):
+    msgStr += importDomainValuesFile(importFile, session_id=session_id)
+  elif (mFormat == 'architecturalpattern'):
+    msgStr += importComponentViewFile(importFile, session_id=session_id)
+  elif (mFormat == 'synopses'):
+    msgStr += importSynopsesFile(importFile, session_id=session_id)
+  elif (mFormat == 'processes'):
+    msgStr += importProcessesFile(importFile, session_id=session_id)
+  elif (mFormat == 'assets'):
+    msgStr += importAssetsFile(importFile, session_id=session_id)
+  elif (mFormat == 'all'):
+    msgStr += importModelFile(importFile,int(overwriteFlag), session_id=session_id)
+  else:
+    raise ARMException('Input model type ' + mFormat + ' not recognised')
+  print msgStr
+  return msgStr
 
 if __name__ == '__main__':
   try:
@@ -35,45 +74,9 @@ if __name__ == '__main__':
     mFormat = args.modelFormat
     importFile = args.modelFile
     overwriteFlag = args.isOverwrite
-    if overwriteFlag == None:
-      overwriteFlag = 1
 
     BorgFactory.initialise()
-   
-    msgStr = ''
-    if (mFormat == 'securitypattern'):
-      msgStr += importSecurityPatterns(importFile)
-    if (mFormat == 'attackpattern'):
-      msgStr += importAttackPattern(importFile)
-    elif (mFormat == 'tvtypes'):
-      msgStr += importTVTypeFile(importFile,int(overwriteFlag))
-    elif (mFormat == 'directory'):
-      msgStr += importDirectoryFile(importFile,int(overwriteFlag))
-    elif (mFormat == 'requirements'):
-      msgStr += importRequirementsFile(importFile)
-    elif (mFormat == 'riskanalysis'):
-      msgStr += importRiskAnalysisFile(importFile)
-    elif (mFormat == 'usability'):
-      msgStr += importUsabilityFile(importFile)
-    elif (mFormat == 'associations'):
-      msgStr += importAssociationsFile(importFile)
-    elif (mFormat == 'project'):
-      msgStr += importProjectFile(importFile)
-    elif (mFormat == 'domainvalues'):
-      msgStr += importDomainValuesFile(importFile)
-    elif (mFormat == 'architecturalpattern'):
-      msgStr += importComponentViewFile(importFile)
-    elif (mFormat == 'synopses'):
-      msgStr += importSynopsesFile(importFile)
-    elif (mFormat == 'processes'):
-      msgStr += importProcessesFile(importFile)
-    elif (mFormat == 'assets'):
-      msgStr += importAssetsFile(importFile)
-    elif (mFormat == 'all'):
-      msgStr += importModelFile(importFile,int(overwriteFlag))
-    else:
-      raise ARMException('Input model type ' + mFormat + ' not recognised')
-    print msgStr
+    file_import(importFile, mFormat, overwriteFlag)
   except ARMException, e:
     print 'cimport error: ',e
-    exit(-1) 
+    exit(-1)

@@ -1,17 +1,26 @@
+from jsonpickle import encode as serialize
+from jsonpickle import decode as deserialize
+from json import dumps, loads
 from Requirement import Requirement
 
 __author__ = 'TChosenOne'
 
+def json_serialize(obj, pretty_printing=False):
+    if pretty_printing:
+        dumps(loads(serialize(obj)), indent=4)
+    else:
+        serialize(obj)
 
-def convert(dict, class_name):
+def json_deserialize(string, class_name=None):
+    dict = deserialize(string)
     if class_name == 'asset':
         pass
     elif class_name == 'requirement':
-        return convertToRequirement(dict)
+        return deserialize_requirement(dict)
     else:
-        raise TypeError('Class name for deserialization was not recognized.')
+        return dict
 
-def convertToRequirement(dict):
+def deserialize_requirement(dict):
     reqDict = dict.popitem()[1]
     req = Requirement(id=reqDict['theId'], label=reqDict['theLabel'])
     req.theDescription = reqDict['theDescription']

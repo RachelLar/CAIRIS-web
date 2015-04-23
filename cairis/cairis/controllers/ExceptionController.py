@@ -1,6 +1,6 @@
 import cherrypy
 from Borg import Borg
-from json import dumps as json_serialize
+from tools.JsonConverter import json_serialize
 from TemplateGenerator import TemplateGenerator
 
 __author__ = 'Robin Quetin'
@@ -28,4 +28,4 @@ class ExceptionController(object):
 
 
     def handle_exception_json(self, msg, code, title):
-        return json_serialize({'message': msg, 'code': code, 'status': title})
+        return json_serialize({'message': msg, 'code': code, 'status': title}, pretty_printing=True)

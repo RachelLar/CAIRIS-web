@@ -1,12 +1,9 @@
-from json import loads, dumps
-
 import cherrypy
-from jsonpickle import encode as json_serialize
-from jsonpickle import decode as json_deserialize
-
 from Borg import Borg
 from CairisHTTPError import CairisHTTPError
 from SessionValidator import validate_proxy
+from tools.JsonConverter import json_serialize
+from tools.JsonConverter import json_deserialize
 
 
 __author__ = 'Robin Quetin'
@@ -34,10 +31,9 @@ class UserController(object):
                 cherrypy.response.headers['Content-Type'] = 'text/plain'
 
                 debug = ''
-                debug.join('{0}\nSession vars:\n{1}\nQuery string:\n'.format(
+                debug += '{0}\nSession vars:\n{1}\nQuery string:\n'.format(
                     'Configuration successfully updated',
-                    dumps(loads(json_serialize(result)), indent=4))
-                )
+                    json_serialize(result, pretty_printing=True))
                 return debug+'session_id={0}'.format(result['session_id'])
             else:
                 CairisHTTPError(msg='One or more settings are missing')
@@ -53,6 +49,11 @@ class UserController(object):
         id = b.init_settings()
         cherrypy.session['session_id'] = id
         b.settings[id]['dbProxy'] = db_proxy
+        b.settings[id]['dbUser'] = conf['user']
+        b.settings[id]['dbPasswd'] = conf['passwd']
+        b.settings[id]['dbHost'] = conf['host']
+        b.settings[id]['dbPort'] = conf['port']
+        b.settings[id]['dbName'] = conf['db']
         b.settings[id]['fontSize'] = pSettings['Font Size']
         b.settings[id]['apFontSize'] = pSettings['AP Font Size']
         b.settings[id]['fontName'] = pSettings['Font Name']

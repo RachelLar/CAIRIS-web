@@ -1,10 +1,8 @@
 import cherrypy
-import json
-import JsonToObjectConverter
-from jsonpickle import encode as json_serialize
-from jsonpickle import decode as json_deserialize
 from CairisHTTPError import CairisHTTPError
 from SessionValidator import validate_proxy
+from tools.JsonConverter import json_serialize, json_deserialize
+
 
 __author__ = 'Robin Quetin'
 
@@ -22,8 +20,7 @@ class RequirementController(object):
 
         db_proxy = validate_proxy(cherrypy.session, session_id)
         reqs = db_proxy.getRequirements(constraintId, isAsset)
-        return json.dumps(json.loads(json_serialize(reqs)), indent=4)
-        return json_serialize(reqs)
+        return json_serialize(reqs, pretty_printing=True)
 
     def get_requirement(self, id, session_id=None):
         accept_header = cherrypy.request.headers.get('Accept', None)
@@ -36,15 +33,13 @@ class RequirementController(object):
 
         db_proxy = validate_proxy(cherrypy.session, session_id)
         req = db_proxy.getRequirement(id)
-        return json.dumps(json.loads(json_serialize(req)), indent=4)
-        return json_serialize(req)
+        return json_serialize(req, pretty_printing=True)
 
     def update_requirement(self, requirement, session_id=None):
         db_proxy = validate_proxy(cherrypy.session, session_id)
-        reqDict = json_deserialize(requirement)
-        reqObj = JsonToObjectConverter.convert(reqDict, 'requirement')
+        reqObj = json_deserialize(requirement, 'requirement')
         db_proxy.updateRequirement(reqObj)
         msg = 'Requirement successfully updated'
         code = 200
         status = 'OK'
-        return json_serialize({'message': msg, 'code': code, 'status': status})
+        return json_serialize({'message': msg, 'code': code, 'status': status}, pretty_printing=True)

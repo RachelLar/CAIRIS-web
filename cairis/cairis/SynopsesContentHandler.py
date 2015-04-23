@@ -22,9 +22,9 @@ from ReferenceContribution import ReferenceContribution
 from Borg import Borg
 
 class SynopsesContentHandler(ContentHandler,EntityResolver):
-  def __init__(self, id):
+  def __init__(self, session_id):
     b = Borg()
-    self.dbProxy = b.get_dbproxy(id)
+    self.dbProxy = b.get_dbproxy(session_id)
     self.configDir = b.configDir
     self.theCharacteristicSynopses = []
     self.theReferenceSynopses = []
