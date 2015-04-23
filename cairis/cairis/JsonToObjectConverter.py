@@ -20,3 +20,4 @@ def convertToRequirement(dict):
     req.theVersion = reqDict['theVersion']
     req.attrs = reqDict['attrs']
     req.dirtyAttrs = set(reqDict['dirtyAttrs'])
+    return req

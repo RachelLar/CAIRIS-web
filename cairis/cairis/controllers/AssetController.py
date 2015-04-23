@@ -14,20 +14,20 @@ class AssetController(object):
         b = Borg()
         self.model_generator = b.model_generator
 
-    def all(self, conf=None):
-        db_proxy = validate_proxy(cherrypy.session, conf)
+    def all(self, session_id=None):
+        db_proxy = validate_proxy(cherrypy.session, session_id)
         assets = db_proxy.getDimensionNames('asset')
         return json_serialize(assets)
 
-    def get_asset(self, name=None, conf=None):
-        db_proxy = validate_proxy(cherrypy.session, conf)
+    def get_asset(self, name=None, session_id=None):
+        db_proxy = validate_proxy(cherrypy.session, session_id)
         if name is not None:
             return 'Name: '+name
         return 'Name not set!'
 
-    def view_asset_model(self, environment, conf=None):
-        db_proxy = validate_proxy(cherrypy.session, conf)
-        fontName, fontSize, apFontName = validate_fonts(cherrypy.session, conf)
+    def view_asset_model(self, environment, session_id=None):
+        db_proxy = validate_proxy(cherrypy.session, session_id)
+        fontName, fontSize, apFontName = validate_fonts(cherrypy.session, session_id)
         environmentName = environment
         associationDictionary = db_proxy.classModel(environmentName)
         associations = AssetModel(associationDictionary.values(), environmentName, db_proxy=db_proxy, fontName=fontName, fontSize=fontSize)

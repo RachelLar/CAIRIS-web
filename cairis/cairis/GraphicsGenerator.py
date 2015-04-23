@@ -1,5 +1,4 @@
 from SVGGenerator import SVGGenerator
-from AssetModel import AssetModel
 
 __author__ = 'Robin Quetin'
 

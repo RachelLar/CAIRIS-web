@@ -8757,9 +8757,22 @@ class MySQLDatabaseProxy(DatabaseProxy.DatabaseProxy):
       exceptionText = 'MySQL selecting interim redmine goals (id:' + str(id) + ',message:' + msg + ')'
       raise DatabaseProxyException(exceptionText) 
 
-  def clearDatabase(self):
+  def clearDatabase(self, id=None):
     b = Borg()
-    b.dbProxy.close()
+    if b.runmode == 'desktop':
+      db_proxy = b.dbProxy
+      host = b.dbHost
+      port = b.dbPort
+      user = b.dbUser
+      passwd = b.dbPasswd
+      db = b.dbName
+    elif b.runmode == 'web':
+      ses_settings = b.settings[id]
+      db_proxy = ses_settings
+    else:
+      pass
+
+    db_proxy.close()
     srcDir = b.cairisRoot + '/cairis/sql'
     initSql = srcDir + '/init.sql'
     procsSql = srcDir + '/procs.sql'
@@ -8767,7 +8780,7 @@ class MySQLDatabaseProxy(DatabaseProxy.DatabaseProxy):
     os.system(cmd)
     cmd = '/usr/bin/mysql -h ' + b.dbHost + ' -u ' + b.dbUser + ' --password=\'' + b.dbPasswd + '\'' + ' --database ' + b.dbName + ' < ' + procsSql
     os.system(cmd)
-    b.dbProxy.reconnect(False)
+    db_proxy.reconnect(False)
 
   def conceptMapModel(self,envName,reqName = ''):
     try:

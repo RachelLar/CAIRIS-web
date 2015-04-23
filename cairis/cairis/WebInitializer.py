@@ -2,6 +2,7 @@ import os
 import cherrypy
 from Borg import Borg
 from controllers.AssetController import AssetController
+from controllers.CImportController import CImportController
 from controllers.EnvironmentController import EnvironmentController
 from controllers.ExceptionController import ExceptionController
 from controllers.IndexController import IndexController
@@ -19,6 +20,7 @@ def start():
     cherrypy.tools.CORS = cherrypy.Tool('before_handler', CORS)
 
     asset_controller = AssetController()
+    cimport_controller = CImportController()
     environment_controller = EnvironmentController()
     exception_controller = ExceptionController()
     index_controller = IndexController()
@@ -28,24 +30,27 @@ def start():
     dispatcher = cherrypy.dispatch.RoutesDispatcher()
 
     # Asset routes
-    dispatcher.connect('assets-all', '/assets/all', asset_controller.all)
-    dispatcher.connect('asset-by-name', '/assets/name/{name}', asset_controller.get_asset)
-    dispatcher.connect('asset-view-model', '/assets/view', asset_controller.view_asset_model)
+    dispatcher.connect('assets-all', '/api/assets/all', asset_controller.all)
+    dispatcher.connect('asset-by-name', '/api/assets/name/{name}', asset_controller.get_asset)
+    dispatcher.connect('asset-view-model', '/api/assets/view', asset_controller.view_asset_model)
+
+    # CImport
+    #dispatcher.connect('cimport', '/api/cimport', cimport_controller.cimport)
 
     # Index route
     dispatcher.connect('index', '/', index_controller.index)
 
     # Environment routes
-    dispatcher.connect('environments-all', '/environments/all', environment_controller.all)
-    dispatcher.connect('environments-all-names', '/environments/all/names', environment_controller.all_names)
+    dispatcher.connect('environments-all', '/api/environments/all', environment_controller.all)
+    dispatcher.connect('environments-all-names', '/api/environments/all/names', environment_controller.all_names)
 
     # Exception route
     dispatcher.connect('exception', '/exception', exception_controller.handle_exception)
 
     # Requirement routes
-    dispatcher.connect('requirements-all', '/requirements/all', requirement_controller.all)
-    dispatcher.connect('requirement-by-id', '/requirements/id/{id}', requirement_controller.get_requirement)
-    dispatcher.connect('requirement-update', '/requirements/update', requirement_controller.update_requirement)
+    dispatcher.connect('requirements-all', '/api/requirements/all', requirement_controller.all)
+    dispatcher.connect('requirement-by-id', '/api/requirements/id/{id}', requirement_controller.get_requirement)
+    dispatcher.connect('requirement-update', '/api/requirements/update', requirement_controller.update_requirement)
 
     # User routes
     dispatcher.connect('config', '/user/config', user_controller.set_db)
@@ -81,10 +86,6 @@ def start():
         '/plugins': {
             'tools.staticdir.on': True,
             'tools.staticdir.dir': 'plugins'
-        },
-        '/index.html': {
-            'tools.staticfile.on': True,
-            'tools.staticfile.filename': os.path.join(b.staticDir, 'index.html')
         },
     }
 

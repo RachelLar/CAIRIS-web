@@ -40,9 +40,12 @@ def u2s(aStr):
   return outStr
   
 class AssociationsContentHandler(ContentHandler,EntityResolver):
-  def __init__(self):
+  def __init__(self, db_proxy=None):
     b = Borg()
-    self.dbProxy = b.dbProxy
+    if db_proxy is None:
+      self.dbProxy = b.dbProxy
+    else:
+      self.dbProxy = db_proxy
     self.configDir = b.configDir
     self.theManualAssociations = set([])
     self.theGoalAssociations = []

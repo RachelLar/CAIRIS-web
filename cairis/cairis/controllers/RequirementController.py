@@ -11,7 +11,7 @@ __author__ = 'Robin Quetin'
 
 # noinspection PyMethodMayBeStatic
 class RequirementController(object):
-    def all(self, constraintId='', isAsset=1, conf=None):
+    def all(self, constraintId='', isAsset=1, session_id=None):
         accept_header = cherrypy.request.headers.get('Accept', None)
         if accept_header.find('application/json')+accept_header.find('text/plain') > -2:
             cherrypy.response.headers['Content-Type'] = accept_header
@@ -20,12 +20,12 @@ class RequirementController(object):
         else:
             CairisHTTPError(msg='Not Acceptable', code=406, status='Not Acceptable')
 
-        db_proxy = validate_proxy(cherrypy.session, conf)
+        db_proxy = validate_proxy(cherrypy.session, session_id)
         reqs = db_proxy.getRequirements(constraintId, isAsset)
         return json.dumps(json.loads(json_serialize(reqs)), indent=4)
         return json_serialize(reqs)
 
-    def get_requirement(self, id, conf=None):
+    def get_requirement(self, id, session_id=None):
         accept_header = cherrypy.request.headers.get('Accept', None)
         if accept_header.find('application/json')+accept_header.find('text/plain') > -2:
             cherrypy.response.headers['Content-Type'] = accept_header
@@ -34,13 +34,17 @@ class RequirementController(object):
         else:
             CairisHTTPError(msg='Not Acceptable', code=406, status='Not Acceptable')
 
-        db_proxy = validate_proxy(cherrypy.session, conf)
+        db_proxy = validate_proxy(cherrypy.session, session_id)
         req = db_proxy.getRequirement(id)
         return json.dumps(json.loads(json_serialize(req)), indent=4)
         return json_serialize(req)
 
-    def update_requirement(self, requirement, conf=None):
-        db_proxy = validate_proxy(cherrypy.session, conf)
+    def update_requirement(self, requirement, session_id=None):
+        db_proxy = validate_proxy(cherrypy.session, session_id)
         reqDict = json_deserialize(requirement)
         reqObj = JsonToObjectConverter.convert(reqDict, 'requirement')
-        #db_proxy.updateRequirement(reqObj)
+        db_proxy.updateRequirement(reqObj)
+        msg = 'Requirement successfully updated'
+        code = 200
+        status = 'OK'
+        return json_serialize({'message': msg, 'code': code, 'status': status})

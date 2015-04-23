@@ -21,11 +21,13 @@ import logging
 import DatabaseProxyFactory
 from string import strip
 from GraphicsGenerator import GraphicsGenerator
+from MySQLDatabaseProxy import MySQLDatabaseProxy
 from TemplateGenerator import TemplateGenerator
 
 
 def initialise():
   b = Borg()
+  b.runmode = 'desktop'
   b.logger = logging.getLogger('CAIRIS')
   
   homeDir = os.getenv("HOME")
@@ -87,6 +89,8 @@ def initialise():
 
 def dInitialise(configFile):
   b = Borg()
+  b.runmode = 'web'
+  b.settings = dict()
   b.logger = logging.getLogger('cairisd')
 
   homeDir = os.getenv("HOME")
@@ -147,3 +151,11 @@ def dInitialise(configFile):
     b.docBookDir = '/usr/share/sgml/docbook/dtd/4.5'
   else:
     b.logger.warning('Unable to find DocBook schemes. Check if DocBook is correctly installed.')
+
+  b.settings['test'] = {
+    'session_id': 'test',
+    'fontSize': '13',
+    'fontName': 'Times New Roman',
+    'apFontSize': '7.5',
+    'dbProxy': MySQLDatabaseProxy(host='127.0.0.1', port=3306, user='cairis', passwd='cairis123', db='cairis')
+  }

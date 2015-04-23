@@ -1,3 +1,4 @@
+import os
 import cherrypy
 from Borg import Borg
 
@@ -8,10 +9,10 @@ class IndexController(object):
     def index(self):
         b = Borg()
         try:
-            dbProxyConfigured = cherrypy.session.get('dbProxy', False)
-            b.logger.info('Database configured: '+str(dbProxyConfigured))
-            if dbProxyConfigured:
-                raise cherrypy.HTTPRedirect('/index.html')
+            dbProxyConfigured = cherrypy.session.get('session_id', -1)
+            b.logger.info('Database configured: {0}'.format(str(dbProxyConfigured != -1)))
+            if dbProxyConfigured != -1:
+                return open(os.path.join(b.staticDir, 'index.html')).readlines()
             else:
                 raise KeyError('Not configured!')
         except KeyError, ex:
