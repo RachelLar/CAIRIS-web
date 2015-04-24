@@ -3,6 +3,7 @@ import cherrypy
 from Borg import Borg
 from controllers.AssetController import AssetController
 from controllers.CImportController import CImportController
+from controllers.DimensionController import DimensionController
 from controllers.EnvironmentController import EnvironmentController
 from controllers.ExceptionController import ExceptionController
 from controllers.IndexController import IndexController
@@ -21,6 +22,7 @@ def start():
 
     asset_controller = AssetController()
     cimport_controller = CImportController()
+    dimension_controller = DimensionController()
     environment_controller = EnvironmentController()
     exception_controller = ExceptionController()
     index_controller = IndexController()
@@ -31,11 +33,14 @@ def start():
 
     # Asset routes
     dispatcher.connect('assets-all', '/api/assets/all', asset_controller.all)
-    dispatcher.connect('asset-by-name', '/api/assets/name/{name}', asset_controller.get_asset)
     dispatcher.connect('asset-view-model', '/api/assets/view', asset_controller.view_asset_model)
 
     # CImport
     dispatcher.connect('cimport', '/api/cimport', cimport_controller.cimport)
+
+    # DimensionController
+    dispatcher.connect('dimensions-all', '/api/dimensions/all', dimension_controller.get_dimensions)
+    dispatcher.connect('dimensions-all-names', '/api/dimensions/all/names', dimension_controller.get_dimension_names)
 
     # Index route
     dispatcher.connect('index', '/', index_controller.index)
@@ -49,7 +54,8 @@ def start():
 
     # Requirement routes
     dispatcher.connect('requirements-all', '/api/requirements/all', requirement_controller.all)
-    dispatcher.connect('requirement-by-id', '/api/requirements/id/{id}', requirement_controller.get_requirement)
+    dispatcher.connect('requirements-filtered', '/api/requirements/all/filter/{filter}', requirement_controller.get_filtered_requirements)
+    dispatcher.connect('requirement-by-id', '/api/requirements/id/{id}', requirement_controller.get_requirement_by_id)
     dispatcher.connect('requirement-update', '/api/requirements/update', requirement_controller.update_requirement)
 
     # User routes

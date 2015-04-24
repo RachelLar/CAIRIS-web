@@ -1,8 +1,7 @@
 import cherrypy
-
-from tools.JsonConverter import json_serialize
 from AssetModel import AssetModel
 from Borg import Borg
+from tools.JsonConverter import json_serialize
 from tools.SessionValidator import validate_proxy, validate_fonts
 
 
@@ -18,12 +17,6 @@ class AssetController(object):
         db_proxy = validate_proxy(cherrypy.session, session_id)
         assets = db_proxy.getDimensionNames('asset')
         return json_serialize(assets, session_id=session_id)
-
-    def get_asset(self, name=None, session_id=None):
-        db_proxy = validate_proxy(cherrypy.session, session_id)
-        if name is not None:
-            return 'Name: '+name
-        return 'Name not set!'
 
     def view_asset_model(self, environment, session_id=None):
         db_proxy = validate_proxy(cherrypy.session, session_id)

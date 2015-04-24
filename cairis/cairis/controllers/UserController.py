@@ -33,9 +33,9 @@ class UserController(object):
                 cherrypy.response.headers['Content-Type'] = 'text/plain'
 
                 debug = ''
-                debug += '{0}\nSession vars:\n{1}\nQuery string:\n'.format(
+                '''debug += '{0}\nSession vars:\n{1}\nQuery string:\n'.format(
                     'Configuration successfully updated',
-                    json_serialize(s, session_id=s['session_id']))
+                    json_serialize(s, session_id=s['session_id']))'''
                 return debug+'session_id={0}'.format(s['session_id'])
             else:
                 CairisHTTPError(msg='One or more settings are missing')

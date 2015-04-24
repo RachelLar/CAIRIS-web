@@ -10,28 +10,23 @@ __author__ = 'Robin Quetin'
 
 # noinspection PyMethodMayBeStatic
 class RequirementController(object):
-    def all(self, constraintId='', isAsset=1, session_id=None):
-        accept_header = cherrypy.request.headers.get('Accept', None)
-        if accept_header.find('application/json')+accept_header.find('text/plain') > -2:
-            cherrypy.response.headers['Content-Type'] = accept_header
-        elif accept_header.find('*/*') > -1:
-            cherrypy.response.headers['Content-Type'] = 'application/json'
-        else:
-            CairisHTTPError(msg='Not Acceptable', code=406, status='Not Acceptable')
-
+    def all(self, is_asset=1, ordered=1, session_id=None):
         db_proxy = validate_proxy(cherrypy.session, session_id)
-        reqs = db_proxy.getRequirements(constraintId, isAsset)
+        if ordered == 1:
+            reqs = db_proxy.getOrderedRequirements('', is_asset==1)
+        else:
+            reqs = db_proxy.getRequirements('', is_asset)
         return json_serialize(reqs, session_id=session_id)
 
-    def get_requirement(self, id, session_id=None):
-        accept_header = cherrypy.request.headers.get('Accept', None)
-        if accept_header.find('application/json')+accept_header.find('text/plain') > -2:
-            cherrypy.response.headers['Content-Type'] = accept_header
-        elif accept_header.find('*/*') > -1:
-            cherrypy.response.headers['Content-Type'] = 'application/json'
+    def get_filtered_requirements(self, filter, is_asset=1, ordered=1, session_id=None):
+        db_proxy = validate_proxy(cherrypy.session, session_id)
+        if ordered == 1:
+            reqs = db_proxy.getOrderedRequirements(filter, is_asset==1)
         else:
-            CairisHTTPError(msg='Not Acceptable', code=406, status='Not Acceptable')
+            reqs = db_proxy.getRequirements(filter, is_asset)
+        return json_serialize(reqs, session_id=session_id)
 
+    def get_requirement_by_id(self, id, session_id=None):
         db_proxy = validate_proxy(cherrypy.session, session_id)
         req = db_proxy.getRequirement(id)
         return json_serialize(req, session_id=session_id)
