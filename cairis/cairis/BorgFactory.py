@@ -15,12 +15,13 @@
 #  specific language governing permissions and limitations
 #  under the License.
 
-from Borg import Borg
 import os
 import logging
-import DatabaseProxyFactory
 from string import strip
-from GraphicsGenerator import GraphicsGenerator
+
+from Borg import Borg
+import DatabaseProxyFactory
+from tools.GraphicsGenerator import GraphicsGenerator
 from MySQLDatabaseProxy import MySQLDatabaseProxy
 from TemplateGenerator import TemplateGenerator
 
@@ -156,6 +157,7 @@ def dInitialise(configFile):
     'session_id': 'test',
     'fontSize': '13',
     'fontName': 'Times New Roman',
+    'jsonPrettyPrint': True,
     'apFontSize': '7.5',
     'dbHost': '127.0.0.1',
     'dbPort': 3306,
@@ -163,10 +165,11 @@ def dInitialise(configFile):
     'dbPasswd': 'cairis123',
     'dbName': 'cairis'
   }
+
   b.settings['test']['dbProxy'] = MySQLDatabaseProxy(
-    b.settings['test']['dbHost'],
-    b.settings['test']['dbPort'],
-    b.settings['test']['dbUser'],
-    b.settings['test']['dbPasswd'],
-    b.settings['test']['dbName']
+    host=b.settings['test']['dbHost'],
+    port=b.settings['test']['dbPort'],
+    user=b.settings['test']['dbUser'],
+    passwd=b.settings['test']['dbPasswd'],
+    db=b.settings['test']['dbName']
   )

@@ -1,4 +1,4 @@
-from SVGGenerator import SVGGenerator
+from tools.SVGGenerator import SVGGenerator
 
 __author__ = 'Robin Quetin'
 

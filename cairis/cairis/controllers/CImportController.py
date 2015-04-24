@@ -20,6 +20,6 @@ class CImportController(object):
             result = cimport.file_import(abs_path, type, overwrite, session_id=session_id)
             remove_file(abs_path)
             cherrypy.response.headers['Content-Type'] = 'application/json'
-            return json_serialize({'msg': result})
+            return json_serialize({'msg': result}, session_id=session_id)
         else:
-            CairisHTTPError(msg='The provided file is not a valid XML file')
+            CairisHTTPError(msg='The provided file is not a valid XML file', session_id=session_id)

@@ -1,15 +1,21 @@
 from jsonpickle import encode as serialize
 from jsonpickle import decode as deserialize
 from json import dumps, loads
+from Borg import Borg
 from Requirement import Requirement
 
 __author__ = 'TChosenOne'
 
-def json_serialize(obj, pretty_printing=False):
+def json_serialize(obj, pretty_printing=False, session_id=None):
+    if session_id is not None:
+        b = Borg()
+        s = b.get_settings(session_id)
+        pretty_printing = s['jsonPrettyPrint']
+
     if pretty_printing:
-        dumps(loads(serialize(obj)), indent=4)
+        return dumps(loads(serialize(obj)), indent=4)
     else:
-        serialize(obj)
+        return serialize(obj)
 
 def json_deserialize(string, class_name=None):
     dict = deserialize(string)

@@ -1,7 +1,6 @@
 from ARM import DatabaseProxyException
 from Borg import Borg
 from CairisHTTPError import CairisHTTPError
-from jsonpickle import decode as json_deserialize
 from MySQLDatabaseProxy import MySQLDatabaseProxy
 
 __author__ = 'Robin Quetin'

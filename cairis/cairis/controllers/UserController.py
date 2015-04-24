@@ -1,7 +1,8 @@
 import cherrypy
+
 from Borg import Borg
 from CairisHTTPError import CairisHTTPError
-from SessionValidator import validate_proxy
+from tools.SessionValidator import validate_proxy
 from tools.JsonConverter import json_serialize
 from tools.JsonConverter import json_deserialize
 
@@ -10,31 +11,32 @@ __author__ = 'Robin Quetin'
 
 
 class UserController(object):
-    def set_db(self, conf=None, host=None, port=None, user=None, passwd=None, db=None):
+    def set_db(self, conf=None, host=None, port=None, user=None, passwd=None, db=None, jsonPrettyPrint=False):
         if cherrypy.request.method == 'POST':
             if conf is not None:
                 dbconf = json_deserialize(conf)
                 msg = self.set_dbproxy(dbconf)
                 code = 200
                 status = 'OK'
-                return json_serialize({'message': msg, 'code': code, 'status': status})
+                return json_serialize({'message': msg, 'code': code, 'status': status}, jsonPrettyPrint)
             elif host is not None and port is not None and user is not None and passwd is not None and db is not None:
                 conf = {
                     'host': host,
                     'port': int(port),
                     'user': user,
                     'passwd': passwd,
-                    'db': db
+                    'db': db,
+                    'jsonPrettyPrint': jsonPrettyPrint
                 }
 
-                result = self.set_dbproxy(conf)
+                s = self.set_dbproxy(conf)
                 cherrypy.response.headers['Content-Type'] = 'text/plain'
 
                 debug = ''
                 debug += '{0}\nSession vars:\n{1}\nQuery string:\n'.format(
                     'Configuration successfully updated',
-                    json_serialize(result, pretty_printing=True))
-                return debug+'session_id={0}'.format(result['session_id'])
+                    json_serialize(s, session_id=s['session_id']))
+                return debug+'session_id={0}'.format(s['session_id'])
             else:
                 CairisHTTPError(msg='One or more settings are missing')
         elif cherrypy.request.method == 'GET':
@@ -57,5 +59,6 @@ class UserController(object):
         b.settings[id]['fontSize'] = pSettings['Font Size']
         b.settings[id]['apFontSize'] = pSettings['AP Font Size']
         b.settings[id]['fontName'] = pSettings['Font Name']
+        b.settings[id]['jsonPrettyPrint'] = conf['jsonPrettyPrint']
 
         return b.settings[id]
