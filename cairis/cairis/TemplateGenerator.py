@@ -1,5 +1,6 @@
 import mako.lookup
 from mako.template import Template
+from Borg import Borg
 from templates.NavObject import NavObject
 
 __author__ = 'Raf'
@@ -133,7 +134,8 @@ class TemplateGenerator:
     navList.append(grid)
     navList.append(help)
 
-    self.lookup = mako.lookup.TemplateLookup(directories=['./templates'], module_directory='./templates')
+    b = Borg()
+    self.lookup = mako.lookup.TemplateLookup(directories=[b.templateDir], module_directory=b.templateDir)
     self.templates['index_page'] = self.lookup.get_template("index.mako")
 
   def serve_result(self, template_name, **kwargs):

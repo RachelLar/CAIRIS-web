@@ -140,8 +140,9 @@ def dInitialise(configFile):
     print('Unable to read config file: %s' % ex.strerror)
     exit(5)
 
-  b.imageDir = b.cairisRoot + '/cairis/images'
+  b.imageDir = os.path.join(b.cairisRoot, '/cairis/images')
   b.configDir = os.path.join(b.cairisRoot, 'cairis/config')
+  b.templateDir = os.path.join(b.cairisRoot, 'cairis/templates')
   b.exampleDir = os.path.join(b.cairisRoot, 'examples')
 
   b.template_generator = TemplateGenerator()

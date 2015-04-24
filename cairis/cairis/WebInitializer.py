@@ -54,7 +54,7 @@ def start():
 
     # Requirement routes
     dispatcher.connect('requirements-all', '/api/requirements/all', requirement_controller.all)
-    dispatcher.connect('requirements-filtered', '/api/requirements/all/filter/{filter}', requirement_controller.get_filtered_requirements)
+    dispatcher.connect('requirements-filtered', '/api/requirements/filter/{filter}', requirement_controller.get_filtered_requirements)
     dispatcher.connect('requirement-by-id', '/api/requirements/id/{id}', requirement_controller.get_requirement_by_id)
     dispatcher.connect('requirement-update', '/api/requirements/update', requirement_controller.update_requirement)
 
