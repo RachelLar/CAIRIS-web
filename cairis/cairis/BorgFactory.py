@@ -65,8 +65,12 @@ def initialise():
       b.dbName = cfgVal
     elif cfgKey == 'tmp_dir': 
       b.tmpDir = cfgVal
-    elif cfgKey == 'root': 
-      b.cairisRoot = cfgVal
+    elif cfgKey == 'root':
+      if os.path.exists(cfgVal): 
+         b.cairisRoot = cfgVal
+      else:
+         print('The root directory of CAIRIS specified in the config file is invalid.\nSpecified path: %s' % cfgVal)
+         exit(6)
   cfgFile.close()
 
   b.dbProxy = DatabaseProxyFactory.build()
@@ -123,7 +127,11 @@ def dInitialise(configFile):
       if cfgKey == 'tmp_dir':
         b.tmpDir = cfgVal
       elif cfgKey == 'root':
-        b.cairisRoot = cfgVal
+      	if os.path.exists(cfgVal): 
+          b.cairisRoot = cfgVal
+        else:
+          print('The root directory of CAIRIS specified in the config file is invalid.\nSpecified path: %s' % cfgVal)
+          exit(6)
       elif cfgKey == 'web_port':
         try:
           b.webPort = int(cfgVal)
@@ -137,7 +145,7 @@ def dInitialise(configFile):
 
     cfgFile.close()
   except IOError as ex:
-    print('Unable to read config file: %s' % ex.strerror)
+    print('Unable to read config file: %s\nFilename: %s' % (ex.strerror, cfgFileName))
     exit(5)
 
   b.imageDir = os.path.join(b.cairisRoot, '/cairis/images')
