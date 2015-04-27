@@ -29,7 +29,7 @@ from TemplateGenerator import TemplateGenerator
 def initialise():
   b = Borg()
   b.runmode = 'desktop'
-  b.logger = logging.getLogger('CAIRIS')
+  b.logger = logging.getLogger('cairisd')
   
   homeDir = os.getenv("HOME")
   if homeDir is not None:
@@ -127,11 +127,7 @@ def dInitialise(configFile):
       if cfgKey == 'tmp_dir':
         b.tmpDir = cfgVal
       elif cfgKey == 'root':
-      	if os.path.exists(cfgVal): 
-          b.cairisRoot = cfgVal
-        else:
-          print('The root directory of CAIRIS specified in the config file is invalid.\nSpecified path: %s' % cfgVal)
-          exit(6)
+      	b.cairisRoot = cfgVal
       elif cfgKey == 'web_port':
         try:
           b.webPort = int(cfgVal)
@@ -148,10 +144,24 @@ def dInitialise(configFile):
     print('Unable to read config file: %s\nFilename: %s' % (ex.strerror, cfgFileName))
     exit(5)
 
-  b.imageDir = os.path.join(b.cairisRoot, '/cairis/images')
+  b.imageDir = os.path.join(b.cairisRoot, 'cairis/images')
   b.configDir = os.path.join(b.cairisRoot, 'cairis/config')
   b.templateDir = os.path.join(b.cairisRoot, 'cairis/templates')
   b.exampleDir = os.path.join(b.cairisRoot, 'examples')
+
+  paths = {
+    'root': b.cairisRoot,
+    'image': b.imageDir,
+    'configuration files': b.configDir,
+    'template files': b.templateDir,
+    'examples': b.exampleDir
+  }
+
+  for key, path in paths.items():
+    if not os.path.exists(path):
+      err_msg = 'The {0} directory of CAIRIS is inaccessible or not existing.{1}Path: {2}'.format(key, os.linesep, path)
+      b.logger.error(err_msg)
+      exit(6)
 
   b.template_generator = TemplateGenerator()
   b.model_generator = GraphicsGenerator('svg')
