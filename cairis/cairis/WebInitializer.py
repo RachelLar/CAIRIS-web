@@ -1,103 +1,58 @@
 import os
-import cherrypy
-from Borg import Borg
-from controllers.AssetController import AssetController
-from controllers.CImportController import CImportController
-from controllers.DimensionController import DimensionController
-from controllers.EnvironmentController import EnvironmentController
-from controllers.ExceptionController import ExceptionController
-from controllers.IndexController import IndexController
-from controllers.RequirementController import RequirementController
-from controllers.UserController import UserController
+
+from flask import Flask
+from flask.ext.cors import CORS
+from flask.ext.restful import Api
+from flask.ext.restful_swagger import swagger
+
+from controllers.AssetController import AssetsAPI, AssetModelAPI
+from controllers.CImportController import CImportAPI
+from controllers.DimensionController import DimensionsAPI, DimensionNamesAPI
+from controllers.EnvironmentController import EnvironmentsAPI, EnvironmentNamesAPI
+
 
 __author__ = 'Robin Quetin'
 ''' This module uses CherryPy (tested using 3.6.0) & Routes (tested using 1.13) '''
 
-def CORS():
-    cherrypy.response.headers["Access-Control-Allow-Origin"] = "*"
-
 def start():
-    b = Borg()
-    cherrypy.tools.CORS = cherrypy.Tool('before_handler', CORS)
-
-    asset_controller = AssetController()
-    cimport_controller = CImportController()
-    dimension_controller = DimensionController()
-    environment_controller = EnvironmentController()
-    exception_controller = ExceptionController()
-    index_controller = IndexController()
-    requirement_controller = RequirementController()
-    user_controller = UserController()
-
-    dispatcher = cherrypy.dispatch.RoutesDispatcher()
+    app = Flask(__name__)
+    api = swagger.docs(Api(app), apiVersion='0.1', description='CAIRIS API', api_spec_url='/api/cairis')
+    cors = CORS(app)
 
     # Asset routes
-    dispatcher.connect('assets-all', '/api/assets/all', asset_controller.all)
-    dispatcher.connect('asset-view-model', '/api/assets/view', asset_controller.view_asset_model)
+    api.add_resource(AssetsAPI, '/api/assets/all/names')
+    api.add_resource(AssetModelAPI, '/api/assets/view')
 
     # CImport
-    dispatcher.connect('cimport', '/api/cimport', cimport_controller.cimport)
+    api.add_resource(CImportAPI, '/api/cimport')
 
     # DimensionController
-    dispatcher.connect('dimensions-all', '/api/dimensions/all', dimension_controller.get_dimensions)
-    dispatcher.connect('dimensions-all-names', '/api/dimensions/all/names', dimension_controller.get_dimension_names)
+    api.add_resource(DimensionsAPI, '/api/dimensions/table/<table>')
+    api.add_resource(DimensionNamesAPI, '/api/dimensions/table/<table>/environment/<environment>')
 
     # Index route
-    dispatcher.connect('index', '/', index_controller.index)
+    # dispatcher.connect('index', '/', index_controller.index)
 
     # Environment routes
-    dispatcher.connect('environments-all', '/api/environments/all', environment_controller.all)
-    dispatcher.connect('environments-all-names', '/api/environments/all/names', environment_controller.all_names)
+    api.add_resource(EnvironmentsAPI, '/api/environments')
+    api.add_resource(EnvironmentNamesAPI, '/api/environments/names')
 
     # Exception route
-    dispatcher.connect('exception', '/exception', exception_controller.handle_exception)
+    # dispatcher.connect('exception', '/exception', exception_controller.handle_exception)
 
     # Requirement routes
-    dispatcher.connect('requirements-all', '/api/requirements/all', requirement_controller.all)
-    dispatcher.connect('requirements-filtered', '/api/requirements/filter/{filter}', requirement_controller.get_filtered_requirements)
-    dispatcher.connect('requirement-by-id', '/api/requirements/id/{id}', requirement_controller.get_requirement_by_id)
-    dispatcher.connect('requirement-update', '/api/requirements/update', requirement_controller.update_requirement)
+    # dispatcher.connect('requirements-all', '/api/requirements/all', requirement_controller.all)
+    # dispatcher.connect('requirements-filtered', '/api/requirements/filter/{filter}', requirement_controller.get_filtered_requirements)
+    # dispatcher.connect('requirement-by-id', '/api/requirements/id/{id}', requirement_controller.get_requirement_by_id)
+    # dispatcher.connect('requirement-update', '/api/requirements/update', requirement_controller.update_requirement)
 
     # User routes
-    dispatcher.connect('config', '/user/config', user_controller.set_db)
+    # dispatcher.connect('config', '/user/config', user_controller.set_db)
 
     # For development
     #b.staticDir = '/home/student/Documents/CAIRIS-web/cairis/cairis/public'
 
-    conf = {
-        '/': {
-            'tools.sessions.on': True,
-            'tools.sessions.storage_type': 'ram',
-            'tools.CORS.on': True,
-            'tools.response_headers.on': True,
-            'tools.response_headers.headers': [('Content-Type', 'text/html'),
-                                               ('Cache-Control', 'no-cache, no-store, must-revalidate'),
-                                               ('Pragma', 'no-cache'),
-                                               ('Expires', 0)],
-            'tools.staticdir.root': b.staticDir,
-            'request.dispatch': dispatcher
-        },
-        '/bootstrap': {
-            'tools.staticdir.on': True,
-            'tools.staticdir.dir': 'bootstrap'
-        },
-        '/build': {
-            'tools.staticdir.on': True,
-            'tools.staticdir.dir': 'build'
-        },
-        '/dist': {
-            'tools.staticdir.on': True,
-            'tools.staticdir.dir': 'dist'
-        },
-        '/plugins': {
-            'tools.staticdir.on': True,
-            'tools.staticdir.dir': 'plugins'
-        },
-    }
+    # set the secret key.  keep this really secret:
+    app.secret_key = os.urandom(24)
 
-    cherrypy.config.update({
-        'server.socket_port': b.webPort,
-        'server.socket_host': '0.0.0.0',
-    })
-    cherrypy.tree.mount(None, "/", config=conf)
-    cherrypy.quickstart(None, config=conf)
+    app.run(debug=True)

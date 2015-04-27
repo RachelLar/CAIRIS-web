@@ -1,10 +1,14 @@
+from flask.ext.restful import abort
 from ARM import DatabaseProxyException
 from Borg import Borg
-from CairisHTTPError import CairisHTTPError
 from MySQLDatabaseProxy import MySQLDatabaseProxy
 
 __author__ = 'Robin Quetin'
 
+
+def check_required_keys(json_dict, required):
+    if not all(reqKey in json_dict for reqKey in required):
+        abort(405, 'Some required parameters are missing.')
 
 def validate_proxy(session, id, conf=None):
     if session is not None:
@@ -27,13 +31,13 @@ def validate_proxy(session, id, conf=None):
         db_proxy = b.get_dbproxy(id)
 
         if db_proxy is None:
-            CairisHTTPError(msg='The method is not callable without setting up a database connection.')
+            abort(message='The method is not callable without setting up a database connection.')
         elif isinstance(db_proxy, MySQLDatabaseProxy):
             return db_proxy
         else:
-            CairisHTTPError(msg='The database connection was not properly set up. Please try to reset the connection.')
+            abort(400, message='The database connection was not properly set up. Please try to reset the connection.')
     else:
-        CairisHTTPError(msg='The method is not callable without setting up a database connection.')
+        abort(400, message='The method is not callable without setting up a database connection.')
 
 def validate_fonts(session, id):
     if session is not None:
@@ -52,10 +56,10 @@ def validate_fonts(session, id):
         apFontName = settings.get('apFontSize', None)
 
         if fontName is None or fontSize is None or apFontName is None:
-            CairisHTTPError(msg='The method is not callable without setting up the project settings.')
+            abort(400, message='The method is not callable without setting up the project settings.')
         elif isinstance(fontName, str) and isinstance(fontSize, str) and isinstance(apFontName, str):
             return fontName, fontSize, apFontName
         else:
-            CairisHTTPError(msg='The database connection was not properly set up. Please try to reset the connection.')
+            abort(400, message='The database connection was not properly set up. Please try to reset the connection.')
     else:
-        CairisHTTPError(msg='The method is not callable without setting up the project settings.')
+        abort(400, message='The method is not callable without setting up the project settings.')

@@ -4,7 +4,7 @@ from json import dumps, loads
 from Borg import Borg
 from Requirement import Requirement
 
-__author__ = 'TChosenOne'
+__author__ = 'Robin Quetin'
 
 def json_serialize(obj, pretty_printing=False, session_id=None):
     if session_id is not None:
