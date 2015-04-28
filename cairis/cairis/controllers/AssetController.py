@@ -87,6 +87,6 @@ class AssetModelAPI(Resource):
         dot_code = associations.graph()
 
         resp = make_response(model_generator.generate(dot_code), 200)
-        resp.headers['Content-type'] = 'text/plain'
+        resp.headers['Content-type'] = request.headers.get('Accept', 'image/svg+xml')
 
         return resp
