@@ -15,11 +15,8 @@
 #  KIND, either express or implied.  See the License for the
 #  specific language governing permissions and limitations
 #  under the License.
-import logging
 import sys
-
-from IRISDaemon import IRISDaemon
-import WebInitializer
+import IRISDaemon
 
 if __name__ == '__main__':
   options = {
@@ -32,5 +29,4 @@ if __name__ == '__main__':
       if arg == '-d':
         options['loggingLevel'] = 'debug'
 
-  IRISDaemon(options)
-  WebInitializer.start()
+  IRISDaemon.start(options)
