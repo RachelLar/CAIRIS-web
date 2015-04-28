@@ -4,6 +4,7 @@ from flask import Flask
 from flask.ext.cors import CORS
 from flask.ext.restful import Api
 from flask.ext.restful_swagger import swagger
+from Borg import Borg
 
 from controllers.AssetController import AssetsAPI, AssetModelAPI
 from controllers.CImportController import CImportAPI
@@ -15,6 +16,7 @@ __author__ = 'Robin Quetin'
 ''' This module uses CherryPy (tested using 3.6.0) & Routes (tested using 1.13) '''
 
 def start():
+    b = Borg()
     app = Flask(__name__)
     api = swagger.docs(Api(app), apiVersion='0.1', description='CAIRIS API', api_spec_url='/api/cairis')
     cors = CORS(app)
@@ -50,9 +52,9 @@ def start():
     # dispatcher.connect('config', '/user/config', user_controller.set_db)
 
     # For development
-    #b.staticDir = '/home/student/Documents/CAIRIS-web/cairis/cairis/public'
+    #b.staticDir = '/home/student/Documents/CAIRIS-web/cairis/cairis/static'
 
     # set the secret key.  keep this really secret:
     app.secret_key = os.urandom(24)
 
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=b.webPort)
