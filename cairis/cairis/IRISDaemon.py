@@ -1,78 +1,58 @@
-import logging
 import os
-
+from flask import Flask, session
+from flask.ext.cors import CORS
+from flask.ext.restful import Api
+from flask.ext.restful_swagger import swagger
 from Borg import Borg
-import BorgFactory
-
+from controllers.AssetController import AssetsAPI, AssetModelAPI
+from controllers.CImportController import CImportAPI
+from controllers.DimensionController import DimensionsAPI, DimensionNamesAPI
+from controllers.EnvironmentController import EnvironmentsAPI, EnvironmentNamesAPI
 
 __author__ = 'Robin Quetin'
+''' This module uses CherryPy (tested using 3.6.0) & Routes (tested using 1.13) '''
 
 
-class IRISDaemon:
-    def __init__(self, settings):
-        logging.basicConfig(level=logging.INFO)
-        self.logger = logging.getLogger('IRISDaemon')
-        self.logger.info('Starting CAIRIS as web daemon')
+def start():
+    b = Borg()
+    app = Flask(__name__)
+    api = swagger.docs(Api(app), apiVersion='0.1', description='CAIRIS API', api_spec_url='/api/cairis')
+    cors = CORS(app)
 
-        if settings.has_key('configFile'):
-            self.loadSettingsFromFile(settings['configFile'])
-        else:
-            self.loadSettingsFromFile()
-        if settings.has_key('staticDir'):
-            self.setStaticDir(settings['staticDir'])
-        if settings.has_key('port'):
-            self.setPort(int(settings['port']))
-        if settings.has_key('loggingLevel'):
-            self.setLoglevel(settings['loggingLevel'])
+    # Asset routes
+    api.add_resource(AssetsAPI, '/api/assets/all/names')
+    api.add_resource(AssetModelAPI, '/api/assets/view')
 
-        self.logParams()
+    # CImport
+    api.add_resource(CImportAPI, '/api/cimport')
 
-    def loadSettingsFromFile(self, config_file=''):
-        self.logger.info('Loading settings from file...')
-        BorgFactory.dInitialise(config_file)
+    # DimensionController
+    api.add_resource(DimensionsAPI, '/api/dimensions/table/<table>')
+    api.add_resource(DimensionNamesAPI, '/api/dimensions/table/<table>/environment/<environment>')
 
-    def setLoglevel(self, log_level):
-        b = Borg()
-        self.logger.info('Applying log level...')
+    # Index route
+    # dispatcher.connect('index', '/', index_controller.index)
 
-        log_level = log_level.lower()
-        if log_level == 'verbose':
-            realLevel = logging.INFO
-        elif log_level == 'debug':
-            realLevel = logging.DEBUG
-        else:
-            realLevel = logging.WARNING
+    # Environment routes
+    api.add_resource(EnvironmentsAPI, '/api/environments')
+    api.add_resource(EnvironmentNamesAPI, '/api/environments/names')
 
-        b.logLevel = realLevel
+    # Exception route
+    # dispatcher.connect('exception', '/exception', exception_controller.handle_exception)
 
-    def setPort(self, port):
-        self.logger.info('Applying web port...')
-        b = Borg()
-        if port == 0:
-            if not hasattr(b, 'webPort'):
-                b.webPort = 7071
-        else:
-            b.webPort = port
+    # Requirement routes
+    # dispatcher.connect('requirements-all', '/api/requirements/all', requirement_controller.all)
+    # dispatcher.connect('requirements-filtered', '/api/requirements/filter/{filter}', requirement_controller.get_filtered_requirements)
+    # dispatcher.connect('requirement-by-id', '/api/requirements/id/{id}', requirement_controller.get_requirement_by_id)
+    # dispatcher.connect('requirement-update', '/api/requirements/update', requirement_controller.update_requirement)
 
-    def logParams(self):
-        b = Borg()
-        self.logger.info('Config: %s/cairis.cnf', b.configDir)
-        if b.logLevel == logging.INFO:
-            self.logger.info('Log level: INFO')
-        elif b.logLevel == logging.DEBUG:
-            self.logger.info('Log level: DEBUG')
-        elif b.logLevel == logging.WARNING:
-            self.logger.info('Log level: WARNING')
+    # User routes
+    # dispatcher.connect('config', '/user/config', user_controller.set_db)
 
-        self.logger.info('Port: %d', b.webPort)
+    # For development
+    #b.staticDir = '/home/student/Documents/CAIRIS-web/cairis/cairis/static'
 
-    def setStaticDir(self, static_dir):
-        self.logger.info('Applying web port...')
-        b = Borg()
-        try:
-            os.listdir(static_dir)
-        except EnvironmentError as ex:
-            self.logger.warning('The directory for static web content is not readable: %s' % ex.strerror)
-            self.logger.warning('Static content may not be available')
+    # set the secret key.  keep this really secret:
+    app.secret_key = os.urandom(24)
 
-        b.staticDir = os.path.abspath(static_dir)
+    app.run(debug=True, host='0.0.0.0', port=b.webPort)
