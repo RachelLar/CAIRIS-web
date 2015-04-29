@@ -5,7 +5,7 @@
     <title>Configuration | CAIRIS</title>
     <meta content='width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no' name='viewport'>
     <!-- Bootstrap 3.3.2 -->
-    <link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet" type="text/css"/>
+    <link href="/static/bootstrap/css/bootstrap.min.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div class="col-md-4 col-md-offset-3">
@@ -58,6 +58,6 @@
         </form>
     </div>
 </div>
-<script src="/plugins/jQuery/jQuery-2.1.3.min.js"></script>
+<script src="/static//plugins/jQuery/jQuery-2.1.3.min.js"></script>
 </body>
 </html>

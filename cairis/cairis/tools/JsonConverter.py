@@ -1,3 +1,4 @@
+from flask import session
 from jsonpickle import encode as serialize
 from jsonpickle import decode as deserialize
 from json import dumps, loads
@@ -7,10 +8,13 @@ from Requirement import Requirement
 __author__ = 'Robin Quetin'
 
 def json_serialize(obj, pretty_printing=False, session_id=None):
-    if session_id is not None:
-        b = Borg()
-        s = b.get_settings(session_id)
-        pretty_printing = s['jsonPrettyPrint']
+    b = Borg()
+    if session_id is None:
+        session_id = session.get('session_id', None)
+
+    s = b.get_settings(session_id)
+    if s is not None:
+        pretty_printing = s.get('jsonPrettyPrint', False)
 
     if pretty_printing:
         return dumps(loads(serialize(obj)), indent=4)

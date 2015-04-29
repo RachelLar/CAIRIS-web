@@ -1,64 +1,67 @@
-import cherrypy
-
-from Borg import Borg
+from flask.ext.restful_swagger import swagger
 from CairisHTTPError import CairisHTTPError
+from Borg import Borg
+from flask import request, make_response, session
+from flask.ext.restful import Resource
+from tools.ModelDefinitions import UserConfigModel
 from tools.SessionValidator import validate_proxy
-from tools.JsonConverter import json_serialize
-from tools.JsonConverter import json_deserialize
-
 
 __author__ = 'Robin Quetin'
 
 
-class UserController(object):
-    def set_db(self, conf=None, host=None, port=None, user=None, passwd=None, db=None, jsonPrettyPrint=False):
-        if cherrypy.request.method == 'POST':
-            if conf is not None:
-                dbconf = json_deserialize(conf)
-                msg = self.set_dbproxy(dbconf)
-                code = 200
-                status = 'OK'
-                return json_serialize({'message': msg, 'code': code, 'status': status}, jsonPrettyPrint)
-            elif host is not None and port is not None and user is not None and passwd is not None and db is not None:
-                conf = {
-                    'host': host,
-                    'port': int(port),
-                    'user': user,
-                    'passwd': passwd,
-                    'db': db,
-                    'jsonPrettyPrint': jsonPrettyPrint
-                }
+def set_dbproxy(conf):
+    b = Borg()
+    db_proxy = validate_proxy(None, -1, conf)
+    pSettings = db_proxy.getProjectSettings()
 
-                s = self.set_dbproxy(conf)
-                cherrypy.response.headers['Content-Type'] = 'text/plain'
+    id = b.init_settings()
+    session['session_id'] = id
+    b.settings[id]['dbProxy'] = db_proxy
+    b.settings[id]['dbUser'] = conf['user']
+    b.settings[id]['dbPasswd'] = conf['passwd']
+    b.settings[id]['dbHost'] = conf['host']
+    b.settings[id]['dbPort'] = conf['port']
+    b.settings[id]['dbName'] = conf['db']
+    b.settings[id]['fontSize'] = pSettings['Font Size']
+    b.settings[id]['apFontSize'] = pSettings['AP Font Size']
+    b.settings[id]['fontName'] = pSettings['Font Name']
+    b.settings[id]['jsonPrettyPrint'] = conf.get('jsonPrettyPrint', False)
 
-                debug = ''
-                '''debug += '{0}\nSession vars:\n{1}\nQuery string:\n'.format(
-                    'Configuration successfully updated',
-                    json_serialize(s, session_id=s['session_id']))'''
-                return debug+'session_id={0}'.format(s['session_id'])
-            else:
-                CairisHTTPError(msg='One or more settings are missing')
-        elif cherrypy.request.method == 'GET':
-            b = Borg()
-            return b.template_generator.serve_result('user_config', action_url=cherrypy.request.path_info)
+    return b.settings[id]
 
-    def set_dbproxy(self, conf):
-        b = Borg()
-        db_proxy = validate_proxy(None, -1, conf)
-        pSettings = db_proxy.getProjectSettings()
+class UserConfigAPI(Resource):
+    @swagger.operation(
+        notes='Sets up the user session',
+        nickname='user-config-post',
+        parameters=[
+            {
+                'name': 'body',
+                "description": "The configuration settings for the user's session",
+                "required": True,
+                "allowMultiple": False,
+                'type': UserConfigModel.__name__,
+                'paramType': 'body'
+            }
+        ],
+        responseMessages=[
+            {
+                'code': 400,
+                'message': 'The provided file is not a valid XML file'
+            },
+            {
+                'code': 405,
+                'message': '''Some parameters are missing.'''
+            }
+        ]
+    )
+    def post(self):
+        try:
+            dict_form = request.get_json()
+            s = set_dbproxy(dict_form)
 
-        id = b.init_settings()
-        cherrypy.session['session_id'] = id
-        b.settings[id]['dbProxy'] = db_proxy
-        b.settings[id]['dbUser'] = conf['user']
-        b.settings[id]['dbPasswd'] = conf['passwd']
-        b.settings[id]['dbHost'] = conf['host']
-        b.settings[id]['dbPort'] = conf['port']
-        b.settings[id]['dbName'] = conf['db']
-        b.settings[id]['fontSize'] = pSettings['Font Size']
-        b.settings[id]['apFontSize'] = pSettings['AP Font Size']
-        b.settings[id]['fontName'] = pSettings['Font Name']
-        b.settings[id]['jsonPrettyPrint'] = conf['jsonPrettyPrint']
+            resp = make_response('session_id={0}'.format(s['session_id']), 200)
+            resp.headers['Content-type'] = 'text/plain'
+            return resp
 
-        return b.settings[id]
+        except KeyError:
+            return CairisHTTPError(405, message='One or more settings are missing')

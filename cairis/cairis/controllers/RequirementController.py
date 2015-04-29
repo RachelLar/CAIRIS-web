@@ -1,5 +1,5 @@
-from flask import session, request, make_response
-from flask.ext.restful import Resource
+from flask import session, request, make_response, Blueprint
+from flask.ext.restful import Resource, Api
 from flask.ext.restful_swagger import swagger
 from Requirement import Requirement
 from tools.ModelDefinitions import RequirementModel
@@ -14,7 +14,7 @@ class RequirementsAPI(Resource):
     @swagger.operation(
         notes='Get all requirements',
         nickname='requirements-get',
-        responseClass=Requirement.__name__,
+        responseClass=RequirementModel.__name__,
         responseContainer='List',
         parameters=[
             {
@@ -56,22 +56,13 @@ class RequirementsAPI(Resource):
         resp.headers['Content-type'] = 'application/json'
         return resp
 
-class FilteredRequirementsAPI(Resource):
+class RequirementsByAssetAPI(Resource):
     @swagger.operation(
-        notes='Get the filtered requirements',
-        nickname='requirements-filtered-get',
-        responseClass=Requirement.__name__,
+        notes='Get the requirements associated with an asset',
+        nickname='requirements-by-asset-get',
+        responseClass=RequirementModel.__name__,
         responseContainer='List',
         parameters=[
-            {
-                "name": "is_asset",
-                "description": "Defines if the filter is an asset filter",
-                "required": False,
-                "default": 1,
-                "allowMultiple": False,
-                "dataType": int.__name__,
-                "paramType": "query"
-            },
             {
                 "name": "ordered",
                 "description": "Defines if the list has to be order",
@@ -97,16 +88,61 @@ class FilteredRequirementsAPI(Resource):
             }
         ]
     )
-    def get(self, filter):
+    def get(self, name):
         session_id = request.args.get('session_id', None)
-        is_asset = request.args.get('is_asset', 1)
         ordered = request.args.get('ordered', 1)
         db_proxy = validate_proxy(session, session_id)
 
         if ordered == 1:
-            reqs = db_proxy.getOrderedRequirements(filter, is_asset==1)
+            reqs = db_proxy.getOrderedRequirements(name, 1)
         else:
-            reqs = db_proxy.getRequirements(filter, is_asset)
+            reqs = db_proxy.getRequirements(name, 1)
+
+        resp = make_response(json_serialize(reqs, session_id=session_id), 200)
+        resp.headers['Content-type'] = 'application/json'
+        return resp
+
+class RequirementsByEnvironmentAPI(Resource):
+    @swagger.operation(
+        notes='Get the requirements associated with an environment',
+        nickname='requirements-by-environment-get',
+        responseClass=RequirementModel.__name__,
+        responseContainer='List',
+        parameters=[
+            {
+                "name": "ordered",
+                "description": "Defines if the list has to be order",
+                "default": 1,
+                "required": False,
+                "allowMultiple": False,
+                "dataType": int.__name__,
+                "paramType": "query"
+            },
+            {
+                "name": "session_id",
+                "description": "The ID of the user's session",
+                "required": False,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "paramType": "query"
+            }
+        ],
+        responseMessages=[
+            {
+                "code": 400,
+                "message": "The database connection was not properly set up"
+            }
+        ]
+    )
+    def get(self, name):
+        session_id = request.args.get('session_id', None)
+        ordered = request.args.get('ordered', 1)
+        db_proxy = validate_proxy(session, session_id)
+
+        if ordered == 1:
+            reqs = db_proxy.getOrderedRequirements(name, 0)
+        else:
+            reqs = db_proxy.getRequirements(name, 0)
 
         resp = make_response(json_serialize(reqs, session_id=session_id), 200)
         resp.headers['Content-type'] = 'application/json'

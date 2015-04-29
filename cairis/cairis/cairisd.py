@@ -17,6 +17,7 @@
 #  under the License.
 import sys
 import IRISDaemon
+import WebConfig
 
 if __name__ == '__main__':
   options = {
@@ -29,4 +30,5 @@ if __name__ == '__main__':
       if arg == '-d':
         options['loggingLevel'] = 'debug'
 
-  IRISDaemon.start(options)
+  WebConfig.config(options)
+  IRISDaemon.start()

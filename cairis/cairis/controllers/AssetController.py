@@ -1,7 +1,8 @@
 from flask import request, session, make_response
-from flask.ext.restful import Resource, abort
+from flask.ext.restful import Resource
 from AssetModel import AssetModel
 from Borg import Borg
+from CairisHTTPError import CairisHTTPError
 from tools.JsonConverter import json_serialize
 from tools.SessionValidator import validate_proxy, validate_fonts
 from flask_restful_swagger import swagger
@@ -78,7 +79,7 @@ class AssetModelAPI(Resource):
         environment = request.args.get('environment', None)
 
         if environment is None:
-            abort(405, message='Environment not defined')
+            raise CairisHTTPError(405, message='Environment not defined')
 
         db_proxy = validate_proxy(session, session_id)
         fontName, fontSize, apFontName = validate_fonts(session, session_id)

@@ -11,7 +11,8 @@ class CImportParams(object):
         'type': fields.String,
         'overwrite': fields.Integer
     }
-    required=['file_contents', 'type']
+    required = ['file_contents', 'type']
+
 
 @swagger.model
 class RequirementAttributesModel(object):
@@ -23,6 +24,7 @@ class RequirementAttributesModel(object):
         "rationale": fields.String,
         "type": fields.String
     }
+
 
 @swagger.model
 @swagger.nested(
@@ -41,3 +43,22 @@ class RequirementModel(object):
         "theVersion": fields.Integer
     }
     required = ["theId", "dirtyAttrs", "attrs", "theName", "theLabel", "theDescription", "thePriority", "theVersion"]
+
+@swagger.model
+class UserConfigModel(object):
+    resource_fields = {
+        "user": fields.String,
+        "passwd": fields.String,
+        "db": fields.String,
+        "host": fields.String,
+        "port": fields.Integer,
+        "jsonPrettyPrint": fields.String
+    }
+
+    required = ["user", "passwd", "db", "host", "port"]
+    swagger_metadata = {
+        'jsonPrettyPrint':
+            {
+                'enum': ['on', 'off']
+            }
+    }

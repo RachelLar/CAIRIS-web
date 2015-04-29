@@ -4,6 +4,7 @@ from os import remove as remove_file
 from flask import make_response, request, session
 from flask.ext.restful import abort, Resource
 from flask_restful_swagger import swagger
+from CairisHTTPError import CairisHTTPError
 from tools.ModelDefinitions import CImportParams
 from tools.SessionValidator import validate_proxy
 import cimport
@@ -50,7 +51,7 @@ class CImportAPI(Resource):
         json_dict = request.get_json()
 
         if not all(reqKey in json_dict for reqKey in ('file_contents','type')):
-            abort(405, '''Some parameters are missing. Be sure 'file_contents' and 'type' are defined.''')
+            return CairisHTTPError(405, '''Some parameters are missing. Be sure 'file_contents' and 'type' are defined.''')
 
         validate_proxy(session, session_id)
         file_contents = json_dict['file_contents']
@@ -70,4 +71,4 @@ class CImportAPI(Resource):
             resp.headers['Content-Type'] = 'text/plain'
             return resp
         else:
-            abort(400, message='The provided file is not a valid XML file')
+            raise CairisHTTPError(400, 'The provided file is not a valid XML file')
