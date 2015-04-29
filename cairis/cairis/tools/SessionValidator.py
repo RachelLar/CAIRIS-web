@@ -34,7 +34,7 @@ def validate_proxy(session, id, conf=None):
                 if db_proxy is not None:
                     return db_proxy
                 else:
-                    raise CairisHTTPError(400, message='The method is not callable without setting up a database connection.')
+                    raise CairisHTTPError(400, message='The database connection could not be created.')
             except DatabaseProxyException:
                 raise CairisHTTPError(405, message='The provided settings are invalid and cannot be used to create a database connection')
 
@@ -45,13 +45,13 @@ def validate_proxy(session, id, conf=None):
         db_proxy = b.get_dbproxy(id)
 
         if db_proxy is None:
-            raise CairisHTTPError(400, message='The method is not callable without setting up a database connection.')
+            raise CairisHTTPError(400, message='The database connection could not be created.')
         elif isinstance(db_proxy, MySQLDatabaseProxy):
             return db_proxy
         else:
             raise CairisHTTPError(400, message='The database connection was not properly set up. Please try to reset the connection.')
     else:
-        raise CairisHTTPError(400, message='The method is not callable without setting up a database connection.')
+        raise CairisHTTPError(405, message='The session is neither started or no session ID is provided with the request.')
 
 def validate_fonts(session, id):
     """
