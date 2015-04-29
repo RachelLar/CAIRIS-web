@@ -46,11 +46,11 @@ class UserConfigAPI(Resource):
         responseMessages=[
             {
                 'code': 400,
-                'message': 'The provided file is not a valid XML file'
+                'message': 'The method is not callable without setting up a database connection'
             },
             {
                 'code': 405,
-                'message': '''Some parameters are missing.'''
+                'message': 'The provided parameters are invalid'
             }
         ]
     )
