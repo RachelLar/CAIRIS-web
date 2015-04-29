@@ -85,7 +85,9 @@ class UserConfigAPI(Resource):
     )
     def post(self):
         try:
+            b = Borg()
             dict_form = request.get_json()
+            b.logger.info(dict_form)
             s = set_dbproxy(dict_form)
 
             resp = make_response('session_id={0}'.format(s['session_id']), 200)
