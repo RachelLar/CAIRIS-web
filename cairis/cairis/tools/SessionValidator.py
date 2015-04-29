@@ -36,7 +36,7 @@ def validate_proxy(session, id, conf=None):
                 else:
                     raise CairisHTTPError(400, message='The method is not callable without setting up a database connection.')
             except DatabaseProxyException:
-                raise CairisHTTPError(400, message='The provided settings are invalid and cannot be used to create a database connection')
+                raise CairisHTTPError(405, message='The provided settings are invalid and cannot be used to create a database connection')
 
     if not (session_id == -1 and id is None):
         if id is None:

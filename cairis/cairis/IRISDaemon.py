@@ -99,7 +99,7 @@ def start():
     api.add_resource(RequirementController.RequirementUpdateAPI, '/api/requirements/update')
 
     # User routes
-    api.add_resource(UserController.UserConfigAPI, '/user/config')
+    api.add_resource(UserController.UserConfigAPI, '/api/user/config')
 
     # For development
     #b.staticDir = '/home/student/Documents/CAIRIS-web/cairis/cairis/static'
