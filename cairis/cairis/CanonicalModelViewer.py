@@ -157,8 +157,13 @@ class CanonicalModelViewer(kaosxdot.KaosDotWindow):
         self.environmentCombo.set_active(environmentNames.index(self.environment.name()))
       self.unblockHandlers()
       self.widget.zoom_to_fit()
+    except DatabaseProxyException, ex:
+      print(ex.value)
     except ARMException,errorText:
-      print str(errorText)
+      if isinstance(errorText.value, DatabaseProxyException):
+          print(errorText.value.value)
+      else:
+          print str(errorText)
 #      dlg = wx.MessageDialog(self,str(errorText),'IRIS',wx.OK | wx.ICON_ERROR)
 #      dlg.ShowModal()
 #      dlg.Destroy()

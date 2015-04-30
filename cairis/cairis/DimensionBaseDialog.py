@@ -151,7 +151,7 @@ class DimensionBaseDialog(BaseDialog):
         self.addObjectToDialog(objtId,self.listId,dialogOutParameters)
       dialog.Destroy()
     except ARM.ARMException,errorText:
-      dlg = wx.MessageDialog(self,str(errorText),'Add ' + dimName,wx.OK | wx.ICON_ERROR)
+      dlg = wx.MessageDialog(self,errorText.value,'Add ' + dimName,wx.OK | wx.ICON_ERROR)
       dlg.ShowModal()
       dlg.Destroy()
       return

@@ -1,14 +1,16 @@
 from Borg import Borg
 from tools.JsonConverter import json_serialize
+from werkzeug.exceptions import HTTPException
 
 __author__ = 'Robin Quetin'
 
-class CairisHTTPError(Exception):
+class CairisHTTPError(HTTPException):
     def __init__(self, status_code, message, status='Invalid input'):
         Exception.__init__(self)
         self.message = message
         self.status_code = status_code
         self.status = status
+        self.valid_methods = ['GET', 'POST', 'PUT', 'DELETE']
         self.__setattr__('code', status_code)
         self.__setattr__('data', {'status': status_code, 'message': message})
 

@@ -54,6 +54,7 @@ class RequirementsAPI(Resource):
 
         resp = make_response(json_serialize(reqs, session_id=session_id), 200)
         resp.headers['Content-type'] = 'application/json'
+        resp.headers['Access-Control-Allow-Origin'] = "*"
         return resp
 
 class RequirementsByAssetAPI(Resource):
@@ -100,6 +101,7 @@ class RequirementsByAssetAPI(Resource):
 
         resp = make_response(json_serialize(reqs, session_id=session_id), 200)
         resp.headers['Content-type'] = 'application/json'
+        resp.headers['Access-Control-Allow-Origin'] = "*"
         return resp
 
 class RequirementsByEnvironmentAPI(Resource):
@@ -146,6 +148,7 @@ class RequirementsByEnvironmentAPI(Resource):
 
         resp = make_response(json_serialize(reqs, session_id=session_id), 200)
         resp.headers['Content-type'] = 'application/json'
+        resp.headers['Access-Control-Allow-Origin'] = "*"
         return resp
 
 class RequirementByIdAPI(Resource):
@@ -178,6 +181,7 @@ class RequirementByIdAPI(Resource):
 
         resp = make_response(json_serialize(req, session_id=session_id), 200)
         resp.headers['Content-type'] = 'application/json'
+        resp.headers['Access-Control-Allow-Origin'] = "*"
         return resp
 
 class RequirementUpdateAPI(Resource):
@@ -223,4 +227,5 @@ class RequirementUpdateAPI(Resource):
 
         resp = make_response('Requirement successfully updated', 200)
         resp.headers['Content-type'] = 'text/plain'
+        resp.headers['Access-Control-Allow-Origin'] = "*"
         return resp

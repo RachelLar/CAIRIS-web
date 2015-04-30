@@ -6,6 +6,7 @@ from flask import Flask, session, make_response, request
 from flask.ext.cors import CORS
 from flask.ext.restful import Api
 from flask.ext.restful_swagger import swagger
+import httplib
 
 __author__ = 'Robin Quetin'
 ''' This module uses CherryPy (tested using 3.6.0) & Routes (tested using 1.13) '''
@@ -46,9 +47,19 @@ def handle_error(error):
         resp.headers['Content-type'] = 'application/json'
         return resp
 
+@app.errorhandler(KeyError)
+def handle_keyerror(error):
+    raise CairisHTTPError(httplib.BAD_REQUEST, str(error.message), 'Missing attribute')
+
+@app.errorhandler(httplib.INTERNAL_SERVER_ERROR)
+def handle_error(error):
+    raise CairisHTTPError(httplib.BAD_REQUEST, error.message, status='Unknown error')
+
 def start():
     # Asset routes
-    api.add_resource(AssetController.AssetsAPI, '/api/assets/all/names')
+    api.add_resource(AssetController.AssetsAPI, '/api/assets')
+    api.add_resource(AssetController.AssetByIdAPI, '/api/assets/name/<string:name>')
+    api.add_resource(AssetController.AssetNamesAPI, '/api/assets/all/names')
     api.add_resource(AssetController.AssetModelAPI, '/api/assets/view')
 
     # CImport
@@ -63,13 +74,13 @@ def start():
 
     # Environment routes
     api.add_resource(EnvironmentController.EnvironmentsAPI, '/api/environments')
-    api.add_resource(EnvironmentController.EnvironmentNamesAPI, '/api/environments/names')
+    api.add_resource(EnvironmentController.EnvironmentNamesAPI, '/api/environments/all/names')
 
     # Exception route
     # dispatcher.connect('exception', '/exception', exception_controller.handle_exception)
 
     # Requirement routes
-    api.add_resource(RequirementController.RequirementsAPI, '/api/requirements/all')
+    api.add_resource(RequirementController.RequirementsAPI, '/api/requirements')
     api.add_resource(RequirementController.RequirementsByAssetAPI, '/api/requirements/asset/<string:name>')
     api.add_resource(RequirementController.RequirementsByEnvironmentAPI, '/api/requirements/environment/<string:name>')
     api.add_resource(RequirementController.RequirementByIdAPI, '/api/requirements/id/{id}')

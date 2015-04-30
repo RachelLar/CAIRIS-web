@@ -1,8 +1,41 @@
 from flask.ext.restful import fields
 from flask.ext.restful_swagger import swagger
+from PropertyHolder import PropertyHolder
 
 __author__ = 'Robin Quetin'
 
+
+@swagger.model
+class AssetEnvironmentPropertiesModel(object):
+    resource_fields = {
+        "theAssociations": fields.List,
+        "theProperties": fields.Integer,
+        "theRationale": fields.List(fields.String),
+        "theEnvironmentName": fields.String
+    }
+
+@swagger.model
+@swagger.nested(
+    envProps=AssetEnvironmentPropertiesModel.__name__
+)
+class AssetModel(object):
+    resource_fields = {
+        "description": fields.String,
+        "significance": fields.String,
+        "id": fields.Integer,
+        "tags": fields.List(fields.String),
+        "cRationale": fields.String,
+        "interfaces": fields.List(fields.String),
+        "type": fields.String,
+        "name": fields.String,
+        "isCritical": fields.Integer,
+        "shortcode": fields.String,
+        "envProps": fields.List(fields.Nested(AssetEnvironmentPropertiesModel.resource_fields))
+    }
+    required = [
+        "description", "significance", "id", "tags", "cRationale",
+        "interfaces", "type", "name", "isCritical", "shortcode", "envProps"
+    ]
 
 @swagger.model
 class CImportParams(object):

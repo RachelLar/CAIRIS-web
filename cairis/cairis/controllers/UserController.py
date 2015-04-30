@@ -33,6 +33,7 @@ def serve_user_config_form():
     b = Borg()
     resp = make_response(b.template_generator.serve_result('user_config', action_url=request.full_path), 200)
     resp.headers['Content-type'] = 'text/html'
+    resp.headers['Access-Control-Allow-Origin'] = "*"
     return resp
 
 def handle_user_config_form():
@@ -54,6 +55,7 @@ def handle_user_config_form():
 
         resp = make_response(debug + 'session_id={0}'.format(s['session_id']), 200)
         resp.headers['Content-type'] = 'text/plain'
+        resp.headers['Access-Control-Allow-Origin'] = "*"
         return resp
     except KeyError:
         return CairisHTTPError(405, message='One or more settings are missing')
@@ -92,6 +94,7 @@ class UserConfigAPI(Resource):
 
             resp = make_response('session_id={0}'.format(s['session_id']), 200)
             resp.headers['Content-type'] = 'text/plain'
+            resp.headers['Access-Control-Allow-Origin'] = "*"
             return resp
 
         except KeyError:
