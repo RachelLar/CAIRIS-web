@@ -160,7 +160,8 @@ class CanonicalModelViewer(kaosxdot.KaosDotWindow):
     except DatabaseProxyException, ex:
       print(ex.value)
     except ARMException,errorText:
-      if isinstance(errorText.value, DatabaseProxyException):
+      if hasattr(errorText, 'value'):
+        if isinstance(errorText.value, DatabaseProxyException):
           print(errorText.value.value)
       else:
           print str(errorText)
