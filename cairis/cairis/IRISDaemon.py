@@ -1,7 +1,7 @@
 import os
 from Borg import Borg
 from CairisHTTPError import CairisHTTPError
-from controllers import AssetController, CImportController, DimensionController, EnvironmentController, RequirementController, UserController
+from controllers import AssetController, CImportController, DimensionController, EnvironmentController, GoalController, RequirementController, UserController
 from flask import Flask, session, make_response, request
 from flask.ext.cors import CORS
 from flask.ext.restful import Api
@@ -69,15 +69,12 @@ def start():
     api.add_resource(DimensionController.DimensionsAPI, '/api/dimensions/table/<table>')
     api.add_resource(DimensionController.DimensionNamesAPI, '/api/dimensions/table/<table>/environment/<environment>')
 
-    # Index route
-    # dispatcher.connect('index', '/', index_controller.index)
-
     # Environment routes
     api.add_resource(EnvironmentController.EnvironmentsAPI, '/api/environments')
     api.add_resource(EnvironmentController.EnvironmentNamesAPI, '/api/environments/all/names')
 
-    # Exception route
-    # dispatcher.connect('exception', '/exception', exception_controller.handle_exception)
+    # Goal routes
+    api.add_resource(GoalController.GoalsAPI, '/api/goals')
 
     # Requirement routes
     api.add_resource(RequirementController.RequirementsAPI, '/api/requirements')
@@ -88,9 +85,6 @@ def start():
 
     # User routes
     api.add_resource(UserController.UserConfigAPI, '/api/user/config')
-
-    # For development
-    #b.staticDir = '/home/student/Documents/CAIRIS-web/cairis/cairis/static'
 
     # set the secret key.  keep this really secret:
     b.logger.debug('Error handlers: {0}'.format(app.error_handler_spec))

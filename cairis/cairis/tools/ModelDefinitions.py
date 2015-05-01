@@ -46,6 +46,38 @@ class CImportParams(object):
     }
     required = ['file_contents', 'type']
 
+@swagger.model
+class GoalEnvironmentProperties(object):
+    resource_fields = {
+        "theCategory": fields.String,
+        "theConcernAssociations": fields.List(fields.String),
+        "theConcerns": fields.List(fields.String),
+        "theDefinition": fields.String,
+        "theEnvironmentName": fields.String,
+        "theFitCriterion": fields.String,
+        "theGoalRefinements": fields.List(fields.String),
+        "theIssue": fields.String,
+        "theLabel": fields.String,
+        "thePriority": fields.String,
+        "theSubGoalRefinements": fields.List(fields.String)
+    }
+
+
+@swagger.model
+@swagger.nested(
+    theEnvironmentDictionary=GoalEnvironmentProperties.__name__,
+    theEnvironmentProperties=GoalEnvironmentProperties.__name__
+)
+class GoalModel(object):
+    resource_fields = {
+        "theColour": fields.String,
+        "theEnvironmentDictionary": fields.List(fields.Nested(GoalEnvironmentProperties.resource_fields)),
+        "theEnvironmentProperties": fields.List(fields.Nested(GoalEnvironmentProperties.resource_fields)),
+        "theId": fields.Integer,
+        "theName": fields.String,
+        "theOriginator": fields.String,
+        "theTags": fields.List(fields.String)
+    }
 
 @swagger.model
 class RequirementAttributesModel(object):
