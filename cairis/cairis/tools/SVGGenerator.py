@@ -46,6 +46,8 @@ class SVGGenerator(object):
 
             line = substitute("<!--.*?-->", "", line)
 
+            line = line.replace('fill="none"', 'fill="white"')
+
             href_exists = -1
             href_exists = line.find('<a xlink:href="', href_exists+1)
             while href_exists > -1:
