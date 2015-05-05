@@ -1,3 +1,4 @@
+import httplib
 from flask.ext.restful_swagger import swagger
 from CairisHTTPError import CairisHTTPError
 from Borg import Borg
@@ -88,7 +89,15 @@ class UserConfigAPI(Resource):
     def post(self):
         try:
             b = Borg()
-            dict_form = request.get_json()
+            dict_form = request.get_json(silent=True)
+
+            if dict_form is False:
+                raise CairisHTTPError(httplib.BAD_REQUEST,
+                                      'The request body could not be converted to a JSON object.' +
+                                      '''Check if the request content type is 'application/json' ''' +
+                                      'and that the JSON string is well-formed',
+                                      'Unreadable JSON data')
+
             b.logger.info(dict_form)
             s = set_dbproxy(dict_form)
 

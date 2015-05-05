@@ -1,3 +1,4 @@
+import httplib
 from tempfile import mkstemp
 from os import close as fd_close
 from os import remove as remove_file
@@ -48,7 +49,14 @@ class CImportAPI(Resource):
     )
     def post(self):
         session_id = request.args.get('session_id', None)
-        json_dict = request.get_json()
+        json_dict = request.get_json(silent=True)
+
+        if json_dict is False:
+            raise CairisHTTPError(httplib.BAD_REQUEST,
+                                  'The request body could not be converted to a JSON object.' +
+                                  '''Check if the request content type is 'application/json' ''' +
+                                  'and that the JSON string is well-formed',
+                                  'Unreadable JSON data')
 
         if not all(reqKey in json_dict for reqKey in ('file_contents','type')):
             return CairisHTTPError(405, '''Some parameters are missing. Be sure 'file_contents' and 'type' are defined.''')

@@ -1,6 +1,8 @@
+import httplib
 from flask import session, request, make_response, Blueprint
 from flask.ext.restful import Resource, Api
 from flask.ext.restful_swagger import swagger
+from CairisHTTPError import CairisHTTPError
 from Requirement import Requirement
 from tools.ModelDefinitions import RequirementModel
 from tools.SessionValidator import validate_proxy
@@ -219,13 +221,19 @@ class RequirementUpdateAPI(Resource):
     )
     def put(self):
         session_id = request.args.get('session_id', None)
-        json_dict = request.get_json()
+        json_dict = request.get_json(silent=True)
         db_proxy = validate_proxy(session, session_id)
+
+        if json_dict is False:
+            raise CairisHTTPError(httplib.BAD_REQUEST,
+                                  'The request body could not be converted to a JSON object.' +
+                                  '''Check if the request content type is 'application/json' ''' +
+                                  'and that the JSON string is well-formed',
+                                  'Unreadable JSON data')
 
         reqObj = json_deserialize(json_dict, 'requirement')
         db_proxy.updateRequirement(reqObj)
 
         resp = make_response('Requirement successfully updated', 200)
         resp.headers['Content-type'] = 'text/plain'
-        resp.headers['Access-Control-Allow-Origin'] = "*"
         return resp
