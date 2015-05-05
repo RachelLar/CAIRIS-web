@@ -1,6 +1,5 @@
 from flask.ext.restful import fields
 from flask.ext.restful_swagger import swagger
-from PropertyHolder import PropertyHolder
 
 __author__ = 'Robin Quetin'
 
@@ -89,7 +88,6 @@ class RequirementAttributesModel(object):
         "rationale": fields.String,
         "type": fields.String
     }
-
 
 @swagger.model
 @swagger.nested(

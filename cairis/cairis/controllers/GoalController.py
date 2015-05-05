@@ -40,3 +40,36 @@ class GoalsAPI(Resource):
         resp = make_response(json_serialize(goals, session_id=session_id))
         resp.headers['Content-Type'] = "application/json"
         return resp
+
+class ColouredGoalsAPI(Resource):
+    #region Swagger Doc
+    @swagger.operation(
+        notes='Get all goals with associated goals',
+        responseClass=SwaggerGoalModel.__name__,
+        nickname='goals-coloured-get',
+        parameters=[
+            {
+                "name": "session_id",
+                "description": "The ID of the user's session",
+                "required": False,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "paramType": "query"
+            }
+        ],
+        responseMessages=[
+            {
+                "code": 400,
+                "message": "The database connection was not properly set up"
+            }
+        ]
+    )
+    #endregion
+    def get(self):
+        session_id = request.args.get('session_id', None)
+        db_proxy = validate_proxy(session, session_id)
+        goals = db_proxy.getColouredGoals()
+
+        resp = make_response(json_serialize(goals, session_id=session_id))
+        resp.headers['Content-Type'] = "application/json"
+        return resp

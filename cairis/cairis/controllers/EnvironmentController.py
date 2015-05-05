@@ -9,6 +9,7 @@ __author__ = 'Robin Quetin'
 
 
 class EnvironmentsAPI(Resource):
+    #region Swagger Docs
     @swagger.operation(
         notes='Get all dimensions of a specific table',
         nickname='environments-get',
@@ -38,6 +39,7 @@ class EnvironmentsAPI(Resource):
             }
         ]
     )
+    #endregion
     def get(self):
         session_id = request.args.get('session_id', None)
         constraintsId = request.args.get('constraints_id', -1)
@@ -49,6 +51,7 @@ class EnvironmentsAPI(Resource):
         return resp
 
 class EnvironmentNamesAPI(Resource):
+    #region Swagger Docs
     @swagger.operation(
         notes='Get all environment names',
         nickname='dimensions-table-get',
@@ -69,6 +72,7 @@ class EnvironmentNamesAPI(Resource):
             }
         ]
     )
+    #endregion
     def get(self):
         session_id = request.args.get('session_id', None)
         db_proxy = validate_proxy(session, session_id)

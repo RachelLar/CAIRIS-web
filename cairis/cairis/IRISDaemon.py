@@ -2,7 +2,7 @@ import os
 from Borg import Borg
 from CairisHTTPError import CairisHTTPError
 from controllers import AssetController, CImportController, DimensionController, EnvironmentController, GoalController, RequirementController, UserController
-from flask import Flask, session, make_response, request
+from flask import Flask, session, make_response, request, got_request_exception
 from flask.ext.cors import CORS
 from flask.ext.restful import Api
 from flask.ext.restful_swagger import swagger
@@ -47,13 +47,24 @@ def handle_error(error):
         resp.headers['Content-type'] = 'application/json'
         return resp
 
+@app.errorhandler(AssertionError)
+def handle_asserterror(error):
+    err = CairisHTTPError(httplib.CONFLICT, str(error.message), 'Unmet requirement')
+    return handle_error(err)
+
 @app.errorhandler(KeyError)
 def handle_keyerror(error):
-    raise CairisHTTPError(httplib.BAD_REQUEST, str(error.message), 'Missing attribute')
+    err = CairisHTTPError(httplib.BAD_REQUEST, str(error.message), 'Missing attribute')
+    return handle_error(err)
 
-@app.errorhandler(httplib.INTERNAL_SERVER_ERROR)
-def handle_error(error):
-    raise CairisHTTPError(httplib.BAD_REQUEST, error.message, status='Unknown error')
+def handle_exception(e):
+    if isinstance(e, AssertionError):
+        return handle_asserterror(e)
+    elif isinstance(e, KeyError):
+        return handle_keyerror(e)
+    else:
+        new_ex = CairisHTTPError(httplib.INTERNAL_SERVER_ERROR, str(e), 'Unknown error')
+        return handle_error(new_ex)
 
 def start():
     # Asset routes
@@ -61,6 +72,7 @@ def start():
     api.add_resource(AssetController.AssetByIdAPI, '/api/assets/name/<string:name>')
     api.add_resource(AssetController.AssetNamesAPI, '/api/assets/all/names')
     api.add_resource(AssetController.AssetModelAPI, '/api/assets/view')
+    api.add_resource(AssetController.AssetEnvironmentPropertiesAPI, '/api/assets/<int:asset_id>/properties')
 
     # CImport
     api.add_resource(CImportController.CImportAPI, '/api/cimport')
@@ -75,6 +87,7 @@ def start():
 
     # Goal routes
     api.add_resource(GoalController.GoalsAPI, '/api/goals')
+    api.add_resource(GoalController.ColouredGoalsAPI, '/api/goals/coloured')
 
     # Requirement routes
     api.add_resource(RequirementController.RequirementsAPI, '/api/requirements')

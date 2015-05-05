@@ -1,5 +1,7 @@
 import ARM
 import httplib
+from Asset import Asset
+from AssetEnvironmentProperties import AssetEnvironmentProperties
 from AssetModel import AssetModel
 from AssetParameters import AssetParameters
 from Borg import Borg
@@ -7,6 +9,7 @@ from CairisHTTPError import CairisHTTPError
 from flask import request, session, make_response
 from flask_restful_swagger import swagger
 from flask.ext.restful import Resource
+import armid
 from tools.JsonConverter import json_serialize, json_deserialize
 from tools.ModelDefinitions import AssetModel as SwaggerAssetModel
 from tools.SessionValidator import validate_proxy, validate_fonts
@@ -238,3 +241,107 @@ class AssetModelAPI(Resource):
             resp.headers['Content-type'] = 'image/svg+xml'
 
         return resp
+
+class AssetEnvironmentPropertiesAPI(Resource):
+    def get(self, asset_id):
+        session_id = request.args.get('session_id', None)
+        db_proxy = validate_proxy(session, session_id)
+
+        assets = db_proxy.getAssets()
+        if len(assets) > 0:
+            assets = assets.values()
+        else:
+            raise CairisHTTPError(404, 'There were no Assets found in the database.', 'No assets')
+
+        found_asset = None
+        idx = 0
+
+        while found_asset is None and idx < len(assets):
+            if assets[idx].theId == asset_id:
+                found_asset = assets[idx]
+            idx+=1
+
+        try:
+            assert isinstance(found_asset, Asset)
+        except AssertionError as ex:
+            raise CairisHTTPError(httplib.CONFLICT, 'There is no asset in the database with the specified ID', 'Asset not found')
+
+        if found_asset is None:
+            raise CairisHTTPError(httplib.CONFLICT, 'There is no asset in the database with the specified ID', 'Asset not found')
+        else:
+            values = ['None','Low','Medium','High']
+            envPropertiesDict = dict()
+            for envProperty in found_asset.theEnvironmentProperties:
+                assert isinstance(envProperty, AssetEnvironmentProperties)
+                envPropertyDict = envPropertiesDict.get(envProperty.theEnvironmentName, dict())
+                syProperties = envProperty.properties()
+                pRationale = envProperty.rationale()
+                cProperty = syProperties[armid.C_PROPERTY]
+                cRationale = pRationale[armid.C_PROPERTY]
+                if (cProperty != armid.NONE_VALUE):
+                    prop_name = 'Confidentiality'
+                    envPropertyDict[prop_name] = dict()
+                    envPropertyDict[prop_name]['value'] = values[cProperty]
+                    envPropertyDict[prop_name]['rationale'] = cRationale
+
+                iProperty = syProperties[armid.I_PROPERTY]
+                iRationale = pRationale[armid.I_PROPERTY]
+                if (iProperty != armid.NONE_VALUE):
+                    prop_name = 'Integrity'
+                    envPropertyDict[prop_name] = dict()
+                    envPropertyDict[prop_name]['value'] = values[iProperty]
+                    envPropertyDict[prop_name]['rationale'] = iRationale
+
+                avProperty = syProperties[armid.AV_PROPERTY]
+                avRationale = pRationale[armid.AV_PROPERTY]
+                if (avProperty != armid.NONE_VALUE):
+                    prop_name = 'Availability'
+                    envPropertyDict[prop_name] = dict()
+                    envPropertyDict[prop_name]['value'] = values[avProperty]
+                    envPropertyDict[prop_name]['rationale'] = avRationale
+
+                acProperty = syProperties[armid.AC_PROPERTY]
+                acRationale = pRationale[armid.AC_PROPERTY]
+                if (acProperty != armid.NONE_VALUE):
+                    prop_name = 'Accountability'
+                    envPropertyDict[prop_name] = dict()
+                    envPropertyDict[prop_name]['value'] = values[acProperty]
+                    envPropertyDict[prop_name]['rationale'] = acRationale
+
+                anProperty = syProperties[armid.AN_PROPERTY]
+                anRationale = pRationale[armid.AN_PROPERTY]
+                if (anProperty != armid.NONE_VALUE):
+                    prop_name = 'Anonymity'
+                    envPropertyDict[prop_name] = dict()
+                    envPropertyDict[prop_name]['value'] = values[anProperty]
+                    envPropertyDict[prop_name]['rationale'] = anRationale
+
+                panProperty = syProperties[armid.PAN_PROPERTY]
+                panRationale = pRationale[armid.PAN_PROPERTY]
+                if (panProperty != armid.NONE_VALUE):
+                    prop_name = 'Pseudonymity'
+                    envPropertyDict[prop_name] = dict()
+                    envPropertyDict[prop_name]['value'] = values[panProperty]
+                    envPropertyDict[prop_name]['rationale'] = panRationale
+
+                unlProperty = syProperties[armid.UNL_PROPERTY]
+                unlRationale = pRationale[armid.UNL_PROPERTY]
+                if (unlProperty != armid.NONE_VALUE):
+                    prop_name = 'Unlinkability'
+                    envPropertyDict[prop_name] = dict()
+                    envPropertyDict[prop_name]['value'] = values[unlProperty]
+                    envPropertyDict[prop_name]['rationale'] = unlRationale
+
+                unoProperty = syProperties[armid.UNO_PROPERTY]
+                unoRationale = pRationale[armid.UNO_PROPERTY]
+                if (unoProperty != armid.NONE_VALUE):
+                    prop_name = 'Unobservability'
+                    envPropertyDict[prop_name] = dict()
+                    envPropertyDict[prop_name]['value'] = values[unoProperty]
+                    envPropertyDict[prop_name]['rationale'] = unoRationale
+
+                envPropertiesDict[envProperty.theEnvironmentName] = envPropertyDict
+
+            resp = make_response(json_serialize(envPropertiesDict))
+            resp.contenttype = 'application/json'
+            return resp
