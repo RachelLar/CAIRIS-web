@@ -1,13 +1,16 @@
 import ARM
 import httplib
+from Borg import Borg
 from CairisHTTPError import CairisHTTPError
 from flask import session, request, make_response
 from flask.ext.restful_swagger import swagger
 from flask_restful import Resource
 from GoalParameters import GoalParameters
+from KaosModel import KaosModel
+from controllers import EnvironmentController
 from tools.JsonConverter import json_serialize, json_deserialize
 from tools.ModelDefinitions import GoalModel as SwaggerGoalModel
-from tools.SessionValidator import validate_proxy
+from tools.SessionValidator import validate_proxy, validate_fonts
 
 __author__ = 'Robin Quetin'
 
@@ -291,4 +294,82 @@ class GoalByNameAPI(Resource):
 
         resp = make_response(json_serialize(found_goal, session_id=session_id))
         resp.headers['Content-Type'] = "application/json"
+        return resp
+
+class GoalModelAPI(Resource):
+    # region Swagger Doc
+    @swagger.operation(
+        notes='Get the goal model for a specific environment',
+        responseClass=SwaggerGoalModel.__name__,
+        nickname='goal-by-name-get',
+        parameters=[
+            {
+                "name": "environment",
+                "description": "The environment to be used for the asset model",
+                "required": True,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "paramType": "query"
+            },
+            {
+                "name": "session_id",
+                "description": "The ID of the user's session",
+                "required": False,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "paramType": "query"
+            }
+        ],
+        responseMessages=[
+            {
+                "code": 400,
+                "message": "The database connection was not properly set up"
+            },
+            {
+                "code": 404,
+                "message": "Environment not found"
+            },
+            {
+                "code": 405,
+                "message": "Environment not defined"
+            }
+        ]
+    )
+    # endregion
+    def get(self):
+        b = Borg()
+        model_generator = b.model_generator
+
+        session_id = request.args.get('session_id', None)
+        environment = request.args.get('environment', None)
+
+        if environment is None:
+            raise CairisHTTPError(
+                status_code=httplib.BAD_REQUEST,
+                message='''The 'environment' query parameter was not provided to the API call.''',
+                status='Environment not defined')
+
+        EnvironmentController.checkEnvironment(environment, session_id)
+
+        db_proxy = validate_proxy(session, session_id)
+        fontName, fontSize, apFontName = validate_fonts(session, session_id)
+        try:
+            associationDictionary = db_proxy.goalModel(environment)
+            associations = KaosModel(associationDictionary.values(), environment, db_proxy=db_proxy, font_name=fontName,
+                font_size=fontSize)
+            dot_code = associations.graph()
+        except ARM.DatabaseProxyException as ex:
+            raise CairisHTTPError(
+                status_code=httplib.CONFLICT,
+                message=ex.value,
+                status='Database conflict'
+            )
+
+        resp = make_response(model_generator.generate(dot_code), 200)
+        accept_header = request.headers.get('Accept', 'image/svg+xml')
+        if accept_header.find('text/plain') > -1:
+            resp.headers['Content-type'] = 'text/plain'
+        else:
+            resp.headers['Content-type'] = 'image/svg+xml'
+
         return resp
