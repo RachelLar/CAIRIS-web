@@ -36,6 +36,7 @@ class SVGGenerator(object):
     def process_output(self, output):
         lines = output.split('\n')
         svg_start = -1
+        is_node = False
 
         for i in range(len(lines)):
             line = lines[i]
@@ -43,8 +44,14 @@ class SVGGenerator(object):
                 if lines[i].find('<svg') > -1:
                     svg_start = i
 
+            if line.find('class="node"') > -1:
+                is_node = True
+
             line = substitute("<!--.*?-->", "", line)
-            line = line.replace('fill="none"', 'fill="white"')
+            if line.find('fill="none"') > -1 and is_node:
+                line = line.replace('fill="none"', 'fill="white"')
+                is_node = False
+            
             line = correctHref(line)
 
             lines[i] = line
