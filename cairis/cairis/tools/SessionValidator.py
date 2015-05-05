@@ -1,15 +1,19 @@
-from flask.ext.restful import abort
+import httplib
 from ARM import DatabaseProxyException
 from Borg import Borg
 from CairisHTTPError import CairisHTTPError
 from MySQLDatabaseProxy import MySQLDatabaseProxy
+
 
 __author__ = 'Robin Quetin'
 
 
 def check_required_keys(json_dict, required):
     if not all(reqKey in json_dict for reqKey in required):
-        raise CairisHTTPError(405, 'Some required parameters are missing.')
+        raise CairisHTTPError(
+            status_code=httplib.BAD_REQUEST,
+            message='Some required parameters are missing.'
+        )
 
 def validate_proxy(session, id, conf=None):
     """
@@ -34,9 +38,15 @@ def validate_proxy(session, id, conf=None):
                 if db_proxy is not None:
                     return db_proxy
                 else:
-                    raise CairisHTTPError(400, message='The database connection could not be created.')
+                    raise CairisHTTPError(
+                        status_code=httplib.CONFLICT,
+                        message='The database connection could not be created.'
+                    )
             except DatabaseProxyException:
-                raise CairisHTTPError(405, message='The provided settings are invalid and cannot be used to create a database connection')
+                raise CairisHTTPError(
+                    status_code=httplib.BAD_REQUEST,
+                    message='The provided settings are invalid and cannot be used to create a database connection'
+                )
 
     if not (session_id == -1 and id is None):
         if id is None:
@@ -45,13 +55,22 @@ def validate_proxy(session, id, conf=None):
         db_proxy = b.get_dbproxy(id)
 
         if db_proxy is None:
-            raise CairisHTTPError(400, message='The database connection could not be created.')
+            raise CairisHTTPError(
+                status_code=httplib.CONFLICT,
+                message='The database connection could not be created.'
+            )
         elif isinstance(db_proxy, MySQLDatabaseProxy):
             return db_proxy
         else:
-            raise CairisHTTPError(400, message='The database connection was not properly set up. Please try to reset the connection.')
+            raise CairisHTTPError(
+                status_code=httplib.CONFLICT,
+                message='The database connection was not properly set up. Please try to reset the connection.'
+            )
     else:
-        raise CairisHTTPError(405, message='The session is neither started or no session ID is provided with the request.')
+        raise CairisHTTPError(
+            status_code=httplib.BAD_REQUEST,
+            message='The session is neither started or no session ID is provided with the request.'
+        )
 
 def validate_fonts(session, id):
     """
@@ -79,10 +98,19 @@ def validate_fonts(session, id):
         apFontName = settings.get('apFontSize', None)
 
         if fontName is None or fontSize is None or apFontName is None:
-            raise CairisHTTPError(400, message='The method is not callable without setting up the project settings.')
+            raise CairisHTTPError(
+                status_code=httplib.BAD_REQUEST,
+                message='The method is not callable without setting up the project settings.'
+            )
         elif isinstance(fontName, str) and isinstance(fontSize, str) and isinstance(apFontName, str):
             return fontName, fontSize, apFontName
         else:
-            raise CairisHTTPError(400, message='The database connection was not properly set up. Please try to reset the connection.')
+            raise CairisHTTPError(
+                status_code=httplib.BAD_REQUEST,
+                message='The database connection was not properly set up. Please try to reset the connection.'
+            )
     else:
-        raise CairisHTTPError(400, message='The method is not callable without setting up the project settings.')
+        raise CairisHTTPError(
+            status_code=httplib.BAD_REQUEST,
+            message='The method is not callable without setting up the project settings.'
+        )
