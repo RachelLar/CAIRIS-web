@@ -16,22 +16,15 @@
 #  under the License.
 
 
-from Borg import Borg
+import string
+
 import MySQLdb
+import _mysql_exceptions
+from numpy import *
+
+from Borg import Borg
 import RequirementFactory
-from Environment import Environment
 from ARM import *
-import _mysql_exceptions 
-import Attacker
-import Asset
-import Threat
-import Vulnerability
-import Persona
-import MisuseCase
-import Task
-import Risk
-import Response
-import ClassAssociation
 import DatabaseProxy
 from AttackerParameters import AttackerParameters
 from PersonaParameters import PersonaParameters
@@ -46,14 +39,10 @@ from VulnerabilityParameters import VulnerabilityParameters
 from RiskParameters import RiskParameters
 from ResponseParameters import ResponseParameters
 from RoleParameters import RoleParameters
-from ResponsibilityParameters import ResponsibilityParameters
 import ObjectFactory
 from TaskParameters import TaskParameters
 from MisuseCaseParameters import MisuseCaseParameters
 from DomainPropertyParameters import DomainPropertyParameters
-import TraceParameters
-import UpdateTraceParameters
-import Trace
 import armid
 from DotTraceParameters import DotTraceParameters
 from EnvironmentParameters import EnvironmentParameters
@@ -87,8 +76,6 @@ from DocumentReferenceParameters import DocumentReferenceParameters
 from ConceptReferenceParameters import ConceptReferenceParameters
 from PersonaCharacteristicParameters import PersonaCharacteristicParameters
 from TaskCharacteristicParameters import TaskCharacteristicParameters
-from UseCaseParameters import UseCaseParameters
-from UseCase import UseCase
 from UseCaseEnvironmentProperties import UseCaseEnvironmentProperties
 from UseCaseParameters import UseCaseParameters
 from Step import Step
@@ -98,15 +85,9 @@ from ReferenceContribution import ReferenceContribution
 from ConceptMapAssociationParameters import ConceptMapAssociationParameters
 from ComponentViewParameters import ComponentViewParameters;
 from ComponentParameters import ComponentParameters;
-from ConnectorParameters import ConnectorParameters;
 from WeaknessTarget import WeaknessTarget
-from ImpliedProcess import ImpliedProcess
 from ImpliedProcessParameters import ImpliedProcessParameters
 
-import string
-import os
-
-from numpy import *
 
 LABEL_COL = 0
 ID_COL = 1
@@ -323,6 +304,7 @@ class MySQLDatabaseProxy(DatabaseProxy.DatabaseProxy):
 
     try:
       self.conn = MySQLdb.connect(host=host,port=port,user=user,passwd=passwd,db=db)
+      self.prepareDatabase()
     except _mysql_exceptions.DatabaseError, e:
       id,msg = e
       exceptionText = 'MySQL error connecting to the IRIS database on host ' + host + ' at port ' + str(port) + ' with user ' + user + ' (id:' + str(id) + ',message:' + msg
@@ -11485,4 +11467,41 @@ class MySQLDatabaseProxy(DatabaseProxy.DatabaseProxy):
     except _mysql_exceptions.DatabaseError, e:
       id,msg = e
       exceptionText = 'MySQL error getting denied goals for code ' + codeName + ' (id:' + str(id) + ',message:' + msg + ')'
-      raise DatabaseProxyException(exceptionText) 
+      raise DatabaseProxyException(exceptionText)
+
+  def prepareDatabase(self):
+    try:
+      self.conn.query('select @@max_sp_recursion_depth;')
+      result = self.conn.store_result()
+      real_result = result.fetch_row()
+      if (len(real_result) < 1):
+          exceptionText = 'Error getting max_sp_recursion_depth from database'
+          raise DatabaseProxyException(exceptionText)
+
+      try:
+          rec_value = real_result[0][0]
+      except LookupError:
+          rec_value = -1
+
+      if rec_value == -1:
+          print('Unable to get max_sp_recursion_depth. Be sure max_sp_recursion_depth is set to 255 or more.')
+      elif rec_value < 255:
+          self.conn.query('set max_sp_recursion_depth = 255')
+          self.conn.store_result()
+
+          self.conn.query('select @@max_sp_recursion_depth;')
+          result = self.conn.use_result()
+          real_result = result.fetch_row()
+
+          try:
+              rec_value = real_result[0][0]
+              print('max_sp_recursion_depth is %d.' % rec_value)
+              if rec_value < 255:
+                  print('WARNING: some features may not work because the maximum recursion depth for stored procedures is too low')
+          except LookupError:
+              print('Unable to get max_sp_recursion_depth. Be sure max_sp_recursion_depth is set to 255 or more.')
+
+    except _mysql_exceptions.DatabaseError, e:
+      id,msg = e
+      exceptionText = 'MySQL error getting while preparing database'
+      raise DatabaseProxyException(exceptionText)
