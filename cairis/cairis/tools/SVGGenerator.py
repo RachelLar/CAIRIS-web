@@ -1,6 +1,5 @@
 import os
 from re import sub as substitute
-import string
 from subprocess import check_output as cmd
 from tempfile import mkstemp as make_tempfile
 from xml.dom import minidom
@@ -45,26 +44,8 @@ class SVGGenerator(object):
                     svg_start = i
 
             line = substitute("<!--.*?-->", "", line)
-
             line = line.replace('fill="none"', 'fill="white"')
-
-            href_exists = -1
-            href_exists = line.find('<a xlink:href="', href_exists+1)
-            while href_exists > -1:
-                start_index = line.find('"', href_exists)
-                end_index = line.find('"', start_index+1)
-                bracket_index = line.find('#', start_index+1)
-                is_valid = start_index < bracket_index < end_index
-
-                if is_valid:
-                    old_link = line[start_index+1:end_index]
-                    parts = old_link.split('#')
-                    type = parts[0]
-                    object = ''.join(parts[1:])
-                    new_link = '/api/{0}s/name/{1}'.format(type, object)
-                    line = line.replace(old_link, new_link)
-
-                href_exists = line.find('<a xlink:href="', href_exists+1)
+            line = correctHref(line)
 
             lines[i] = line
 
@@ -72,12 +53,38 @@ class SVGGenerator(object):
             lines = lines[svg_start:]
 
         svg_text = '\n'.join(lines)
-        svg_doc = minidom.parseString(svg_text)
-        svg_text = svg_doc.toprettyxml(indent='  ')
-        svg_lines = svg_text.replace('\r\n', '\n').split('\n')
-        svg_filtered = list()
-        for svg_line in svg_lines:
-            if svg_line.strip(' ').strip('\t') != '':
-                svg_filtered.append(svg_line)
+        svg_output = prettifySVG(svg_text)
 
-        return '\n'.join(svg_filtered[1:])
+        return svg_output
+
+def correctHref(line):
+    href_exists = -1
+    href_exists = line.find('<a xlink:href="', href_exists+1)
+    while href_exists > -1:
+        start_index = line.find('"', href_exists)
+        end_index = line.find('"', start_index+1)
+        bracket_index = line.find('#', start_index+1)
+        is_valid = start_index < bracket_index < end_index
+
+        if is_valid:
+            old_link = line[start_index+1:end_index]
+            parts = old_link.split('#')
+            type = parts[0]
+            object = ''.join(parts[1:])
+            new_link = '/api/{0}s/name/{1}'.format(type, object)
+            line = line.replace(old_link, new_link)
+
+        href_exists = line.find('<a xlink:href="', href_exists+1)
+
+    return line
+
+def prettifySVG(svg_text):
+    svg_doc = minidom.parseString(svg_text)
+    svg_text = svg_doc.toprettyxml(indent='  ')
+    svg_lines = svg_text.replace('\r\n', '\n').split('\n')
+    svg_filtered = list()
+    for svg_line in svg_lines:
+        if svg_line.strip(' ').strip('\t') != '':
+            svg_filtered.append(svg_line)
+
+    return '\n'.join(svg_filtered[1:])
