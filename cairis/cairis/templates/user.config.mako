@@ -32,7 +32,7 @@
                 </div>
             </div>
             <div class="form-group">
-                <label for="passwd" class="control-label col-sm-2">Host:</label>
+                <label for="passwd" class="control-label col-sm-2">Password:</label>
                 <div class="col-sm-10">
                     <input type="password" id="passwd" name="passwd" value="cairis123" class="form-control"/>
                 </div>
@@ -58,6 +58,6 @@
         </form>
     </div>
 </div>
-<script src="/static//plugins/jQuery/jQuery-2.1.3.min.js"></script>
+<script src="/static/plugins/jQuery/jQuery-2.1.3.min.js"></script>
 </body>
 </html>
