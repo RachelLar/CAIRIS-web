@@ -1,3 +1,4 @@
+import logging
 import os
 from Borg import Borg
 from CairisHTTPError import CairisHTTPError
@@ -20,7 +21,7 @@ b = Borg()
 @app.route('/')
 def index():
     if session.has_key('session_id'):
-        return b.template_generator.serve_result('index')
+        return b.template_generator.serve_result('index_page')
     else:
         resp = make_response('Moved temporarily', 302)
         resp.headers['Location'] = '/user/config.html'
@@ -91,6 +92,7 @@ def start():
     api.add_resource(GoalController.ColouredGoalsAPI, '/api/goals/coloured')
     api.add_resource(GoalController.GoalByIdAPI, '/api/goals/id/<int:id>')
     api.add_resource(GoalController.GoalByNameAPI, '/api/goals/name/<string:name>')
+    api.add_resource(GoalController.GoalModelAPI, '/api/goals/view')
 
     # Requirement routes
     api.add_resource(RequirementController.RequirementsAPI, '/api/requirements')
@@ -105,6 +107,8 @@ def start():
     # set the secret key.  keep this really secret:
     b.logger.debug('Error handlers: {0}'.format(app.error_handler_spec))
     app.secret_key = os.urandom(24)
+    app.static_folder = b.staticDir
+    app.static_url_path = '/static'
+    enable_debug = b.logLevel == logging.DEBUG
 
-    app.run(host='0.0.0.0', port=b.webPort)
-    app.run(debug=True, host='0.0.0.0', port=b.webPort)
+    app.run(host='0.0.0.0', port=b.webPort, debug=enable_debug)

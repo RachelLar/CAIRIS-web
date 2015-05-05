@@ -64,9 +64,10 @@ def logParams():
         logger.info('Log level: WARNING')
 
     logger.info('Port: %d', b.webPort)
+    logger.info('Static content directory: %s', b.staticDir)
 
 def setStaticDir(self, static_dir):
-    self.logger.info('Applying web port...')
+    self.logger.info('Setting static web content directory...')
     b = Borg()
     try:
         os.listdir(static_dir)
