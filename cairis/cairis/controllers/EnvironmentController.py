@@ -1,6 +1,8 @@
+import httplib
 from flask import session, request, make_response
 from flask.ext.restful import Resource
 from flask.ext.restful_swagger import swagger
+from CairisHTTPError import CairisHTTPError
 from Environment import Environment
 from tools.SessionValidator import validate_proxy
 from tools.JsonConverter import json_serialize
@@ -81,3 +83,15 @@ class EnvironmentNamesAPI(Resource):
         resp = make_response(json_serialize(environment_names, session_id=session_id), 200)
         resp.headers['Content-type'] = 'application/json'
         return resp
+
+
+def checkEnvironment(environment_name, session_id):
+    db_proxy = validate_proxy(session, session_id)
+
+    environment_names = db_proxy.getEnvironmentNames()
+    if not environment_name in environment_names:
+        raise CairisHTTPError(
+            status_code=httplib.NOT_FOUND,
+            message='The environment was not found in the database.',
+            status='Environment not found'
+        )
