@@ -18,7 +18,7 @@ __author__ = 'Robin Quetin'
 
 
 class AssetsAPI(Resource):
-    #region Swagger Doc
+    # region Swagger Doc
     @swagger.operation(
         notes='Get all assets',
         responseClass=SwaggerAssetModel.__name__,
@@ -40,7 +40,7 @@ class AssetsAPI(Resource):
             }
         ]
     )
-    #endregion
+    # endregion
     def get(self):
         session_id = request.args.get('session_id', None)
         db_proxy = validate_proxy(session, session_id)
@@ -50,7 +50,7 @@ class AssetsAPI(Resource):
         resp.headers['Content-Type'] = "application/json"
         return resp
 
-    #region Swagger Doc
+    # region Swagger Doc
     @swagger.operation(
         notes='Creates a new asset',
         nickname='asset-post',
@@ -87,11 +87,19 @@ class AssetsAPI(Resource):
             }
         ]
     )
-    #endregion
+    # endregion
     def post(self):
         session_id = request.args.get('session_id', None)
         db_proxy = validate_proxy(session, session_id)
-        new_json_asset = request.get_json()
+        new_json_asset = request.get_json(silent=True)
+
+        if new_json_asset is False:
+            raise CairisHTTPError(httplib.BAD_REQUEST,
+                                  'The request body could not be converted to a JSON object.' +
+                                  '''Check if the request content type is 'application/json' ''' +
+                                  'and that the JSON string is well-formed',
+                                  'Unreadable JSON data')
+
         asset = json_deserialize(new_json_asset, 'asset')
 
         try:
@@ -112,11 +120,11 @@ class AssetsAPI(Resource):
         except ARM.ARMException, ex:
             raise CairisHTTPError(httplib.CONFLICT, ex.value, 'Database conflict')
 
-class AssetByIdAPI(Resource):
-    #region Swagger Doc
+class AssetByNameAPI(Resource):
+    # region Swagger Doc
     @swagger.operation(
         notes='Get detailed information about an asset',
-        responseClass=str.__name__,
+        responseClass=SwaggerAssetModel.__name__,
         nickname='asset-by-id-get',
         parameters=[
             {
@@ -135,7 +143,7 @@ class AssetByIdAPI(Resource):
             }
         ]
     )
-    #endregion
+    # endregion
     def get(self, name):
         session_id = request.args.get('session_id', None)
         db_proxy = validate_proxy(session, session_id)
@@ -149,9 +157,48 @@ class AssetByIdAPI(Resource):
         resp.headers['Content-Type'] = "application/json"
         return resp
 
+class AssetByIdAPI(Resource):
+    # region Swagger Doc
+    @swagger.operation(
+        notes='Get detailed information about an asset',
+        responseClass=SwaggerAssetModel.__name__,
+        nickname='asset-by-id-get',
+        parameters=[
+            {
+                "name": "session_id",
+                "description": "The ID of the user's session",
+                "required": False,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "paramType": "query"
+            }
+        ],
+        responseMessages=[
+            {
+                "code": 400,
+                "message": "The database connection was not properly set up"
+            }
+        ]
+    )
+    # endregion
+    def get(self, id):
+        session_id = request.args.get('session_id', None)
+        db_proxy = validate_proxy(session, session_id)
+        assets = db_proxy.getAssets()
+        found_asset = None
+        idx = 0
+
+        while found_asset is None and idx < len(assets):
+            if assets.values()[idx].theId == id:
+                found_asset = assets.values()[idx]
+            idx += 1
+
+        resp = make_response(json_serialize(found_asset, session_id=session_id))
+        resp.headers['Content-Type'] = "application/json"
+        return resp
 
 class AssetNamesAPI(Resource):
-    #region Swagger Doc
+    # region Swagger Doc
     @swagger.operation(
         notes='Get a list of assets',
         responseClass=str.__name__,
@@ -174,7 +221,7 @@ class AssetNamesAPI(Resource):
             }
         ]
     )
-    #endregion
+    # endregion
     def get(self):
         session_id = request.args.get('session_id', None)
         db_proxy = validate_proxy(session, session_id)
@@ -186,7 +233,7 @@ class AssetNamesAPI(Resource):
 
 
 class AssetModelAPI(Resource):
-    #region Swagger Doc
+    # region Swagger Doc
     @swagger.operation(
         notes='Get the asset model for a specific environment',
         nickname='asset-model-get',
@@ -215,7 +262,7 @@ class AssetModelAPI(Resource):
             }
         ]
     )
-    #endregion
+    # endregion
     def get(self):
         b = Borg()
         model_generator = b.model_generator
@@ -243,6 +290,27 @@ class AssetModelAPI(Resource):
         return resp
 
 class AssetEnvironmentPropertiesAPI(Resource):
+    @swagger.operation(
+        notes='Get the environment properties for a specific asset',
+        nickname='asset-envprops-by-id-get',
+        parameters=[
+            {
+                "name": "session_id",
+                "description": "The ID of the user's session",
+                "required": False,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "paramType": "query"
+            }
+        ],
+        responseMessages=[
+            {
+                "code": 400,
+                "message": "The database connection was not properly set up"
+            }
+        ]
+    )
+    # endregion
     def get(self, asset_id):
         session_id = request.args.get('session_id', None)
         db_proxy = validate_proxy(session, session_id)
@@ -251,7 +319,9 @@ class AssetEnvironmentPropertiesAPI(Resource):
         if len(assets) > 0:
             assets = assets.values()
         else:
-            raise CairisHTTPError(404, 'There were no Assets found in the database.', 'No assets')
+            raise CairisHTTPError(status_code=httplib.NOT_FOUND,
+                                  message='There were no Assets found in the database.',
+                                  status='No assets found')
 
         found_asset = None
         idx = 0
@@ -259,17 +329,19 @@ class AssetEnvironmentPropertiesAPI(Resource):
         while found_asset is None and idx < len(assets):
             if assets[idx].theId == asset_id:
                 found_asset = assets[idx]
-            idx+=1
+            idx += 1
 
-        try:
-            assert isinstance(found_asset, Asset)
-        except AssertionError as ex:
-            raise CairisHTTPError(httplib.CONFLICT, 'There is no asset in the database with the specified ID', 'Asset not found')
+        if not isinstance(found_asset, Asset):
+            raise CairisHTTPError(status_code=httplib.CONFLICT,
+                                  message='There is no asset in the database with the specified ID',
+                                  status='Asset not found')
 
         if found_asset is None:
-            raise CairisHTTPError(httplib.CONFLICT, 'There is no asset in the database with the specified ID', 'Asset not found')
+            raise CairisHTTPError(status_code=httplib.CONFLICT,
+                                  message='There is no asset in the database with the specified ID',
+                                  status='Asset not found')
         else:
-            values = ['None','Low','Medium','High']
+            values = ['None', 'Low', 'Medium', 'High']
             envPropertiesDict = dict()
             for envProperty in found_asset.theEnvironmentProperties:
                 assert isinstance(envProperty, AssetEnvironmentProperties)

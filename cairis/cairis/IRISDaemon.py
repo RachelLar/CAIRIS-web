@@ -69,10 +69,11 @@ def handle_exception(e):
 def start():
     # Asset routes
     api.add_resource(AssetController.AssetsAPI, '/api/assets')
-    api.add_resource(AssetController.AssetByIdAPI, '/api/assets/name/<string:name>')
+    api.add_resource(AssetController.AssetByNameAPI, '/api/assets/name/<string:name>')
+    api.add_resource(AssetController.AssetByIdAPI, '/api/assets/id/<int:id>')
     api.add_resource(AssetController.AssetNamesAPI, '/api/assets/all/names')
     api.add_resource(AssetController.AssetModelAPI, '/api/assets/view')
-    api.add_resource(AssetController.AssetEnvironmentPropertiesAPI, '/api/assets/<int:asset_id>/properties')
+    api.add_resource(AssetController.AssetEnvironmentPropertiesAPI, '/api/assets/id/<int:asset_id>/properties')
 
     # CImport
     api.add_resource(CImportController.CImportAPI, '/api/cimport')
@@ -88,6 +89,8 @@ def start():
     # Goal routes
     api.add_resource(GoalController.GoalsAPI, '/api/goals')
     api.add_resource(GoalController.ColouredGoalsAPI, '/api/goals/coloured')
+    api.add_resource(GoalController.GoalByIdAPI, '/api/goals/id/<int:id>')
+    api.add_resource(GoalController.GoalByNameAPI, '/api/goals/name/<string:name>')
 
     # Requirement routes
     api.add_resource(RequirementController.RequirementsAPI, '/api/requirements')
