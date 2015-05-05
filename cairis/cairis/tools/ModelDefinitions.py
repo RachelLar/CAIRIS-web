@@ -61,6 +61,19 @@ class GoalEnvironmentProperties(object):
         "theSubGoalRefinements": fields.List(fields.String)
     }
 
+    required = [
+        "theCategory",
+        "theConcernAssociations",
+        "theConcerns",
+        "theDefinition",
+        "theEnvironmentName",
+        "theFitCriterion",
+        "theGoalRefinements",
+        "theIssue",
+        "theLabel",
+        "thePriority",
+        "theSubGoalRefinements"
+    ]
 
 @swagger.model
 @swagger.nested(
