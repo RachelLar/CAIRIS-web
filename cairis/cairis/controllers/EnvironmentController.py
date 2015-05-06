@@ -1,11 +1,13 @@
 import httplib
+
 from flask import session, request, make_response
 from flask.ext.restful import Resource
 from flask.ext.restful_swagger import swagger
-from CairisHTTPError import CairisHTTPError
+from exceptions.CairisHTTPError import CairisHTTPError
 from Environment import Environment
 from tools.SessionValidator import validate_proxy
 from tools.JsonConverter import json_serialize
+
 
 __author__ = 'Robin Quetin'
 

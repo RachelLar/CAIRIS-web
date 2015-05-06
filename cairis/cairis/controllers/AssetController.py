@@ -1,18 +1,21 @@
-import ARM
 import httplib
+
+from flask import request, session, make_response
+from flask_restful_swagger import swagger
+from flask.ext.restful import Resource
+
+import ARM
+import armid
 from Asset import Asset
 from AssetEnvironmentProperties import AssetEnvironmentProperties
 from AssetModel import AssetModel
 from AssetParameters import AssetParameters
 from Borg import Borg
-from CairisHTTPError import CairisHTTPError
-from flask import request, session, make_response
-from flask_restful_swagger import swagger
-from flask.ext.restful import Resource
-import armid
+from exceptions.CairisHTTPError import CairisHTTPError
 from tools.JsonConverter import json_serialize, json_deserialize
 from tools.ModelDefinitions import AssetModel as SwaggerAssetModel
 from tools.SessionValidator import validate_proxy, validate_fonts
+
 
 __author__ = 'Robin Quetin'
 
@@ -157,6 +160,86 @@ class AssetByNameAPI(Resource):
         resp.headers['Content-Type'] = "application/json"
         return resp
 
+    # region Swagger Doc
+    @swagger.operation(
+        notes='Creates a new asset',
+        nickname='asset-post',
+        parameters=[
+            {
+                "name": "body",
+                "description": "The serialized version of the new asset to be added",
+                "required": True,
+                "allowMultiple": False,
+                "type": SwaggerAssetModel.__name__,
+                "paramType": "body"
+            },
+            {
+                "name": "session_id",
+                "description": "The ID of the user's session",
+                "required": False,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "paramType": "query"
+            }
+        ],
+        responseMessages=[
+            {
+                'code': httplib.BAD_REQUEST,
+                'message': 'One or more attributes are missing'
+            },
+            {
+                'code': httplib.CONFLICT,
+                'message': 'Some problems were found during the name check'
+            },
+            {
+                'code': httplib.CONFLICT,
+                'message': 'A database error has occurred'
+            }
+        ]
+    )
+    # endregion
+    def put(self, name):
+        session_id = request.args.get('session_id', None)
+        db_proxy = validate_proxy(session, session_id)
+        new_json_asset = request.get_json(silent=True)
+
+        if new_json_asset is False:
+            raise CairisHTTPError(
+                status_code=httplib.BAD_REQUEST,
+                message='The request body could not be converted to a JSON object.' +
+                        '''Check if the request content type is 'application/json' ''' +
+                        'and that the JSON string is well-formed',
+                status='Unreadable JSON data'
+            )
+
+        asset = json_deserialize(new_json_asset, 'asset')
+
+        try:
+            db_proxy.nameCheck(asset.theName, 'asset')
+        except ARM.ARMException, errorText:
+            if str(errorText.value).find(' already exists') < 0:
+                raise CairisHTTPError(
+                    status_code=httplib.CONFLICT,
+                    message=errorText.value,
+                    status='Database conflict'
+                )
+
+        assetParams = AssetParameters(asset.theName, asset.theShortCode, asset.theDescription, asset.theSignificance,
+                                      asset.theType, asset.isCritical, asset.theCriticalRationale, asset.theTags,
+                                      asset.theInterfaces, asset.theEnvironmentProperties)
+        assetParams.setId(asset.theId)
+
+        try:
+            resp = make_response('Update successful', 200)
+            resp.contenttype = 'text/plain'
+            return resp
+        except ARM.ARMException, ex:
+            raise CairisHTTPError(
+                status_code=httplib.CONFLICT,
+                message=ex.value,
+                status='Database conflict'
+            )
+
 class AssetByIdAPI(Resource):
     # region Swagger Doc
     @swagger.operation(
@@ -271,7 +354,10 @@ class AssetModelAPI(Resource):
         environment = request.args.get('environment', None)
 
         if environment is None:
-            raise CairisHTTPError(405, message='Environment not defined')
+            raise CairisHTTPError(
+                status_code=405,
+                message='Environment not defined'
+            )
 
         db_proxy = validate_proxy(session, session_id)
         fontName, fontSize, apFontName = validate_fonts(session, session_id)
@@ -290,6 +376,7 @@ class AssetModelAPI(Resource):
         return resp
 
 class AssetEnvironmentPropertiesAPI(Resource):
+    #region Swagger Doc
     @swagger.operation(
         notes='Get the environment properties for a specific asset',
         nickname='asset-envprops-by-id-get',

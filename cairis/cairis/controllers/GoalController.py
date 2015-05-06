@@ -1,16 +1,19 @@
-import ARM
 import httplib
-from Borg import Borg
-from CairisHTTPError import CairisHTTPError
+
 from flask import session, request, make_response
 from flask.ext.restful_swagger import swagger
 from flask_restful import Resource
+
+import ARM
+from Borg import Borg
+from exceptions.CairisHTTPError import CairisHTTPError
+from controllers import EnvironmentController
 from GoalParameters import GoalParameters
 from KaosModel import KaosModel
-from controllers import EnvironmentController
 from tools.JsonConverter import json_serialize, json_deserialize
 from tools.ModelDefinitions import GoalModel as SwaggerGoalModel
 from tools.SessionValidator import validate_proxy, validate_fonts
+
 
 __author__ = 'Robin Quetin'
 
@@ -249,12 +252,12 @@ class GoalByIdAPI(Resource):
                     status='Goal not found')
 
         goalParams = GoalParameters(goal.theName, goal.originator(). goal.tags(), goal.environmentProperties())
+        goalParams.setId(goal.theId)
 
         try:
-            resp_dict = dict()
-            resp_dict['goal_id'] = db_proxy.updateGoal(goalParams, id=id)
-            resp = make_response(json_serialize(resp_dict), 200)
-            resp.contenttype = 'application/json'
+            db_proxy.updateGoal(goalParams)
+            resp = make_response('Update successful', 200)
+            resp.contenttype = 'text/plain'
             return resp
         except ARM.ARMException, ex:
             raise CairisHTTPError(httplib.CONFLICT, ex.value, 'Database conflict')

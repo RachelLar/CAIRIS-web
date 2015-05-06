@@ -2,10 +2,12 @@ import httplib
 from tempfile import mkstemp
 from os import close as fd_close
 from os import remove as remove_file
+
 from flask import make_response, request, session
-from flask.ext.restful import abort, Resource
+from flask.ext.restful import Resource
 from flask_restful_swagger import swagger
-from CairisHTTPError import CairisHTTPError
+
+from exceptions.CairisHTTPError import CairisHTTPError
 from tools.ModelDefinitions import CImportParams
 from tools.SessionValidator import validate_proxy
 import cimport

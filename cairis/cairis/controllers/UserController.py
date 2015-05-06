@@ -1,11 +1,14 @@
 import httplib
+
 from flask.ext.restful_swagger import swagger
-from CairisHTTPError import CairisHTTPError
-from Borg import Borg
 from flask import request, make_response, session
 from flask.ext.restful import Resource
+
+from exceptions.CairisHTTPError import CairisHTTPError
+from Borg import Borg
 from tools.ModelDefinitions import UserConfigModel
 from tools.SessionValidator import validate_proxy
+
 
 __author__ = 'Robin Quetin'
 

@@ -1,7 +1,8 @@
 import httplib
+
 from ARM import DatabaseProxyException
 from Borg import Borg
-from CairisHTTPError import CairisHTTPError
+from exceptions.CairisHTTPError import CairisHTTPError
 from MySQLDatabaseProxy import MySQLDatabaseProxy
 
 

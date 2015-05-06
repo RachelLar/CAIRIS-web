@@ -1,13 +1,16 @@
 import logging
 import os
-from Borg import Borg
-from CairisHTTPError import CairisHTTPError
-from controllers import AssetController, CImportController, DimensionController, EnvironmentController, GoalController, RequirementController, UserController
-from flask import Flask, session, make_response, request, got_request_exception
+import httplib
+
+from flask import Flask, session, make_response, request
 from flask.ext.cors import CORS
 from flask.ext.restful import Api
 from flask.ext.restful_swagger import swagger
-import httplib
+
+from Borg import Borg
+from exceptions.CairisHTTPError import CairisHTTPError
+from controllers import AssetController, CImportController, DimensionController, EnvironmentController, GoalController, RequirementController, UserController
+
 
 __author__ = 'Robin Quetin'
 ''' This module uses CherryPy (tested using 3.6.0) & Routes (tested using 1.13) '''

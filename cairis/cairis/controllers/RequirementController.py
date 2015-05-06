@@ -1,12 +1,15 @@
 import httplib
-from flask import session, request, make_response, Blueprint
-from flask.ext.restful import Resource, Api
+
+from flask import session, request, make_response
+from flask.ext.restful import Resource
 from flask.ext.restful_swagger import swagger
-from CairisHTTPError import CairisHTTPError
+
+from exceptions.CairisHTTPError import CairisHTTPError
 from Requirement import Requirement
 from tools.ModelDefinitions import RequirementModel
 from tools.SessionValidator import validate_proxy
 from tools.JsonConverter import json_serialize, json_deserialize
+
 
 __author__ = 'Robin Quetin'
 
