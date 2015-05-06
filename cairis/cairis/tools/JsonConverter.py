@@ -1,14 +1,23 @@
+import json
+from json import dumps, loads
+
 from flask import session
 from jsonpickle import encode as serialize
 from jsonpickle import decode as deserialize
-from json import dumps, loads
+
 from Asset import Asset
 from Borg import Borg
 from Goal import Goal
 from Requirement import Requirement
 
+
 __author__ = 'Robin Quetin'
 
+conv_terms = {
+    'py/object': '__python_obj__',
+    'py/id': '__python_id__',
+    'py/tuple': '__python_tuple__'
+}
 
 def json_serialize(obj, pretty_printing=False, session_id=None):
     """
@@ -30,9 +39,14 @@ def json_serialize(obj, pretty_printing=False, session_id=None):
         pretty_printing = s.get('jsonPrettyPrint', False)
 
     if pretty_printing:
-        return dumps(loads(serialize(obj, unpicklable=False)), indent=4)
+        json_string = dumps(loads(serialize(obj)), indent=4)
     else:
-        return serialize(obj, unpicklable=False)
+        json_string = serialize(obj)
+
+    for key in conv_terms:
+        json_string = json_string.replace(key, conv_terms[key])
+
+    return json_string
 
 def json_deserialize(string, class_name=None):
     """
@@ -44,15 +58,24 @@ def json_deserialize(string, class_name=None):
     :return: Returns a dictionary or a class instance depending on the target class chosen
     :rtype: dict|Asset|Requirement
     """
-    dict = deserialize(string)
-    if class_name == 'asset':
-        return deserialize_asset(dict)
-    elif class_name == 'goal':
-        return deserialize_goal(dict)
-    elif class_name == 'requirement':
-        return deserialize_requirement(dict)
-    else:
-        return dict
+
+    if isinstance(string, str):
+        for key in conv_terms:
+            string = string.replace(conv_terms[key], key)
+
+    try:
+        dict = deserialize(string, backend=json.__name__)
+        if class_name == 'asset':
+            return deserialize_asset(dict)
+        elif class_name == 'goal':
+            return deserialize_goal(dict)
+        elif class_name == 'requirement':
+            return deserialize_requirement(dict)
+        else:
+            return dict
+    except Exception as ex:
+        from CairisHTTPError import handle_exception
+        handle_exception(ex)
 
 def deserialize_asset(dict):
     asset = Asset(

@@ -1,9 +1,12 @@
 import httplib
+
 from flask import request, make_response
+from werkzeug.exceptions import HTTPException
+
 from ARM import ARMException, DatabaseProxyException
 from Borg import Borg
 from tools.JsonConverter import json_serialize
-from werkzeug.exceptions import HTTPException
+
 
 __author__ = 'Robin Quetin'
 
@@ -20,12 +23,15 @@ def handle_exception(ex):
         raise ARMHTTPError(ex)
     elif isinstance(ex, LookupError):
         raise MissingParameterHTTPError(exception=ex)
-    else:
-        raise CairisHTTPError(
-            status_code=httplib.INTERNAL_SERVER_ERROR,
-            message=str(ex.message),
-            status='Undefined error'
-        )
+    elif isinstance(ex, TypeError):
+        if ex.message.find('decode() argument 1 must be string, not None') > -1:
+            raise MalformedJSONHTTPError()
+
+    raise CairisHTTPError(
+        status_code=httplib.INTERNAL_SERVER_ERROR,
+        message=str(ex.message),
+        status='Undefined error'
+    )
 
 class CairisHTTPError(HTTPException):
     def __init__(self, status_code, message, status='Invalid input'):
@@ -35,7 +41,6 @@ class CairisHTTPError(HTTPException):
         self.status = status
         self.valid_methods = ['GET', 'POST', 'PUT', 'DELETE']
         self.__setattr__('code', status_code)
-        self.__setattr__('data', {'status': status_code, 'message': message})
 
         accept_header = request.headers.get('Accept', 'application/json')
         if accept_header.find('text/html') > -1:
@@ -46,9 +51,11 @@ class CairisHTTPError(HTTPException):
     def handle_exception_html(self):
         b = Borg()
         message = b.template_generator.prepare_message(self.message)
+        self.__setattr__('data', message)
         return b.template_generator.serve_result('common.error', msg=message, code=self.status_code, title=self.status)
 
     def handle_exception_json(self):
+        self.__setattr__('data', {'message': self.message, 'code': self.status_code, 'status': self.status})
         return json_serialize({'message': self.message, 'code': self.status_code, 'status': self.status})
 
 class ARMHTTPError(CairisHTTPError):
@@ -79,12 +86,13 @@ class MissingParameterHTTPError(CairisHTTPError):
         :param exception: The LookupError instance that was raised
         :type exception: LookupError
         :param param_names: A collection of parameter names that are required
-        :type param_names: list|set|array
+        :type param_names: collections.Iterable
         """
         if exception is not None:
             msg = str(exception)
         else:
-            msg = 'One or more parameters are missing. Please check your request if it contains all the required parameters.'
+            msg = 'One or more parameters are missing. '+\
+                  'Please check your request if it contains all the required parameters.'
 
         if param_names is not None:
             msg += '\nRequired parameters:'
