@@ -1,10 +1,31 @@
 import httplib
 from flask import request, make_response
+from ARM import ARMException, DatabaseProxyException
 from Borg import Borg
 from tools.JsonConverter import json_serialize
 from werkzeug.exceptions import HTTPException
 
 __author__ = 'Robin Quetin'
+
+
+def handle_exception(ex):
+    """
+    Handles a undefined exception in the most correct way possible.
+    :param ex: The caught exception
+    :type ex: Exception
+    """
+    if isinstance(ex, ARMException):
+        raise ARMHTTPError(ex)
+    elif isinstance(ex, DatabaseProxyException):
+        raise ARMHTTPError(ex)
+    elif isinstance(ex, LookupError):
+        raise MissingParameterHTTPError(exception=ex)
+    else:
+        raise CairisHTTPError(
+            status_code=httplib.INTERNAL_SERVER_ERROR,
+            message=str(ex.message),
+            status='Undefined error'
+        )
 
 class CairisHTTPError(HTTPException):
     def __init__(self, status_code, message, status='Invalid input'):
