@@ -1,4 +1,3 @@
-import httplib
 from flask import session
 from jsonpickle import encode as serialize
 from jsonpickle import decode as deserialize
@@ -31,9 +30,9 @@ def json_serialize(obj, pretty_printing=False, session_id=None):
         pretty_printing = s.get('jsonPrettyPrint', False)
 
     if pretty_printing:
-        return dumps(loads(serialize(obj)), indent=4)
+        return dumps(loads(serialize(obj, unpicklable=False)), indent=4)
     else:
-        return serialize(obj)
+        return serialize(obj, unpicklable=False)
 
 def json_deserialize(string, class_name=None):
     """
