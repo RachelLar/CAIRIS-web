@@ -337,8 +337,14 @@ class RequirementUpdateAPI(Resource):
 
         if json_dict is False:
             raise MalformedJSONHTTPError()
+        json_string = json_serialize(json_dict)
 
-        reqObj = json_deserialize(json_dict, 'requirement')
+        reqObj = json_deserialize(json_string, 'requirement')
+        if not isinstance(reqObj, Requirement):
+            raise MissingParameterHTTPError()
+
+        reqObj.incrementVersion()
+
         try:
             db_proxy.updateRequirement(reqObj)
         except Exception as ex:

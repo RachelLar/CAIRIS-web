@@ -91,7 +91,7 @@ class MissingParameterHTTPError(CairisHTTPError):
         if exception is not None:
             msg = str(exception)
         else:
-            msg = 'One or more parameters are missing. '+\
+            msg = 'One or more parameters are missing or invalid. '+\
                   'Please check your request if it contains all the required parameters.'
 
         if param_names is not None:

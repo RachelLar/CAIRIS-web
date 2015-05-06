@@ -64,15 +64,16 @@ def json_deserialize(string, class_name=None):
             string = string.replace(conv_terms[key], key)
 
     try:
-        dict = deserialize(string, backend=json.__name__)
-        if class_name == 'asset':
-            return deserialize_asset(dict)
-        elif class_name == 'goal':
-            return deserialize_goal(dict)
-        elif class_name == 'requirement':
-            return deserialize_requirement(dict)
-        else:
-            return dict
+        obj = deserialize(string)
+        if isinstance(obj, dict):
+            if class_name == 'asset':
+                obj = deserialize_asset(dict)
+            elif class_name == 'goal':
+                obj = deserialize_goal(dict)
+            elif class_name == 'requirement':
+                obj = deserialize_requirement(dict)
+
+        return obj
     except Exception as ex:
         from CairisHTTPError import handle_exception
         handle_exception(ex)

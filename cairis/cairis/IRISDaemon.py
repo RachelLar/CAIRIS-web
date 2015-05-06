@@ -101,7 +101,7 @@ def start():
     api.add_resource(RequirementController.RequirementsAPI, '/api/requirements')
     api.add_resource(RequirementController.RequirementsByAssetAPI, '/api/requirements/asset/<string:name>')
     api.add_resource(RequirementController.RequirementsByEnvironmentAPI, '/api/requirements/environment/<string:name>')
-    api.add_resource(RequirementController.RequirementByIdAPI, '/api/requirements/id/{id}')
+    api.add_resource(RequirementController.RequirementByIdAPI, '/api/requirements/id/<int:id>')
     api.add_resource(RequirementController.RequirementUpdateAPI, '/api/requirements/update')
 
     # User routes
