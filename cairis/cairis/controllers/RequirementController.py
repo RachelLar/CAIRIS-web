@@ -1,8 +1,10 @@
 import httplib
+
+from CairisHTTPError import MalformedJSONHTTPError, MissingParameterHTTPError, handle_exception
 from flask import session, request, make_response
+
 from flask.ext.restful import Resource
 from flask.ext.restful_swagger import swagger
-from CairisHTTPError import MalformedJSONHTTPError
 from Requirement import Requirement
 from tools.ModelDefinitions import RequirementModel
 from tools.SessionValidator import validate_proxy
@@ -61,6 +63,90 @@ class RequirementsAPI(Resource):
         resp.headers['Access-Control-Allow-Origin'] = "*"
         return resp
 
+    # region Swagger Doc
+    @swagger.operation(
+        notes='Creates a new requirement',
+        nickname='requirements-post',
+        parameters=[
+            {
+                "name": "body",
+                "description": "The serialized version of the new requirement to be added",
+                "required": True,
+                "allowMultiple": False,
+                "type": RequirementModel.__name__,
+                "paramType": "body"
+            },
+            {
+                "name": "asset",
+                "description": "The name of the asset which is associated to the new requirement",
+                "required": False,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "paramType": "query"
+            },
+            {
+                "name": "environment",
+                "description": "The name of the environment which is associated to the new requirement",
+                "required": False,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "paramType": "query"
+            },
+            {
+                "name": "session_id",
+                "description": "The ID of the user's session",
+                "required": False,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "paramType": "query"
+            }
+        ],
+        responseMessages=[
+            {
+                'code': httplib.BAD_REQUEST,
+                'message': 'One or more attributes are missing'
+            },
+            {
+                'code': httplib.CONFLICT,
+                'message': 'Some problems were found during the name check'
+            },
+            {
+                'code': httplib.CONFLICT,
+                'message': 'A database error has occurred'
+            }
+        ]
+    )
+    # endregion
+    def post(self):
+        session_id = request.args.get('session_id', None)
+        asset_name = request.args.get('asset', None)
+        environment_name = request.args.get('environment', None)
+        json_new_req = request.get_json(silent=True)
+        db_proxy = validate_proxy(session, session_id)
+
+        if json_new_req is False:
+            raise MalformedJSONHTTPError()
+
+        new_req = json_deserialize(json_new_req)
+
+        if asset_name is not None:
+            try:
+                db_proxy.addRequirement(new_req, assetName=asset_name, isAsset=True)
+            except Exception as ex:
+                handle_exception(ex)
+        elif environment_name is not None:
+            try:
+                db_proxy.addRequirement(new_req, assetName=environment_name, isAsset=False)
+            except Exception as ex:
+                handle_exception(ex)
+        else:
+            raise MissingParameterHTTPError(param_names=['asset', 'environment'])
+
+        resp = make_response('Successfully added new requirement', httplib.OK)
+        resp.contenttype = 'text/plain'
+        return resp
+
+
 class RequirementsByAssetAPI(Resource):
     # region Swagger Doc
     @swagger.operation(
@@ -101,14 +187,20 @@ class RequirementsByAssetAPI(Resource):
         db_proxy = validate_proxy(session, session_id)
 
         if ordered == 1:
-            reqs = db_proxy.getOrderedRequirements(name, 1)
+            try:
+                reqs = db_proxy.getOrderedRequirements(name, 1)
+            except Exception as ex:
+                handle_exception(ex)
         else:
-            reqs = db_proxy.getRequirements(name, 1)
+            try:
+                reqs = db_proxy.getRequirements(name, 1)
+            except Exception as ex:
+                handle_exception(ex)
 
         resp = make_response(json_serialize(reqs, session_id=session_id), httplib.OK)
         resp.headers['Content-type'] = 'application/json'
-        resp.headers['Access-Control-Allow-Origin'] = "*"
         return resp
+
 
 class RequirementsByEnvironmentAPI(Resource):
     # region Swagger Doc
@@ -150,14 +242,20 @@ class RequirementsByEnvironmentAPI(Resource):
         db_proxy = validate_proxy(session, session_id)
 
         if ordered == 1:
-            reqs = db_proxy.getOrderedRequirements(name, 0)
+            try:
+                reqs = db_proxy.getOrderedRequirements(name, 0)
+            except Exception as ex:
+                handle_exception(ex)
         else:
-            reqs = db_proxy.getRequirements(name, 0)
+            try:
+                reqs = db_proxy.getRequirements(name, 0)
+            except Exception as ex:
+                handle_exception(ex)
 
         resp = make_response(json_serialize(reqs, session_id=session_id), httplib.OK)
         resp.headers['Content-type'] = 'application/json'
-        resp.headers['Access-Control-Allow-Origin'] = "*"
         return resp
+
 
 class RequirementByIdAPI(Resource):
     # region Swagger Doc
@@ -187,12 +285,15 @@ class RequirementByIdAPI(Resource):
         session_id = request.args.get('session_id', None)
         db_proxy = validate_proxy(session, session_id)
 
-        req = db_proxy.getRequirement(id)
+        try:
+            req = db_proxy.getRequirement(id)
+        except Exception as ex:
+            handle_exception(ex)
 
         resp = make_response(json_serialize(req, session_id=session_id), httplib.OK)
         resp.headers['Content-type'] = 'application/json'
-        resp.headers['Access-Control-Allow-Origin'] = "*"
         return resp
+
 
 class RequirementUpdateAPI(Resource):
     # region Swagger Docs
@@ -201,7 +302,7 @@ class RequirementUpdateAPI(Resource):
         nickname='asset-model-get',
         parameters=[
             {
-                'name':'body',
+                'name': 'body',
                 "description": "Options to be passed to the import tool",
                 "required": True,
                 "allowMultiple": False,
@@ -238,7 +339,10 @@ class RequirementUpdateAPI(Resource):
             raise MalformedJSONHTTPError()
 
         reqObj = json_deserialize(json_dict, 'requirement')
-        db_proxy.updateRequirement(reqObj)
+        try:
+            db_proxy.updateRequirement(reqObj)
+        except Exception as ex:
+            handle_exception(ex)
 
         resp = make_response('Requirement successfully updated', httplib.OK)
         resp.headers['Content-type'] = 'text/plain'
