@@ -5,6 +5,7 @@ from jsonpickle import decode as deserialize
 from json import dumps, loads
 from Asset import Asset
 from Borg import Borg
+from Goal import Goal
 from Requirement import Requirement
 
 __author__ = 'Robin Quetin'
@@ -34,7 +35,6 @@ def json_serialize(obj, pretty_printing=False, session_id=None):
     else:
         return serialize(obj)
 
-
 def json_deserialize(string, class_name=None):
     """
     Deserializes the JSON object to the appropriate class instance.
@@ -48,17 +48,32 @@ def json_deserialize(string, class_name=None):
     dict = deserialize(string)
     if class_name == 'asset':
         return deserialize_asset(dict)
+    elif class_name == 'goal':
+        return deserialize_goal(dict)
     elif class_name == 'requirement':
         return deserialize_requirement(dict)
     else:
         return dict
 
-
 def deserialize_asset(dict):
-    asset = Asset(dict['id'], dict['name'], dict['shortCode'], dict['description'], dict['significance'], dict['type'],
-                  dict['isCritical'], dict['cRationale'], dict['tags'], dict['interfaces'], dict['envProps'])
+    asset = Asset(
+        dict['theId'],
+        dict['theName'],
+        dict['theShortCode'],
+        dict['theDescription'],
+        dict['theSignificance'],
+        dict['theType'],
+        dict['isCritical'],
+        dict['theCriticalRationale'],
+        dict['theTags'],
+        dict['theInterfaces'],
+        dict['theEnvironmentProperties']
+    )
     return asset
 
+def deserialize_goal(dict):
+    goal = Goal(dict['theId'], dict['theName'], dict['theOriginator'], dict['theTags'], dict['theEnvironmentProperties'])
+    return goal
 
 def deserialize_requirement(dict):
     req = Requirement(id=dict['theId'], label=dict['theLabel'])

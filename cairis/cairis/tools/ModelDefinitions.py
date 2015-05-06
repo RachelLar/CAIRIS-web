@@ -19,21 +19,21 @@ class AssetEnvironmentPropertiesModel(object):
 )
 class AssetModel(object):
     resource_fields = {
-        "description": fields.String,
-        "significance": fields.String,
-        "id": fields.Integer,
-        "tags": fields.List(fields.String),
-        "cRationale": fields.String,
-        "interfaces": fields.List(fields.String),
-        "type": fields.String,
-        "name": fields.String,
+        "theDescription": fields.String,
+        "theSignificance": fields.String,
+        "theId": fields.Integer,
+        "theTags": fields.List(fields.String),
+        "theCriticalRationale": fields.String,
+        "theInterfaces": fields.List(fields.String),
+        "theType": fields.String,
+        "theName": fields.String,
         "isCritical": fields.Integer,
-        "shortcode": fields.String,
-        "envProps": fields.List(fields.Nested(AssetEnvironmentPropertiesModel.resource_fields))
+        "theShortCode": fields.String,
+        "theEnvironmentProperties": fields.List(fields.Nested(AssetEnvironmentPropertiesModel.resource_fields))
     }
     required = [
-        "description", "significance", "id", "tags", "cRationale",
-        "interfaces", "type", "name", "isCritical", "shortcode", "envProps"
+        "theDescription", "theSignificance", "theId", "theTags", "theCriticalRationale",
+        "theInterfaces", "theType", "theName", "isCritical", "theShortCode", "theEnvironmentProperties"
     ]
 
 @swagger.model
@@ -77,7 +77,17 @@ class GoalEnvironmentProperties(object):
 
 @swagger.model
 @swagger.nested(
-    theEnvironmentDictionary=GoalEnvironmentProperties.__name__,
+    _key_=GoalEnvironmentProperties.__name__
+)
+class GoalEnvironmentPropertiesDictionary(object):
+    resource_fields = {
+        "_key_": fields.Nested(GoalEnvironmentProperties.resource_fields)
+    }
+    required = ["_key_"]
+
+@swagger.model
+@swagger.nested(
+    theEnvironmentDictionary=GoalEnvironmentPropertiesDictionary.__name__,
     theEnvironmentProperties=GoalEnvironmentProperties.__name__
 )
 class GoalModel(object):
@@ -90,6 +100,7 @@ class GoalModel(object):
         "theOriginator": fields.String,
         "theTags": fields.List(fields.String)
     }
+    required = ["theColour","theEnvironmentProperties","theId","theName","theOriginator","theTags"]
 
 @swagger.model
 class RequirementAttributesModel(object):
