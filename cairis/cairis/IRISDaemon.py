@@ -8,7 +8,7 @@ from flask.ext.restful import Api
 from flask.ext.restful_swagger import swagger
 
 from Borg import Borg
-from exceptions.CairisHTTPError import CairisHTTPError
+from CairisHTTPError import CairisHTTPError
 from controllers import AssetController, CImportController, DimensionController, EnvironmentController, GoalController, RequirementController, UserController
 
 
@@ -26,7 +26,7 @@ def index():
     if session.has_key('session_id'):
         return b.template_generator.serve_result('index_page')
     else:
-        resp = make_response('Moved temporarily', 302)
+        resp = make_response('Moved temporarily', httplib.TEMPORARY_REDIRECT)
         resp.headers['Location'] = '/user/config.html'
         return resp
 
@@ -37,7 +37,7 @@ def user_config_get():
     elif request.method == 'POST':
         return UserController.handle_user_config_form()
     else:
-        raise CairisHTTPError(404, message='Not found')
+        raise CairisHTTPError(httplib.NOT_FOUND, message='Not found')
 
 @app.errorhandler(CairisHTTPError)
 def handle_error(error):

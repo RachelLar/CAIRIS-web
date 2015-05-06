@@ -11,7 +11,7 @@ from AssetEnvironmentProperties import AssetEnvironmentProperties
 from AssetModel import AssetModel
 from AssetParameters import AssetParameters
 from Borg import Borg
-from exceptions.CairisHTTPError import CairisHTTPError
+from CairisHTTPError import MalformedJSONHTTPError, ARMHTTPError, CairisHTTPError
 from tools.JsonConverter import json_serialize, json_deserialize
 from tools.ModelDefinitions import AssetModel as SwaggerAssetModel
 from tools.SessionValidator import validate_proxy, validate_fonts
@@ -38,7 +38,7 @@ class AssetsAPI(Resource):
         ],
         responseMessages=[
             {
-                "code": 400,
+                "code": httplib.BAD_REQUEST,
                 "message": "The database connection was not properly set up"
             }
         ]
@@ -97,18 +97,14 @@ class AssetsAPI(Resource):
         new_json_asset = request.get_json(silent=True)
 
         if new_json_asset is False:
-            raise CairisHTTPError(httplib.BAD_REQUEST,
-                                  'The request body could not be converted to a JSON object.' +
-                                  '''Check if the request content type is 'application/json' ''' +
-                                  'and that the JSON string is well-formed',
-                                  'Unreadable JSON data')
+            raise MalformedJSONHTTPError()
 
         asset = json_deserialize(new_json_asset, 'asset')
 
         try:
             db_proxy.nameCheck(asset.theName, 'asset')
-        except ARM.ARMException, errorText:
-            raise CairisHTTPError(httplib.CONFLICT, errorText.value, 'Database conflict')
+        except ARM.ARMException as ex:
+            raise ARMHTTPError(ex)
 
         assetParams = AssetParameters(asset.theName, asset.theShortCode, asset.theDescription, asset.theSignificance,
                                       asset.theType, asset.isCritical, asset.theCriticalRationale, asset.theTags,
@@ -117,11 +113,11 @@ class AssetsAPI(Resource):
         try:
             resp_dict = dict()
             resp_dict['asset_id'] = db_proxy.addAsset(assetParams)
-            resp = make_response(json_serialize(resp_dict), 200)
+            resp = make_response(json_serialize(resp_dict), httplib.OK)
             resp.contenttype = 'application/json'
             return resp
-        except ARM.ARMException, ex:
-            raise CairisHTTPError(httplib.CONFLICT, ex.value, 'Database conflict')
+        except ARM.ARMException as ex:
+            raise ARMHTTPError(ex)
 
 class AssetByNameAPI(Resource):
     # region Swagger Doc
@@ -141,7 +137,7 @@ class AssetByNameAPI(Resource):
         ],
         responseMessages=[
             {
-                "code": 400,
+                "code": httplib.BAD_REQUEST,
                 "message": "The database connection was not properly set up"
             }
         ]
@@ -204,25 +200,15 @@ class AssetByNameAPI(Resource):
         new_json_asset = request.get_json(silent=True)
 
         if new_json_asset is False:
-            raise CairisHTTPError(
-                status_code=httplib.BAD_REQUEST,
-                message='The request body could not be converted to a JSON object.' +
-                        '''Check if the request content type is 'application/json' ''' +
-                        'and that the JSON string is well-formed',
-                status='Unreadable JSON data'
-            )
+            raise MalformedJSONHTTPError()
 
         asset = json_deserialize(new_json_asset, 'asset')
 
         try:
             db_proxy.nameCheck(asset.theName, 'asset')
-        except ARM.ARMException, errorText:
-            if str(errorText.value).find(' already exists') < 0:
-                raise CairisHTTPError(
-                    status_code=httplib.CONFLICT,
-                    message=errorText.value,
-                    status='Database conflict'
-                )
+        except ARM.ARMException as ex:
+            if str(ex.value).find(' already exists') < 0:
+                raise ARMHTTPError(ex)
 
         assetParams = AssetParameters(asset.theName, asset.theShortCode, asset.theDescription, asset.theSignificance,
                                       asset.theType, asset.isCritical, asset.theCriticalRationale, asset.theTags,
@@ -230,15 +216,11 @@ class AssetByNameAPI(Resource):
         assetParams.setId(asset.theId)
 
         try:
-            resp = make_response('Update successful', 200)
+            resp = make_response('Update successful', httplib.OK)
             resp.contenttype = 'text/plain'
             return resp
-        except ARM.ARMException, ex:
-            raise CairisHTTPError(
-                status_code=httplib.CONFLICT,
-                message=ex.value,
-                status='Database conflict'
-            )
+        except ARM.ARMException as ex:
+            raise ARMHTTPError(ex)
 
 class AssetByIdAPI(Resource):
     # region Swagger Doc
@@ -258,7 +240,7 @@ class AssetByIdAPI(Resource):
         ],
         responseMessages=[
             {
-                "code": 400,
+                "code": httplib.BAD_REQUEST,
                 "message": "The database connection was not properly set up"
             }
         ]
@@ -299,7 +281,7 @@ class AssetNamesAPI(Resource):
         ],
         responseMessages=[
             {
-                "code": 400,
+                "code": httplib.BAD_REQUEST,
                 "message": "The database connection was not properly set up"
             }
         ]
@@ -340,7 +322,7 @@ class AssetModelAPI(Resource):
         ],
         responseMessages=[
             {
-                "code": 400,
+                "code": httplib.BAD_REQUEST,
                 "message": "The database connection was not properly set up"
             }
         ]
@@ -366,7 +348,7 @@ class AssetModelAPI(Resource):
             fontSize=fontSize)
         dot_code = associations.graph()
 
-        resp = make_response(model_generator.generate(dot_code), 200)
+        resp = make_response(model_generator.generate(dot_code), httplib.OK)
         accept_header = request.headers.get('Accept', 'image/svg+xml')
         if accept_header.find('text/plain') > -1:
             resp.headers['Content-type'] = 'text/plain'
@@ -392,7 +374,7 @@ class AssetEnvironmentPropertiesAPI(Resource):
         ],
         responseMessages=[
             {
-                "code": 400,
+                "code": httplib.BAD_REQUEST,
                 "message": "The database connection was not properly set up"
             }
         ]

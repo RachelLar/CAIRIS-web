@@ -1,11 +1,10 @@
 import httplib
-
 from flask.ext.restful_swagger import swagger
 from flask import request, make_response, session
 from flask.ext.restful import Resource
 
-from exceptions.CairisHTTPError import CairisHTTPError
 from Borg import Borg
+from CairisHTTPError import MissingParameterHTTPError, MalformedJSONHTTPError
 from tools.ModelDefinitions import UserConfigModel
 from tools.SessionValidator import validate_proxy
 
@@ -35,7 +34,7 @@ def set_dbproxy(conf):
 
 def serve_user_config_form():
     b = Borg()
-    resp = make_response(b.template_generator.serve_result('user_config', action_url=request.full_path), 200)
+    resp = make_response(b.template_generator.serve_result('user_config', action_url=request.full_path), httplib.OK)
     resp.headers['Content-type'] = 'text/html'
     resp.headers['Access-Control-Allow-Origin'] = "*"
     return resp
@@ -57,17 +56,19 @@ def handle_user_config_form():
             'Configuration successfully updated',
             json_serialize(s, session_id=s['session_id']))'''
 
-        resp = make_response(debug + 'session_id={0}'.format(s['session_id']), 200)
+        resp = make_response(debug + 'session_id={0}'.format(s['session_id']), httplib.OK)
         resp.headers['Content-type'] = 'text/plain'
         resp.headers['Access-Control-Allow-Origin'] = "*"
         return resp
-    except KeyError:
-        return CairisHTTPError(405, message='One or more settings are missing')
+    except KeyError as ex:
+        return MissingParameterHTTPError(exception=ex)
 
 class UserConfigAPI(Resource):
+    # region Swagger Doc
     @swagger.operation(
         notes='Sets up the user session',
         nickname='user-config-post',
+        responseClass=str.__name__,
         parameters=[
             {
                 'name': 'body',
@@ -80,34 +81,31 @@ class UserConfigAPI(Resource):
         ],
         responseMessages=[
             {
-                'code': 400,
+                'code': httplib.BAD_REQUEST,
                 'message': 'The method is not callable without setting up a database connection'
             },
             {
-                'code': 405,
+                'code': httplib.BAD_REQUEST,
                 'message': 'The provided parameters are invalid'
             }
         ]
     )
+    # endregion
     def post(self):
         try:
             b = Borg()
             dict_form = request.get_json(silent=True)
 
             if dict_form is False:
-                raise CairisHTTPError(httplib.BAD_REQUEST,
-                                      'The request body could not be converted to a JSON object.' +
-                                      '''Check if the request content type is 'application/json' ''' +
-                                      'and that the JSON string is well-formed',
-                                      'Unreadable JSON data')
+                raise MalformedJSONHTTPError()
 
             b.logger.info(dict_form)
             s = set_dbproxy(dict_form)
 
-            resp = make_response('session_id={0}'.format(s['session_id']), 200)
+            resp = make_response('session_id={0}'.format(s['session_id']), httplib.OK)
             resp.headers['Content-type'] = 'text/plain'
             resp.headers['Access-Control-Allow-Origin'] = "*"
             return resp
 
         except KeyError:
-            return CairisHTTPError(405, message='One or more settings are missing')
+            return MissingParameterHTTPError()

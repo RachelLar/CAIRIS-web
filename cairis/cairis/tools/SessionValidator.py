@@ -2,8 +2,8 @@ import httplib
 
 from ARM import DatabaseProxyException
 from Borg import Borg
-from exceptions.CairisHTTPError import CairisHTTPError
 from MySQLDatabaseProxy import MySQLDatabaseProxy
+from CairisHTTPError import MissingParameterHTTPError, CairisHTTPError
 
 
 __author__ = 'Robin Quetin'
@@ -11,10 +11,7 @@ __author__ = 'Robin Quetin'
 
 def check_required_keys(json_dict, required):
     if not all(reqKey in json_dict for reqKey in required):
-        raise CairisHTTPError(
-            status_code=httplib.BAD_REQUEST,
-            message='Some required parameters are missing.'
-        )
+        raise MissingParameterHTTPError(param_names=required)
 
 def validate_proxy(session, id, conf=None):
     """

@@ -138,6 +138,29 @@ class TemplateGenerator:
     self.lookup = mako.lookup.TemplateLookup(directories=[b.templateDir], module_directory=b.templateDir)
     self.templates['index_page'] = self.lookup.get_template("index.mako")
 
+  def prepare_message(self, message):
+    """
+    Converts regular text to HTML formatted text
+    :type message: str
+    """
+    lines = message.split('\n')
+    in_list = False
+
+    for idx in range(0, len(lines)):
+        line = lines[idx]
+        if line.startswith('*'):
+            line = line.lstrip(('*', ' '))
+            if not in_list:
+                in_list = True
+                line = '<ul>\n' + line
+            line = '<li>'+line+'</li>'
+        else:
+            if in_list:
+                in_list = False
+                line = '</ul>\n'+line
+            line = '<p>'+line+'</p>'
+        lines[idx] = line
+
   def serve_result(self, template_name, **kwargs):
     # index.head.html (templatename) -> index_head (template_key)
     """

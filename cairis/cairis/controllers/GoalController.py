@@ -6,7 +6,8 @@ from flask_restful import Resource
 
 import ARM
 from Borg import Borg
-from exceptions.CairisHTTPError import CairisHTTPError
+from CairisHTTPError import ARMHTTPError, CairisHTTPError
+from CairisHTTPError import MalformedJSONHTTPError
 from controllers import EnvironmentController
 from GoalParameters import GoalParameters
 from KaosModel import KaosModel
@@ -36,7 +37,7 @@ class GoalsAPI(Resource):
         ],
         responseMessages=[
             {
-                "code": 400,
+                "code": httplib.BAD_REQUEST,
                 "message": "The database connection was not properly set up"
             }
         ]
@@ -94,29 +95,25 @@ class GoalsAPI(Resource):
         db_proxy = validate_proxy(session, session_id)
         new_json_goal = request.get_json(silent=True)
         if new_json_goal is False:
-            raise CairisHTTPError(httplib.BAD_REQUEST,
-                                  'The request body could not be converted to a JSON object.' +
-                                  '''Check if the request content type is 'application/json' ''' +
-                                  'and that the JSON string is well-formed',
-                                  'Unreadable JSON data')
+            raise MalformedJSONHTTPError()
 
         goal = json_deserialize(new_json_goal, 'goal')
 
         try:
             db_proxy.nameCheck(goal.theName, 'goal')
-        except ARM.ARMException, errorText:
-            raise CairisHTTPError(httplib.CONFLICT, errorText.value, 'Database conflict')
+        except ARM.ARMException as ex:
+            raise ARMHTTPError(ex)
 
         goalParams = GoalParameters(goal.theName, goal.originator(). goal.tags(), goal.environmentProperties())
 
         try:
             resp_dict = dict()
             resp_dict['goal_id'] = db_proxy.addGoal(goalParams)
-            resp = make_response(json_serialize(resp_dict), 200)
+            resp = make_response(json_serialize(resp_dict), httplib.OK)
             resp.contenttype = 'application/json'
             return resp
-        except ARM.ARMException, ex:
-            raise CairisHTTPError(httplib.CONFLICT, ex.value, 'Database conflict')
+        except ARM.ARMException as ex:
+            raise ARMHTTPError(ex)
 
 class ColouredGoalsAPI(Resource):
     #region Swagger Doc
@@ -136,7 +133,7 @@ class ColouredGoalsAPI(Resource):
         ],
         responseMessages=[
             {
-                "code": 400,
+                "code": httplib.BAD_REQUEST,
                 "message": "The database connection was not properly set up"
             }
         ]
@@ -169,7 +166,7 @@ class GoalByIdAPI(Resource):
         ],
         responseMessages=[
             {
-                "code": 400,
+                "code": httplib.BAD_REQUEST,
                 "message": "The database connection was not properly set up"
             }
         ]
@@ -234,33 +231,30 @@ class GoalByIdAPI(Resource):
         db_proxy = validate_proxy(session, session_id)
         new_json_goal = request.get_json(silent=True)
         if new_json_goal is False:
-            raise CairisHTTPError(status_code=httplib.BAD_REQUEST,
-                                  message='The request body could not be converted to a JSON object.' +
-                                          '''Check if the request content type is 'application/json' ''' +
-                                          'and that the JSON string is well-formed',
-                                  status='Unreadable JSON data')
+            raise MalformedJSONHTTPError()
 
         goal = json_deserialize(new_json_goal, 'goal')
 
         try:
             db_proxy.nameCheck(goal.theName, 'goal')
-        except ARM.ARMException, errorText:
-            if str(errorText.value).find(' already exists') < 0:
+        except ARM.ARMException as ex:
+            if str(ex.value).find(' already exists') < 0:
                 raise CairisHTTPError(
                     status_code=httplib.NOT_FOUND,
                     message='The goal does not exist in the database and can therefore not be updated',
-                    status='Goal not found')
+                    status='Goal not found'
+                )
 
         goalParams = GoalParameters(goal.theName, goal.originator(). goal.tags(), goal.environmentProperties())
         goalParams.setId(goal.theId)
 
         try:
             db_proxy.updateGoal(goalParams)
-            resp = make_response('Update successful', 200)
+            resp = make_response('Update successful', httplib.OK)
             resp.contenttype = 'text/plain'
             return resp
-        except ARM.ARMException, ex:
-            raise CairisHTTPError(httplib.CONFLICT, ex.value, 'Database conflict')
+        except ARM.ARMException as ex:
+            raise ARMHTTPError(ex)
 
 class GoalByNameAPI(Resource):
     # region Swagger Doc
@@ -280,7 +274,7 @@ class GoalByNameAPI(Resource):
         ],
         responseMessages=[
             {
-                "code": 400,
+                "code": httplib.BAD_REQUEST,
                 "message": "The database connection was not properly set up"
             }
         ]
@@ -325,15 +319,15 @@ class GoalModelAPI(Resource):
         ],
         responseMessages=[
             {
-                "code": 400,
+                "code": httplib.BAD_REQUEST,
                 "message": "The database connection was not properly set up"
             },
             {
-                "code": 404,
+                "code": httplib.NOT_FOUND,
                 "message": "Environment not found"
             },
             {
-                "code": 405,
+                "code": httplib.BAD_REQUEST,
                 "message": "Environment not defined"
             }
         ]
@@ -350,7 +344,8 @@ class GoalModelAPI(Resource):
             raise CairisHTTPError(
                 status_code=httplib.BAD_REQUEST,
                 message='''The 'environment' query parameter was not provided to the API call.''',
-                status='Environment not defined')
+                status='Environment not defined'
+            )
 
         EnvironmentController.checkEnvironment(environment, session_id)
 
@@ -362,13 +357,9 @@ class GoalModelAPI(Resource):
                 font_size=fontSize)
             dot_code = associations.graph()
         except ARM.DatabaseProxyException as ex:
-            raise CairisHTTPError(
-                status_code=httplib.CONFLICT,
-                message=ex.value,
-                status='Database conflict'
-            )
+            raise ARMHTTPError(ex)
 
-        resp = make_response(model_generator.generate(dot_code), 200)
+        resp = make_response(model_generator.generate(dot_code), httplib.OK)
         accept_header = request.headers.get('Accept', 'image/svg+xml')
         if accept_header.find('text/plain') > -1:
             resp.headers['Content-type'] = 'text/plain'
