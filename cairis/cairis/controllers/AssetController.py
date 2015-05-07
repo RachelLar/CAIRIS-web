@@ -34,6 +34,15 @@ class AssetsAPI(Resource):
                 "allowMultiple": False,
                 "dataType": str.__name__,
                 "paramType": "query"
+            },
+            {
+                "name": "constraint_id",
+                "description": "An ID used to filter the assets",
+                "required": False,
+                "default": -1,
+                "allowMultiple": False,
+                "dataType": int.__name__,
+                "paramType": "query"
             }
         ],
         responseMessages=[
@@ -47,7 +56,8 @@ class AssetsAPI(Resource):
     def get(self):
         session_id = request.args.get('session_id', None)
         db_proxy = validate_proxy(session, session_id)
-        assets = db_proxy.getAssets()
+        constraint_id = request.args.get('constraint_id', -1)
+        assets = db_proxy.getAssets(constraint_id)
 
         resp = make_response(json_serialize(assets, session_id=session_id))
         resp.headers['Content-Type'] = "application/json"
