@@ -135,7 +135,17 @@ def dInitialise(configFile):
           b.logger.error(str(ex.message))
           b.webPort = 0
       elif cfgKey == 'log_level':
-        b.logLevel = cfgVal
+        log_level = cfgVal.lower()
+        if log_level == 'debug':
+            b.logLevel = logging.DEBUG
+        elif log_level == 'none':
+            b.logLevel = logging.FATAL
+        elif log_level == 'info':
+            b.logLevel = logging.INFO
+        elif log_level == 'error':
+            b.logLevel = logging.ERROR
+        else:
+            b.logLevel = logging.WARNING
       elif cfgKey == 'web_static_dir':
         b.staticDir = cfgVal
 

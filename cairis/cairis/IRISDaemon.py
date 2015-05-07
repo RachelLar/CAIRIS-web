@@ -9,7 +9,7 @@ from flask.ext.restful_swagger import swagger
 
 from Borg import Borg
 from CairisHTTPError import CairisHTTPError
-from controllers import AssetController, CImportController, DimensionController, EnvironmentController, GoalController, RequirementController, UserController
+from controllers import AssetController, CImportController, DimensionController, EnvironmentController, GoalController, RequirementController, RiskController, UserController
 
 
 __author__ = 'Robin Quetin'
@@ -71,6 +71,8 @@ def handle_exception(e):
         return handle_error(new_ex)
 
 def start():
+    b = Borg()
+
     # Asset routes
     api.add_resource(AssetController.AssetsAPI, '/api/assets')
     api.add_resource(AssetController.AssetByNameAPI, '/api/assets/name/<string:name>')
@@ -104,14 +106,20 @@ def start():
     api.add_resource(RequirementController.RequirementByIdAPI, '/api/requirements/id/<int:id>')
     api.add_resource(RequirementController.RequirementUpdateAPI, '/api/requirements/update')
 
+    # Risk routes
+    api.add_resource(RiskController.RisksAPI, '/api/risks')
+
     # User routes
     api.add_resource(UserController.UserConfigAPI, '/api/user/config')
 
-    # set the secret key.  keep this really secret:
+    # Set server specific settings
     b.logger.debug('Error handlers: {0}'.format(app.error_handler_spec))
     app.secret_key = os.urandom(24)
     app.static_folder = b.staticDir
     app.static_url_path = '/static'
+
+    logger = logging.getLogger('werkzeug')
+    logger.setLevel(b.logLevel)
     enable_debug = b.logLevel == logging.DEBUG
 
     app.run(host='0.0.0.0', port=b.webPort, debug=enable_debug)

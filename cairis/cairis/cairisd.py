@@ -21,7 +21,6 @@ import WebConfig
 
 if __name__ == '__main__':
   options = {
-    'loggingLevel': 'warning',
     'port': 0
   }
 
