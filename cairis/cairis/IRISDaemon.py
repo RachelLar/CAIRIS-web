@@ -107,7 +107,7 @@ def start():
     api.add_resource(RequirementController.RequirementUpdateAPI, '/api/requirements/update')
 
     # Risk routes
-    api.add_resource(RiskController.RisksAPI, '/api/risks')
+    #api.add_resource(RiskController.RisksAPI, '/api/risks')
 
     # User routes
     api.add_resource(UserController.UserConfigAPI, '/api/user/config')
