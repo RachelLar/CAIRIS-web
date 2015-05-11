@@ -12,6 +12,7 @@ from controllers import EnvironmentController
 from GoalParameters import GoalParameters
 from KaosModel import KaosModel
 from tools.JsonConverter import json_serialize, json_deserialize
+from tools.MessageDefinitions import GoalMessage
 from tools.ModelDefinitions import GoalModel as SwaggerGoalModel
 from tools.SessionValidator import validate_proxy, validate_fonts
 
@@ -62,7 +63,7 @@ class GoalsAPI(Resource):
                 "description": "The serialized version of the new goal to be added",
                 "required": True,
                 "allowMultiple": False,
-                "type": SwaggerGoalModel.__name__,
+                "type": GoalMessage.__name__,
                 "paramType": "body"
             },
             {
@@ -92,12 +93,13 @@ class GoalsAPI(Resource):
     #endregion
     def post(self):
         session_id = request.args.get('session_id', None)
-        db_proxy = validate_proxy(session, session_id)
         new_json_goal = request.get_json(silent=True)
         if new_json_goal is False:
             raise MalformedJSONHTTPError()
 
-        goal = json_deserialize(new_json_goal, 'goal')
+        session_id = new_json_goal.get('session_id', session_id)
+        db_proxy = validate_proxy(session, session_id)
+        goal = json_deserialize(new_json_goal['object'], 'goal')
 
         try:
             db_proxy.nameCheck(goal.theName, 'goal')
@@ -198,7 +200,7 @@ class GoalByIdAPI(Resource):
                 "description": "The serialized version of the goal to be updated",
                 "required": True,
                 "allowMultiple": False,
-                "type": SwaggerGoalModel.__name__,
+                "type": GoalMessage.__name__,
                 "paramType": "body"
             },
             {
@@ -228,12 +230,14 @@ class GoalByIdAPI(Resource):
     #endregion
     def put(self, id):
         session_id = request.args.get('session_id', None)
-        db_proxy = validate_proxy(session, session_id)
         new_json_goal = request.get_json(silent=True)
+
         if new_json_goal is False:
             raise MalformedJSONHTTPError()
 
-        goal = json_deserialize(new_json_goal, 'goal')
+        session_id = new_json_goal.get('session_id', session_id)
+        db_proxy = validate_proxy(session, session_id)
+        goal = json_deserialize(new_json_goal['object'], 'goal')
 
         try:
             db_proxy.nameCheck(goal.theName, 'goal')
@@ -246,7 +250,7 @@ class GoalByIdAPI(Resource):
                 )
 
         goalParams = GoalParameters(goal.theName, goal.originator(). goal.tags(), goal.environmentProperties())
-        goalParams.setId(goal.theId)
+        goalParams.setId(id)
 
         try:
             db_proxy.updateGoal(goalParams)

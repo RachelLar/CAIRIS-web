@@ -6,6 +6,7 @@ from flask import session, request, make_response
 from flask.ext.restful import Resource
 from flask.ext.restful_swagger import swagger
 from Requirement import Requirement
+from tools.MessageDefinitions import RequirementMessage
 from tools.ModelDefinitions import RequirementModel
 from tools.SessionValidator import validate_proxy
 from tools.JsonConverter import json_serialize, json_deserialize
@@ -73,7 +74,7 @@ class RequirementsAPI(Resource):
                 "description": "The serialized version of the new requirement to be added",
                 "required": True,
                 "allowMultiple": False,
-                "type": RequirementModel.__name__,
+                "type": RequirementMessage.__name__,
                 "paramType": "body"
             },
             {
@@ -122,12 +123,13 @@ class RequirementsAPI(Resource):
         asset_name = request.args.get('asset', None)
         environment_name = request.args.get('environment', None)
         json_new_req = request.get_json(silent=True)
-        db_proxy = validate_proxy(session, session_id)
 
         if json_new_req is False:
             raise MalformedJSONHTTPError()
 
-        new_req = json_deserialize(json_new_req)
+        session_id = json_new_req.get('session_id', session_id)
+        db_proxy = validate_proxy(session, session_id)
+        new_req = json_deserialize(json_new_req['object'])
 
         if asset_name is not None:
             try:
@@ -299,14 +301,14 @@ class RequirementUpdateAPI(Resource):
     # region Swagger Docs
     @swagger.operation(
         notes='Imports data from an XML file',
-        nickname='asset-model-get',
+        nickname='requirement-update-put',
         parameters=[
             {
                 'name': 'body',
                 "description": "Options to be passed to the import tool",
                 "required": True,
                 "allowMultiple": False,
-                'type': RequirementModel.__name__,
+                'type': RequirementMessage.__name__,
                 'paramType': 'body'
             },
             {
@@ -333,11 +335,13 @@ class RequirementUpdateAPI(Resource):
     def put(self):
         session_id = request.args.get('session_id', None)
         json_dict = request.get_json(silent=True)
-        db_proxy = validate_proxy(session, session_id)
 
         if json_dict is False:
             raise MalformedJSONHTTPError()
-        json_string = json_serialize(json_dict)
+
+        session_id = json_dict.get('session_id', session_id)
+        db_proxy = validate_proxy(session, session_id)
+        json_string = json_serialize(json_dict['object'])
 
         reqObj = json_deserialize(json_string, 'requirement')
         if not isinstance(reqObj, Requirement):

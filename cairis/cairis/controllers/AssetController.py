@@ -3,6 +3,8 @@ import httplib
 from flask import request, session, make_response
 from flask_restful_swagger import swagger
 from flask.ext.restful import Resource
+import numpy
+from numpy.core.multiarray import array
 
 import ARM
 import armid
@@ -11,13 +13,11 @@ from AssetEnvironmentProperties import AssetEnvironmentProperties
 from AssetModel import AssetModel
 from AssetParameters import AssetParameters
 from Borg import Borg
-from CairisHTTPError import MalformedJSONHTTPError, ARMHTTPError, CairisHTTPError
+from CairisHTTPError import MalformedJSONHTTPError, ARMHTTPError, CairisHTTPError, SilentHTTPError
 from tools.JsonConverter import json_serialize, json_deserialize
-from tools.ModelDefinitions import AssetModel as SwaggerAssetModel
+from tools.MessageDefinitions import AssetMessage, AssetEnvironmentPropertiesMessage
+from tools.ModelDefinitions import AssetModel as SwaggerAssetModel, AssetEnvironmentPropertiesModel, AssetSecurityAttribute
 from tools.SessionValidator import validate_proxy, validate_fonts
-
-
-__author__ = 'Robin Quetin'
 
 
 class AssetsAPI(Resource):
@@ -59,6 +59,11 @@ class AssetsAPI(Resource):
         constraint_id = request.args.get('constraint_id', -1)
         assets = db_proxy.getAssets(constraint_id)
 
+        for key in assets:
+            assets[key].theEnvironmentDictionary = {}
+            assets[key].theAssetPropertyDictionary = {}
+            assets[key].theEnvironmentProperties = []
+
         resp = make_response(json_serialize(assets, session_id=session_id))
         resp.headers['Content-Type'] = "application/json"
         return resp
@@ -73,7 +78,7 @@ class AssetsAPI(Resource):
                 "description": "The serialized version of the new asset to be added",
                 "required": True,
                 "allowMultiple": False,
-                "type": SwaggerAssetModel.__name__,
+                "type": AssetMessage.__name__,
                 "paramType": "body"
             },
             {
@@ -103,12 +108,14 @@ class AssetsAPI(Resource):
     # endregion
     def post(self):
         session_id = request.args.get('session_id', None)
-        db_proxy = validate_proxy(session, session_id)
-        new_json_asset = request.get_json(silent=True)
+        new_json_message = request.get_json(silent=True)
 
-        if new_json_asset is False:
+        if new_json_message is False:
             raise MalformedJSONHTTPError()
 
+        session_id = new_json_message.get('session_id', session_id)
+        new_json_asset = json_serialize(new_json_message['object'])
+        db_proxy = validate_proxy(session, session_id)
         asset = json_deserialize(new_json_asset, 'asset')
 
         try:
@@ -118,7 +125,7 @@ class AssetsAPI(Resource):
 
         assetParams = AssetParameters(asset.theName, asset.theShortCode, asset.theDescription, asset.theSignificance,
                                       asset.theType, asset.isCritical, asset.theCriticalRationale, asset.theTags,
-                                      asset.theInterfaces, asset.theEnvironmentProperties)
+                                      asset.theInterfaces, [])
 
         try:
             resp_dict = dict()
@@ -176,7 +183,7 @@ class AssetByNameAPI(Resource):
                 "description": "The serialized version of the new asset to be added",
                 "required": True,
                 "allowMultiple": False,
-                "type": SwaggerAssetModel.__name__,
+                "type": AssetMessage.__name__,
                 "paramType": "body"
             },
             {
@@ -206,16 +213,17 @@ class AssetByNameAPI(Resource):
     # endregion
     def put(self, name):
         session_id = request.args.get('session_id', None)
-        db_proxy = validate_proxy(session, session_id)
         new_json_asset = request.get_json(silent=True)
 
         if new_json_asset is False:
             raise MalformedJSONHTTPError()
 
-        asset = json_deserialize(new_json_asset, 'asset')
+        session_id = new_json_asset.get('session_id', session_id)
+        db_proxy = validate_proxy(session, session_id)
+        asset = json_deserialize(new_json_asset['object'], 'asset')
 
         try:
-            db_proxy.nameCheck(asset.theName, 'asset')
+            db_proxy.nameCheck(name, 'asset')
         except ARM.ARMException as ex:
             if str(ex.value).find(' already exists') < 0:
                 raise ARMHTTPError(ex)
@@ -226,6 +234,7 @@ class AssetByNameAPI(Resource):
         assetParams.setId(asset.theId)
 
         try:
+            db_proxy.updateAsset(assetParams)
             resp = make_response('Update successful', httplib.OK)
             resp.contenttype = 'text/plain'
             return resp
@@ -371,7 +380,8 @@ class AssetEnvironmentPropertiesAPI(Resource):
     #region Swagger Doc
     @swagger.operation(
         notes='Get the environment properties for a specific asset',
-        nickname='asset-envprops-by-id-get',
+        nickname='asset-envprops-by-name-get',
+        responseClass=AssetEnvironmentPropertiesModel.__name__,
         parameters=[
             {
                 "name": "session_id",
@@ -390,7 +400,7 @@ class AssetEnvironmentPropertiesAPI(Resource):
         ]
     )
     # endregion
-    def get(self, asset_id):
+    def get(self, asset_name):
         session_id = request.args.get('session_id', None)
         db_proxy = validate_proxy(session, session_id)
 
@@ -398,15 +408,17 @@ class AssetEnvironmentPropertiesAPI(Resource):
         if len(assets) > 0:
             assets = assets.values()
         else:
-            raise CairisHTTPError(status_code=httplib.NOT_FOUND,
-                                  message='There were no Assets found in the database.',
-                                  status='No assets found')
+            raise CairisHTTPError(
+                status_code=httplib.NOT_FOUND,
+                message='There were no Assets found in the database.',
+                status='No assets found'
+            )
 
         found_asset = None
         idx = 0
 
         while found_asset is None and idx < len(assets):
-            if assets[idx].theId == asset_id:
+            if assets[idx].theName == asset_name:
                 found_asset = assets[idx]
             idx += 1
 
@@ -424,75 +436,183 @@ class AssetEnvironmentPropertiesAPI(Resource):
             envPropertiesDict = dict()
             for envProperty in found_asset.theEnvironmentProperties:
                 assert isinstance(envProperty, AssetEnvironmentProperties)
-                envPropertyDict = envPropertiesDict.get(envProperty.theEnvironmentName, dict())
+                envPropertyDict = envPropertiesDict.get(envProperty.theEnvironmentName, AssetEnvironmentPropertiesModel(envProperty.theEnvironmentName))
                 syProperties = envProperty.properties()
                 pRationale = envProperty.rationale()
                 cProperty = syProperties[armid.C_PROPERTY]
                 cRationale = pRationale[armid.C_PROPERTY]
                 if (cProperty != armid.NONE_VALUE):
                     prop_name = 'Confidentiality'
-                    envPropertyDict[prop_name] = dict()
-                    envPropertyDict[prop_name]['value'] = values[cProperty]
-                    envPropertyDict[prop_name]['rationale'] = cRationale
+                    envPropertyDict.attributesDictionary[prop_name] = AssetSecurityAttribute(armid.C_PROPERTY, prop_name, values[cProperty], cRationale)
 
                 iProperty = syProperties[armid.I_PROPERTY]
                 iRationale = pRationale[armid.I_PROPERTY]
                 if (iProperty != armid.NONE_VALUE):
                     prop_name = 'Integrity'
-                    envPropertyDict[prop_name] = dict()
-                    envPropertyDict[prop_name]['value'] = values[iProperty]
-                    envPropertyDict[prop_name]['rationale'] = iRationale
+                    envPropertyDict.attributesDictionary[prop_name] = AssetSecurityAttribute(armid.I_PROPERTY, prop_name, values[iProperty], iRationale)
 
                 avProperty = syProperties[armid.AV_PROPERTY]
                 avRationale = pRationale[armid.AV_PROPERTY]
                 if (avProperty != armid.NONE_VALUE):
                     prop_name = 'Availability'
-                    envPropertyDict[prop_name] = dict()
-                    envPropertyDict[prop_name]['value'] = values[avProperty]
-                    envPropertyDict[prop_name]['rationale'] = avRationale
+                    envPropertyDict.attributesDictionary[prop_name] = AssetSecurityAttribute(armid.AV_PROPERTY, prop_name, values[avProperty], avRationale)
 
                 acProperty = syProperties[armid.AC_PROPERTY]
                 acRationale = pRationale[armid.AC_PROPERTY]
                 if (acProperty != armid.NONE_VALUE):
                     prop_name = 'Accountability'
-                    envPropertyDict[prop_name] = dict()
-                    envPropertyDict[prop_name]['value'] = values[acProperty]
-                    envPropertyDict[prop_name]['rationale'] = acRationale
+                    envPropertyDict.attributesDictionary[prop_name] = AssetSecurityAttribute(armid.AC_PROPERTY, prop_name, values[acProperty], acRationale)
 
                 anProperty = syProperties[armid.AN_PROPERTY]
                 anRationale = pRationale[armid.AN_PROPERTY]
                 if (anProperty != armid.NONE_VALUE):
                     prop_name = 'Anonymity'
-                    envPropertyDict[prop_name] = dict()
-                    envPropertyDict[prop_name]['value'] = values[anProperty]
-                    envPropertyDict[prop_name]['rationale'] = anRationale
+                    envPropertyDict.attributesDictionary[prop_name] = AssetSecurityAttribute(armid.AN_PROPERTY, prop_name, values[anProperty], anRationale)
 
                 panProperty = syProperties[armid.PAN_PROPERTY]
                 panRationale = pRationale[armid.PAN_PROPERTY]
                 if (panProperty != armid.NONE_VALUE):
                     prop_name = 'Pseudonymity'
-                    envPropertyDict[prop_name] = dict()
-                    envPropertyDict[prop_name]['value'] = values[panProperty]
-                    envPropertyDict[prop_name]['rationale'] = panRationale
+                    envPropertyDict.attributesDictionary[prop_name] = AssetSecurityAttribute(armid.PAN_PROPERTY, prop_name, values[panProperty], panRationale)
 
                 unlProperty = syProperties[armid.UNL_PROPERTY]
                 unlRationale = pRationale[armid.UNL_PROPERTY]
                 if (unlProperty != armid.NONE_VALUE):
                     prop_name = 'Unlinkability'
-                    envPropertyDict[prop_name] = dict()
-                    envPropertyDict[prop_name]['value'] = values[unlProperty]
-                    envPropertyDict[prop_name]['rationale'] = unlRationale
+                    envPropertyDict.attributesDictionary[prop_name] = AssetSecurityAttribute(armid.UNL_PROPERTY, prop_name, values[unlProperty], unlRationale)
 
                 unoProperty = syProperties[armid.UNO_PROPERTY]
                 unoRationale = pRationale[armid.UNO_PROPERTY]
                 if (unoProperty != armid.NONE_VALUE):
                     prop_name = 'Unobservability'
-                    envPropertyDict[prop_name] = dict()
-                    envPropertyDict[prop_name]['value'] = values[unoProperty]
-                    envPropertyDict[prop_name]['rationale'] = unoRationale
+                    envPropertyDict.attributesDictionary[prop_name] = AssetSecurityAttribute(armid.UNO_PROPERTY, prop_name, values[unoProperty], unoRationale)
 
+                if envProperty.theAssociations is not None:
+                    envPropertyDict.associations = envProperty.theAssociations
+
+                envPropertyDict.json_prepare()
                 envPropertiesDict[envProperty.theEnvironmentName] = envPropertyDict
 
-            resp = make_response(json_serialize(envPropertiesDict))
+            resp = make_response(json_serialize(envPropertiesDict.values(), session_id=session_id))
+            resp.contenttype = 'application/json'
+            return resp
+
+    #region Swagger Doc
+    @swagger.operation(
+        notes='Updates the environment properties for a specific asset',
+        nickname='asset-envprops-by-name-put',
+        responseClass=AssetEnvironmentPropertiesMessage.__name__,
+        parameters=[
+            {
+                "name": "body",
+                "required": True,
+                "allowMultiple": False,
+                "dataType": AssetEnvironmentPropertiesModel.__name__,
+                "paramType": "body"
+            },
+            {
+                "name": "session_id",
+                "description": "The ID of the user's session",
+                "required": False,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "paramType": "query"
+            }
+        ],
+        responseMessages=[
+            {
+                "code": httplib.BAD_REQUEST,
+                "message": "The database connection was not properly set up"
+            }
+        ]
+    )
+    # endregion
+    def put(self, asset_name):
+        session_id = request.args.get('session_id', None)
+        new_json_props = request.get_json(silent=True)
+
+        if new_json_props is False or not isinstance(new_json_props, dict):
+            raise MalformedJSONHTTPError()
+
+        session_id = new_json_props.get('session_id', session_id)
+        new_env_props = json_deserialize(new_json_props['object'])
+        db_proxy = validate_proxy(session, session_id)
+
+        assets = db_proxy.getAssets()
+        if len(assets) > 0:
+            assets = assets.values()
+        else:
+            raise CairisHTTPError(
+                status_code=httplib.NOT_FOUND,
+                message='There were no Assets found in the database.',
+                status='No assets found'
+            )
+
+        found_asset = None
+        idx = 0
+
+        while found_asset is None and idx < len(assets):
+            if assets[idx].theName == asset_name:
+                found_asset = assets[idx]
+            idx += 1
+
+        if not isinstance(found_asset, Asset):
+            raise CairisHTTPError(status_code=httplib.CONFLICT,
+                                  message='There is no asset in the database with the specified ID',
+                                  status='Asset not found')
+
+        if found_asset is None:
+            raise CairisHTTPError(
+                status_code=httplib.CONFLICT,
+                message='There is no asset in the database with the specified ID',
+                status='Asset not found'
+            )
+        else:
+            values = ['None', 'Low', 'Medium', 'High']
+            envProperties = []
+            class_def = AssetEnvironmentPropertiesModel.__module__+'.'+AssetEnvironmentPropertiesModel.__name__
+            for new_env_prop in new_env_props:
+                obj_def = new_env_prop.__class__.__module__+'.'+new_env_prop.__class__.__name__
+                if class_def != obj_def:
+                    raise MalformedJSONHTTPError()
+                env_name = new_env_prop.environment
+
+                # Associations should be a list of tuples
+                associations = list()
+                for idx in range(0, len(new_env_prop.associations)):
+                    associations.append(tuple(new_env_prop.associations[idx]))
+
+                # Security attributes are represented by properties and rationales
+                properties = array((0,0,0,0,0,0,0,0)).astype(numpy.int32)
+                rationales =  8*['None']
+                for attribute in new_env_prop.attributes:
+                    assert isinstance(attribute, AssetSecurityAttribute)
+                    if attribute.id < 0 or attribute.id > 7:
+                        msg = 'Invalid attribute index (index={0}). Attribute is being ignored.'.format(attribute.id)
+                        raise SilentHTTPError(message=msg)
+                    value = attribute.get_attr_value(values)
+                    properties[attribute.id] = value
+                    rationales[attribute.id] = attribute.rationale
+
+                env_prop = AssetEnvironmentProperties(env_name, properties, rationales, associations)
+                envProperties.append(env_prop)
+
+            found_asset.theEnvironmentProperties = envProperties
+            params = AssetParameters(
+                found_asset.theName,
+                found_asset.theShortCode,
+                found_asset.theDescription,
+                found_asset.theSignificance,
+                found_asset.theType,
+                found_asset.isCritical,
+                found_asset.theCriticalRationale,
+                found_asset.theTags,
+                found_asset.theInterfaces,
+                envProperties
+            )
+            params.setId(found_asset.theId)
+            db_proxy.updateAsset(params)
+
+            resp = make_response('The asset properties were successfully updated.', httplib.OK)
             resp.contenttype = 'application/json'
             return resp

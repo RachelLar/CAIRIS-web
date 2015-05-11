@@ -21,7 +21,7 @@ class CImportAPI(Resource):
     # region Swagger Doc
     @swagger.operation(
         notes='Imports data from an XML file',
-        nickname='asset-model-get',
+        nickname='cimport-post',
         parameters=[
             {
                 'name':'body',
@@ -59,6 +59,7 @@ class CImportAPI(Resource):
         if json_dict is False:
             raise MalformedJSONHTTPError()
 
+        session_id = json_dict.get('session_id', session_id)
         check_required_keys(json_dict, ('file_contents','type'))
         validate_proxy(session, session_id)
         file_contents = json_dict['file_contents']
