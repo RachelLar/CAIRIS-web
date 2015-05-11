@@ -1,34 +1,104 @@
 from flask.ext.restful import fields
 from flask.ext.restful_swagger import swagger
+
+from Asset import Asset
 from Goal import Goal
+from GoalEnvironmentProperties import GoalEnvironmentProperties
 from MisuseCase import MisuseCase
 from MisuseCaseEnvironmentProperties import MisuseCaseEnvironmentProperties
 from Requirement import Requirement
 from Risk import Risk
 
+
 __author__ = 'Robin Quetin'
 
-
+obj_id_field = "__python_obj__"
 def gen_class_metadata(class_ref):
     return {
         "enum": [class_ref.__module__+'.'+class_ref.__name__]
     }
 
 @swagger.model
-class AssetEnvironmentPropertiesModel(object):
+class AssetSecurityAttribute(object):
+    def __init__(self, id=-1, name=None, value=None, rationale=None):
+        self.id = id
+        self.name = name
+        self.value = value
+        self.rationale = rationale
+
     resource_fields = {
-        "theAssociations": fields.List,
-        "theProperties": fields.Integer,
-        "theRationale": fields.List(fields.String),
-        "theEnvironmentName": fields.String
+        "__python_obj__": fields.String,
+        "id": fields.Integer,
+        "name": fields.String,
+        "value": fields.String,
+        "rationale": fields.String
+    }
+
+    required = ["__python_obj__", "id", "name", "value", "rationale"]
+
+    swagger_metadata = {
+        "__python_obj__": {
+            "enum": ["tools.ModelDefinitions.AssetSecurityAttribute"]
+        }
+    }
+
+    def get_attr_value(self, enum_obj):
+        """
+        Gets the database value for the security attribute
+        :type enum_obj: list|tuple
+        """
+        value = 0
+
+        if self.value is not None:
+            found = False
+            idx = 0
+
+            while not found and idx < len(enum_obj):
+                if enum_obj[idx] == self.value:
+                    value = idx
+                    found = True
+                else:
+                    idx += 1
+
+        return value
+
+@swagger.model
+@swagger.nested(attributes=AssetSecurityAttribute.__name__)
+class AssetEnvironmentPropertiesModel(object):
+    def __init__(self, env_name=''):
+        self.environment = env_name
+        self.associations = []
+        self.attributes = []
+        self.attributesDictionary = {}
+
+    def json_prepare(self):
+        self.attributes = self.attributesDictionary.values()
+        self.attributesDictionary = {}
+        for idx in range(0, len(self.associations)):
+            self.associations[idx] = list(self.associations[idx])
+
+    resource_fields = {
+        "__python_obj__": fields.String,
+        "associations": fields.List(fields.List(fields.String)),
+        "attributes": fields.List(fields.Nested(AssetSecurityAttribute.resource_fields)),
+        "environment": fields.String
+    }
+
+    required = ["__python_obj__", "associations", "attributes", "environment"]
+
+    swagger_metadata = {
+        "__python_obj__": {
+            "enum": ["tools.ModelDefinitions.AssetEnvironmentPropertiesModel"]
+        }
     }
 
 @swagger.model
 @swagger.nested(
-    envProps=AssetEnvironmentPropertiesModel.__name__
+    theEnvironmentProperties=AssetEnvironmentPropertiesModel.__name__
 )
 class AssetModel(object):
     resource_fields = {
+        obj_id_field: fields.String,
         "theDescription": fields.String,
         "theSignificance": fields.String,
         "theId": fields.Integer,
@@ -41,23 +111,31 @@ class AssetModel(object):
         "theShortCode": fields.String,
         "theEnvironmentProperties": fields.List(fields.Nested(AssetEnvironmentPropertiesModel.resource_fields))
     }
+
     required = [
-        "theDescription", "theSignificance", "theId", "theTags", "theCriticalRationale",
+        obj_id_field, "theDescription", "theSignificance", "theId", "theTags", "theCriticalRationale",
         "theInterfaces", "theType", "theName", "isCritical", "theShortCode", "theEnvironmentProperties"
     ]
+
+    swagger_metadata = {
+        obj_id_field : gen_class_metadata(Asset)
+    }
 
 @swagger.model
 class CImportParams(object):
     resource_fields = {
+        'session_id': fields.String,
         'file_contents': fields.String,
         'type': fields.String,
         'overwrite': fields.Integer
     }
+
     required = ['file_contents', 'type']
 
 @swagger.model
-class GoalEnvironmentProperties(object):
+class GoalEnvironmentPropertiesModel(object):
     resource_fields = {
+        obj_id_field: fields.String,
         "theCategory": fields.String,
         "theConcernAssociations": fields.List(fields.String),
         "theConcerns": fields.List(fields.String),
@@ -72,6 +150,7 @@ class GoalEnvironmentProperties(object):
     }
 
     required = [
+        obj_id_field,
         "theCategory",
         "theConcernAssociations",
         "theConcerns",
@@ -85,36 +164,45 @@ class GoalEnvironmentProperties(object):
         "theSubGoalRefinements"
     ]
 
+    swagger_metadata = {
+        obj_id_field : gen_class_metadata(GoalEnvironmentProperties)
+    }
+
 @swagger.model
 @swagger.nested(
-    theEnvironmentProperties=GoalEnvironmentProperties.__name__
+    theEnvironmentProperties=GoalEnvironmentPropertiesModel.__name__
 )
 class GoalModel(object):
     resource_fields = {
-        "__python_obj__": fields.String,
+        obj_id_field: fields.String,
         "theColour": fields.String,
-        "theEnvironmentDictionary": {
-            "_key_": fields.List(fields.Nested(GoalEnvironmentProperties.resource_fields))
-        },
-        "theEnvironmentProperties": fields.List(fields.Nested(GoalEnvironmentProperties.resource_fields)),
+        "theEnvironmentDictionary": fields.List,
+        "theEnvironmentProperties": fields.List(fields.Nested(GoalEnvironmentPropertiesModel.resource_fields)),
         "theId": fields.Integer,
         "theName": fields.String,
         "theOriginator": fields.String,
         "theTags": fields.List(fields.String)
     }
-    required = ["__python_obj__", "theColour","theEnvironmentProperties","theId","theName","theOriginator","theTags"]
+
+    required = [obj_id_field, "theColour","theEnvironmentProperties","theId","theName","theOriginator","theTags"]
+
     swagger_metadata = {
-        "__python_obj__" : gen_class_metadata(Goal)
+        obj_id_field : gen_class_metadata(Goal)
     }
 
 @swagger.model
 class MisuseCaseEnvironmentPropertiesModel(object):
     resource_fields = {
-        "__python_obj__": fields.String(default=MisuseCaseEnvironmentProperties.__name__),
+        obj_id_field: fields.String,
         "theDescription": fields.String,
         "theEnvironmentName": fields.String
     }
-    required = ["__python_obj__"]
+
+    required = [obj_id_field, "theDescription", "theEnvironmentName"]
+
+    swagger_metadata = {
+        obj_id_field : gen_class_metadata(MisuseCaseEnvironmentProperties)
+    }
 
 @swagger.model
 @swagger.nested(
@@ -122,7 +210,7 @@ class MisuseCaseEnvironmentPropertiesModel(object):
 )
 class MisuseCaseModel(object):
     resource_fields = {
-        "__python_obj__": fields.String(default=MisuseCase.__name__),
+        obj_id_field: fields.String,
         "theEnvironmentDictionary": {
             "_key_": fields.Nested(MisuseCaseEnvironmentPropertiesModel.resource_fields)
         },
@@ -134,7 +222,10 @@ class MisuseCaseModel(object):
         "theEnvironmentProperties": fields.List(fields.Nested(MisuseCaseEnvironmentPropertiesModel.resource_fields))
     }
 
-    required = ["__python_obj__"]
+    required = [obj_id_field]
+    swagger_metadata = {
+        obj_id_field : gen_class_metadata(MisuseCase)
+    }
 
 @swagger.model
 class RequirementAttributesModel(object):
@@ -154,7 +245,7 @@ class RequirementAttributesModel(object):
 )
 class RequirementModel(object):
     resource_fields = {
-        "__python_obj__": fields.String(Requirement.__name__),
+        obj_id_field: fields.String,
         "theId": fields.Integer,
         "dirtyAttrs": fields.Nested(RequirementAttributesModel.resource_fields),
         "attrs": fields.Nested(RequirementAttributesModel.resource_fields),
@@ -164,7 +255,10 @@ class RequirementModel(object):
         "thePriority": fields.Integer,
         "theVersion": fields.Integer
     }
-    required = ["__python_obj__", "theId", "dirtyAttrs", "attrs", "theName", "theLabel", "theDescription", "thePriority", "theVersion"]
+    required = [obj_id_field, "theId", "dirtyAttrs", "attrs", "theName", "theLabel", "theDescription", "thePriority", "theVersion"]
+    swagger_metadata = {
+        obj_id_field : gen_class_metadata(Requirement)
+    }
 
 @swagger.model
 @swagger.nested(
@@ -172,7 +266,7 @@ class RequirementModel(object):
 )
 class RiskModel(object):
     resource_fields = {
-        "__python_obj__": fields.String(default=Risk.__name__),
+        obj_id_field: fields.String,
         "theVulnerabilityName": fields.String,
         "theId": fields.Integer,
         "theMisuseCase": fields.Nested(MisuseCaseModel.resource_fields),
@@ -180,7 +274,10 @@ class RiskModel(object):
         "theThreatName": fields.String,
         "theName": fields.String
     }
-    required = ["__python_obj__", "theVulnerabilityName", "theId", "theMisuseCase", "theTags", "theThreatName", "theName"]
+    required = [obj_id_field, "theVulnerabilityName", "theId", "theMisuseCase", "theTags", "theThreatName", "theName"]
+    swagger_metadata = {
+        obj_id_field : gen_class_metadata(Risk)
+    }
 
 @swagger.model
 class UserConfigModel(object):

@@ -1,4 +1,5 @@
 import httplib
+import logging
 
 from flask import request, make_response
 from werkzeug.exceptions import HTTPException
@@ -9,6 +10,8 @@ from tools.JsonConverter import json_serialize
 
 
 __author__ = 'Robin Quetin'
+
+logger = logging.getLogger('cairisd')
 
 
 def handle_exception(ex):
@@ -76,7 +79,7 @@ class MalformedJSONHTTPError(CairisHTTPError):
             status_code=httplib.BAD_REQUEST,
             message='The request body could not be converted to a JSON object.' +
                     '''Check if the request content type is 'application/json' ''' +
-                    'and that the JSON string is well-formed',
+                    'and that the JSON string is well-formed.',
             status='Unreadable JSON data'
         )
 
@@ -105,3 +108,8 @@ class MissingParameterHTTPError(CairisHTTPError):
             message=msg,
             status='One or more parameters are missing'
         )
+
+class SilentHTTPError(BaseException):
+    def __init__(self, message):
+        BaseException.__init__(self)
+        logger.warning(message)

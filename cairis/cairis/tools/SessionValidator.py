@@ -5,13 +5,16 @@ from Borg import Borg
 from MySQLDatabaseProxy import MySQLDatabaseProxy
 from CairisHTTPError import MissingParameterHTTPError, CairisHTTPError
 
-
 __author__ = 'Robin Quetin'
 
 
 def check_required_keys(json_dict, required):
     if not all(reqKey in json_dict for reqKey in required):
         raise MissingParameterHTTPError(param_names=required)
+
+def get_logger():
+    b = Borg()
+    return b.logger
 
 def validate_proxy(session, id, conf=None):
     """
