@@ -45,6 +45,8 @@ class CairisHTTPError(HTTPException):
         self.valid_methods = ['GET', 'POST', 'PUT', 'DELETE']
         self.__setattr__('code', status_code)
 
+        logger.error('[{0}] {1}: {2}'.format(status_code, status, message))
+
         accept_header = request.headers.get('Accept', 'application/json')
         if accept_header.find('text/html') > -1:
             self.response = make_response(self.handle_exception_html(), self.status_code)
@@ -62,6 +64,9 @@ class CairisHTTPError(HTTPException):
         return json_serialize({'message': self.message, 'code': self.status_code, 'status': self.status})
 
 class ARMHTTPError(CairisHTTPError):
+    status_code=httplib.CONFLICT
+    status='Database conflict'
+
     def __init__(self, exception):
         """
 
@@ -74,6 +79,9 @@ class ARMHTTPError(CairisHTTPError):
         )
 
 class MalformedJSONHTTPError(CairisHTTPError):
+    status='Unreadable JSON data'
+    status_code=httplib.BAD_REQUEST,
+
     def __init__(self):
         CairisHTTPError.__init__(self,
             status_code=httplib.BAD_REQUEST,
@@ -107,6 +115,18 @@ class MissingParameterHTTPError(CairisHTTPError):
             status_code=httplib.BAD_REQUEST,
             message=msg,
             status='One or more parameters are missing'
+        )
+
+class ObjectNotFoundHTTPError(HTTPException):
+    status_code=httplib.NOT_FOUND
+    status='Object not found'
+
+    def __init__(self, obj):
+        CairisHTTPError.__init__(
+            self,
+            status_code=httplib.NOT_FOUND,
+            message='{} could not be found in the database'.format(obj),
+            status='Object not found'
         )
 
 class SilentHTTPError(BaseException):
