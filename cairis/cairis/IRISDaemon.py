@@ -9,7 +9,7 @@ from flask.ext.restful_swagger import swagger
 
 from Borg import Borg
 from CairisHTTPError import CairisHTTPError
-from controllers import AssetController, CImportController, DimensionController, EnvironmentController, GoalController, RequirementController, RiskController, UserController
+from controllers import AssetController, CImportController, DimensionController, EnvironmentController, GoalController, RequirementController, RiskController, RoleController, UserController
 
 
 __author__ = 'Robin Quetin'
@@ -90,6 +90,7 @@ def start():
 
     # Environment routes
     api.add_resource(EnvironmentController.EnvironmentsAPI, '/api/environments')
+    api.add_resource(EnvironmentController.EnvironmentByNameAPI, '/api/environments/name/<string:name>')
     api.add_resource(EnvironmentController.EnvironmentNamesAPI, '/api/environments/all/names')
 
     # Goal routes
@@ -108,6 +109,9 @@ def start():
 
     # Risk routes
     #api.add_resource(RiskController.RisksAPI, '/api/risks')
+
+    # Role routes
+    api.add_resource(RoleController.RolesAPI, '/api/roles')
 
     # User routes
     api.add_resource(UserController.UserConfigAPI, '/api/user/config')
