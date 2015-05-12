@@ -25,7 +25,8 @@ from tools.SessionValidator import validate_proxy, validate_fonts
 class AssetsAPI(Resource):
     # region Swagger Doc
     @swagger.operation(
-        notes='Get all assets',
+        notes='Get all assets without the asset environment properties.' +
+              'To get the asset environment properties of an asset, please use /api/assets/{name}/properties',
         responseClass=SwaggerAssetModel.__name__,
         nickname='assets-get',
         parameters=[
