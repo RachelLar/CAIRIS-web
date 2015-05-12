@@ -1,5 +1,6 @@
 from flask.ext.restful import fields
 from flask.ext.restful_swagger import swagger
+from tools import PseudoClasses
 
 __author__ = 'Robin Quetin'
 
@@ -32,6 +33,16 @@ class AssetEnvironmentPropertiesMessage(DefaultMessage):
 # endregion
 class AssetMessage(DefaultMessage):
     resource_fields = gen_message_fields(ModelDefinitions.AssetModel)
+    required = DefaultMessage.required
+
+# region Swagger Doc
+@swagger.model
+@swagger.nested(
+    object=PseudoClasses.EnvironmentModel.__name__
+)
+# endregion
+class EnvironmentMessage(DefaultMessage):
+    resource_fields = gen_message_fields(PseudoClasses.EnvironmentModel)
     required = DefaultMessage.required
 
 # region Swagger Doc
