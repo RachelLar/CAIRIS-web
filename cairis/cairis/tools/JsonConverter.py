@@ -59,7 +59,7 @@ def json_deserialize(string, class_name=None):
     :param class_name: The name of the target class
     :type class_name: str
     :return: Returns a dictionary or a class instance depending on the target class chosen
-    :rtype: dict|list|Asset|Goal|Requirement|Risk
+    :rtype: list|dict|Asset|Goal|Requirement|Risk
     """
     if isinstance(string, dict) or isinstance(string, list):
         string = json_serialize(string)
