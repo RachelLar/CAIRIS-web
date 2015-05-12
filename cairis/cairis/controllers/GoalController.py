@@ -8,6 +8,7 @@ import ARM
 from Borg import Borg
 from CairisHTTPError import ARMHTTPError, CairisHTTPError, ObjectNotFoundHTTPError
 from CairisHTTPError import MalformedJSONHTTPError
+from Goal import Goal
 from GoalParameters import GoalParameters
 from KaosModel import KaosModel
 from tools.JsonConverter import json_serialize, json_deserialize
@@ -22,7 +23,7 @@ __author__ = 'Robin Quetin'
 class GoalsAPI(Resource):
     #region Swagger Doc
     @swagger.operation(
-        notes='Get all goals',
+        notes='Get all goals.',
         responseClass=SwaggerGoalModel.__name__,
         nickname='goals-get',
         parameters=[
@@ -47,6 +48,12 @@ class GoalsAPI(Resource):
         session_id = request.args.get('session_id', None)
         db_proxy = validate_proxy(session, session_id)
         goals = db_proxy.getGoals()
+
+        assert isinstance(goals, dict)
+        for key in goals:
+            goal = goals[key]
+            goal.theEnvironmentDictionary = {}
+            goals[key] = goal
 
         resp = make_response(json_serialize(goals, session_id=session_id))
         resp.headers['Content-Type'] = "application/json"
@@ -150,6 +157,12 @@ class ColouredGoalsAPI(Resource):
         db_proxy = validate_proxy(session, session_id)
         goals = db_proxy.getColouredGoals()
 
+        assert isinstance(goals, dict)
+        for key in goals:
+            goal = goals[key]
+            goal.theEnvironmentProperties = []
+            goals[key] = goal
+
         resp = make_response(json_serialize(goals, session_id=session_id))
         resp.headers['Content-Type'] = "application/json"
         return resp
@@ -188,6 +201,7 @@ class GoalByIdAPI(Resource):
         while found_goal is None and idx < len(goals):
             if goals.values()[idx].theId == id:
                 found_goal = goals.values()[idx]
+                found_goal.theEnvironmentDictionary = {}
             idx += 1
 
         resp = make_response(json_serialize(found_goal, session_id=session_id))
@@ -266,6 +280,71 @@ class GoalByIdAPI(Resource):
         except ARM.ARMException as ex:
             raise ARMHTTPError(ex)
 
+    #region Swagger Doc
+    @swagger.operation(
+        notes='Deletes an existing goal',
+        nickname='goal-by-id-delete',
+        parameters=[
+            {
+                "name": "body",
+                "description": "The serialized version of the goal to be updated",
+                "required": True,
+                "allowMultiple": False,
+                "type": GoalMessage.__name__,
+                "paramType": "body"
+            },
+            {
+                "name": "session_id",
+                "description": "The ID of the user's session",
+                "required": False,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "paramType": "query"
+            }
+        ],
+        responseMessages=[
+            {
+                'code': httplib.BAD_REQUEST,
+                'message': 'One or more attributes are missing'
+            },
+            {
+                'code': httplib.CONFLICT,
+                'message': 'Some problems were found during the name check'
+            },
+            {
+                'code': httplib.CONFLICT,
+                'message': 'A database error has occurred'
+            }
+        ]
+    )
+    #endregion
+    def delete(self, id):
+        session_id = request.args.get('session_id', None)
+        db_proxy = validate_proxy(session, session_id)
+
+        goals = db_proxy.getGoals()
+        if goals is None:
+            raise ObjectNotFoundHTTPError('A full list of goals')
+
+        found_goal = None
+        idx = 0
+        while found_goal is None and idx < len(goals.values()):
+            goal = goals.values()[idx]
+            if goal.theId == id:
+                found_goal = goal
+            idx+=1
+
+        if found_goal is None or not isinstance(found_goal, Goal):
+            raise ObjectNotFoundHTTPError('The provided goal ID')
+
+        try:
+            db_proxy.deleteGoal(found_goal.theId)
+            resp = make_response('Delete successful', httplib.OK)
+            resp.contenttype = 'text/plain'
+            return resp
+        except ARM.ARMException as ex:
+            raise ARMHTTPError(ex)
+
 class GoalByNameAPI(Resource):
     # region Swagger Doc
     @swagger.operation(
@@ -299,9 +378,144 @@ class GoalByNameAPI(Resource):
         if goals is not None:
             found_goal = goals.get(name, None)
 
+        if found_goal is None:
+            raise ObjectNotFoundHTTPError('The provided goal name')
+
         resp = make_response(json_serialize(found_goal, session_id=session_id))
         resp.headers['Content-Type'] = "application/json"
         return resp
+
+    #region Swagger Doc
+    @swagger.operation(
+        notes='Updates an existing goal',
+        nickname='goal-put',
+        parameters=[
+            {
+                "name": "body",
+                "description": "The serialized version of the goal to be updated",
+                "required": True,
+                "allowMultiple": False,
+                "type": GoalMessage.__name__,
+                "paramType": "body"
+            },
+            {
+                "name": "session_id",
+                "description": "The ID of the user's session",
+                "required": False,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "paramType": "query"
+            }
+        ],
+        responseMessages=[
+            {
+                'code': httplib.BAD_REQUEST,
+                'message': 'One or more attributes are missing'
+            },
+            {
+                'code': httplib.CONFLICT,
+                'message': 'Some problems were found during the name check'
+            },
+            {
+                'code': httplib.CONFLICT,
+                'message': 'A database error has occurred'
+            }
+        ]
+    )
+    #endregion
+    def put(self, name):
+        session_id = request.args.get('session_id', None)
+        new_json_goal = request.get_json(silent=True)
+
+        if new_json_goal is False:
+            raise MalformedJSONHTTPError()
+
+        session_id = new_json_goal.get('session_id', session_id)
+        db_proxy = validate_proxy(session, session_id)
+        goal = json_deserialize(new_json_goal['object'])
+
+        try:
+            db_proxy.nameCheck(name, 'goal')
+            raise ObjectNotFoundHTTPError('The provided goal name')
+        except ARM.ARMException as ex:
+            if str(ex.value).find(' already exists') < 0:
+                raise ARMHTTPError(ex)
+
+        goalParams = GoalParameters(
+            goalName=goal.theName,
+            goalOrig=goal.originator(),
+            tags=goal.tags(),
+            properties=goal.environmentProperties()
+        )
+        goalParams.setId(goal.theId)
+
+        try:
+            db_proxy.updateGoal(goalParams)
+            resp = make_response('Update successful', httplib.OK)
+            resp.contenttype = 'text/plain'
+            return resp
+        except ARM.ARMException as ex:
+            raise ARMHTTPError(ex)
+
+    #region Swagger Doc
+    @swagger.operation(
+        notes='Deletes an existing goal',
+        nickname='goal-by-id-delete',
+        parameters=[
+            {
+                "name": "body",
+                "description": "The serialized version of the goal to be updated",
+                "required": True,
+                "allowMultiple": False,
+                "type": GoalMessage.__name__,
+                "paramType": "body"
+            },
+            {
+                "name": "session_id",
+                "description": "The ID of the user's session",
+                "required": False,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "paramType": "query"
+            }
+        ],
+        responseMessages=[
+            {
+                'code': httplib.BAD_REQUEST,
+                'message': 'One or more attributes are missing'
+            },
+            {
+                'code': httplib.CONFLICT,
+                'message': 'Some problems were found during the name check'
+            },
+            {
+                'code': httplib.CONFLICT,
+                'message': 'A database error has occurred'
+            }
+        ]
+    )
+    #endregion
+    def delete(self, name):
+        session_id = request.args.get('session_id', None)
+        db_proxy = validate_proxy(session, session_id)
+
+        goals = db_proxy.getGoals()
+        if goals is None:
+            raise ObjectNotFoundHTTPError('A full list of goals')
+
+        found_goal = goals.get(name)
+
+        if found_goal is None or not isinstance(found_goal, Goal):
+            raise ObjectNotFoundHTTPError('The provided goal ID')
+
+        try:
+            db_proxy.deleteGoal(found_goal.theId)
+            resp = make_response('Delete successful', httplib.OK)
+            resp.contenttype = 'text/plain'
+            return resp
+        except ARM.ARMException as ex:
+            raise ARMHTTPError(ex)
+
 
 class GoalModelAPI(Resource):
     # region Swagger Doc
