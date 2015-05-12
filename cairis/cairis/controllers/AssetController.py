@@ -1,4 +1,5 @@
 import httplib
+import collections
 
 from flask import request, session, make_response
 from flask_restful_swagger import swagger
@@ -16,7 +17,8 @@ from Borg import Borg
 from CairisHTTPError import MalformedJSONHTTPError, ARMHTTPError, CairisHTTPError, SilentHTTPError
 from tools.JsonConverter import json_serialize, json_deserialize
 from tools.MessageDefinitions import AssetMessage, AssetEnvironmentPropertiesMessage
-from tools.ModelDefinitions import AssetModel as SwaggerAssetModel, AssetEnvironmentPropertiesModel, AssetSecurityAttribute
+from tools.ModelDefinitions import AssetModel as SwaggerAssetModel, AssetEnvironmentPropertiesModel, \
+    AssetSecurityAttribute
 from tools.SessionValidator import validate_proxy, validate_fonts
 
 
@@ -136,6 +138,7 @@ class AssetsAPI(Resource):
         except ARM.ARMException as ex:
             raise ARMHTTPError(ex)
 
+
 class AssetByNameAPI(Resource):
     # region Swagger Doc
     @swagger.operation(
@@ -175,12 +178,12 @@ class AssetByNameAPI(Resource):
 
     # region Swagger Doc
     @swagger.operation(
-        notes='Creates a new asset',
-        nickname='asset-post',
+        notes='Updates an existing asset',
+        nickname='asset-put',
         parameters=[
             {
                 "name": "body",
-                "description": "The serialized version of the new asset to be added",
+                "description": "The session ID and the serialized version of the asset to be updated",
                 "required": True,
                 "allowMultiple": False,
                 "type": AssetMessage.__name__,
@@ -205,6 +208,10 @@ class AssetByNameAPI(Resource):
                 'message': 'Some problems were found during the name check'
             },
             {
+                'code': httplib.NOT_FOUND,
+                'message': 'The provided asset name could not be found in the database'
+            },
+            {
                 'code': httplib.CONFLICT,
                 'message': 'A database error has occurred'
             }
@@ -224,6 +231,10 @@ class AssetByNameAPI(Resource):
 
         try:
             db_proxy.nameCheck(name, 'asset')
+            raise CairisHTTPError(
+                status_code=httplib.NOT_FOUND,
+                message='The provided asset name could not be found in the database'
+            )
         except ARM.ARMException as ex:
             if str(ex.value).find(' already exists') < 0:
                 raise ARMHTTPError(ex)
@@ -240,6 +251,58 @@ class AssetByNameAPI(Resource):
             return resp
         except ARM.ARMException as ex:
             raise ARMHTTPError(ex)
+
+    # region Swagger Doc
+    @swagger.operation(
+        notes='Deletes an existing asset',
+        nickname='asset-delete',
+        parameters=[
+            {
+                "name": "session_id",
+                "description": "The ID of the user's session",
+                "required": False,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "paramType": "query"
+            }
+        ],
+        responseMessages=[
+            {
+                'code': httplib.BAD_REQUEST,
+                'message': 'One or more attributes are missing'
+            },
+            {
+                'code': httplib.CONFLICT,
+                'message': 'Some problems were found during the name check'
+            },
+            {
+                'code': httplib.NOT_FOUND,
+                'message': 'The provided asset name could not be found in the database'
+            },
+            {
+                'code': httplib.CONFLICT,
+                'message': 'A database error has occurred'
+            }
+        ]
+    )
+    # endregion
+    def delete(self, name):
+        session_id = request.args.get('session_id', None)
+        db_proxy = validate_proxy(session, session_id)
+        assets = db_proxy.getAssets()
+        found_asset = None
+
+        if assets is not None:
+            found_asset = assets.get(name, None)
+
+        if found_asset is None or not isinstance(found_asset, Asset):
+            raise CairisHTTPError(
+                status_code=httplib.NOT_FOUND,
+                message='The provided asset name could not be found in the database',
+            )
+
+        db_proxy.deleteAsset(found_asset.theId)
+
 
 class AssetByIdAPI(Resource):
     # region Swagger Doc
@@ -280,6 +343,7 @@ class AssetByIdAPI(Resource):
         resp = make_response(json_serialize(found_asset, session_id=session_id))
         resp.headers['Content-Type'] = "application/json"
         return resp
+
 
 class AssetNamesAPI(Resource):
     # region Swagger Doc
@@ -376,8 +440,9 @@ class AssetModelAPI(Resource):
 
         return resp
 
+
 class AssetEnvironmentPropertiesAPI(Resource):
-    #region Swagger Doc
+    # region Swagger Doc
     @swagger.operation(
         notes='Get the environment properties for a specific asset',
         nickname='asset-envprops-by-name-get',
@@ -436,56 +501,65 @@ class AssetEnvironmentPropertiesAPI(Resource):
             envPropertiesDict = dict()
             for envProperty in found_asset.theEnvironmentProperties:
                 assert isinstance(envProperty, AssetEnvironmentProperties)
-                envPropertyDict = envPropertiesDict.get(envProperty.theEnvironmentName, AssetEnvironmentPropertiesModel(envProperty.theEnvironmentName))
+                envPropertyDict = envPropertiesDict.get(envProperty.theEnvironmentName,
+                                                        AssetEnvironmentPropertiesModel(envProperty.theEnvironmentName))
                 syProperties = envProperty.properties()
                 pRationale = envProperty.rationale()
                 cProperty = syProperties[armid.C_PROPERTY]
                 cRationale = pRationale[armid.C_PROPERTY]
-                if (cProperty != armid.NONE_VALUE):
+                if cProperty != armid.NONE_VALUE:
                     prop_name = 'Confidentiality'
-                    envPropertyDict.attributesDictionary[prop_name] = AssetSecurityAttribute(armid.C_PROPERTY, prop_name, values[cProperty], cRationale)
+                    attr = AssetSecurityAttribute(armid.C_PROPERTY, prop_name, values[cProperty], cRationale)
+                    envPropertyDict.attributesDictionary[prop_name] = attr
 
                 iProperty = syProperties[armid.I_PROPERTY]
                 iRationale = pRationale[armid.I_PROPERTY]
-                if (iProperty != armid.NONE_VALUE):
+                if iProperty != armid.NONE_VALUE:
                     prop_name = 'Integrity'
-                    envPropertyDict.attributesDictionary[prop_name] = AssetSecurityAttribute(armid.I_PROPERTY, prop_name, values[iProperty], iRationale)
+                    attr = AssetSecurityAttribute(armid.I_PROPERTY, prop_name, values[iProperty], iRationale)
+                    envPropertyDict.attributesDictionary[prop_name] = attr
 
                 avProperty = syProperties[armid.AV_PROPERTY]
                 avRationale = pRationale[armid.AV_PROPERTY]
-                if (avProperty != armid.NONE_VALUE):
+                if avProperty != armid.NONE_VALUE:
                     prop_name = 'Availability'
-                    envPropertyDict.attributesDictionary[prop_name] = AssetSecurityAttribute(armid.AV_PROPERTY, prop_name, values[avProperty], avRationale)
+                    attr = AssetSecurityAttribute(armid.AV_PROPERTY, prop_name, values[avProperty], avRationale)
+                    envPropertyDict.attributesDictionary[prop_name] = attr
 
                 acProperty = syProperties[armid.AC_PROPERTY]
                 acRationale = pRationale[armid.AC_PROPERTY]
-                if (acProperty != armid.NONE_VALUE):
+                if acProperty != armid.NONE_VALUE:
                     prop_name = 'Accountability'
-                    envPropertyDict.attributesDictionary[prop_name] = AssetSecurityAttribute(armid.AC_PROPERTY, prop_name, values[acProperty], acRationale)
+                    attr = AssetSecurityAttribute(armid.AC_PROPERTY, prop_name, values[acProperty], acRationale)
+                    envPropertyDict.attributesDictionary[prop_name] = attr
 
                 anProperty = syProperties[armid.AN_PROPERTY]
                 anRationale = pRationale[armid.AN_PROPERTY]
-                if (anProperty != armid.NONE_VALUE):
+                if anProperty != armid.NONE_VALUE:
                     prop_name = 'Anonymity'
-                    envPropertyDict.attributesDictionary[prop_name] = AssetSecurityAttribute(armid.AN_PROPERTY, prop_name, values[anProperty], anRationale)
+                    attr = AssetSecurityAttribute(armid.AN_PROPERTY, prop_name, values[anProperty], anRationale)
+                    envPropertyDict.attributesDictionary[prop_name] = attr
 
                 panProperty = syProperties[armid.PAN_PROPERTY]
                 panRationale = pRationale[armid.PAN_PROPERTY]
-                if (panProperty != armid.NONE_VALUE):
+                if panProperty != armid.NONE_VALUE:
                     prop_name = 'Pseudonymity'
-                    envPropertyDict.attributesDictionary[prop_name] = AssetSecurityAttribute(armid.PAN_PROPERTY, prop_name, values[panProperty], panRationale)
+                    attr = AssetSecurityAttribute(armid.PAN_PROPERTY, prop_name, values[panProperty], panRationale)
+                    envPropertyDict.attributesDictionary[prop_name] = attr
 
                 unlProperty = syProperties[armid.UNL_PROPERTY]
                 unlRationale = pRationale[armid.UNL_PROPERTY]
-                if (unlProperty != armid.NONE_VALUE):
+                if unlProperty != armid.NONE_VALUE:
                     prop_name = 'Unlinkability'
-                    envPropertyDict.attributesDictionary[prop_name] = AssetSecurityAttribute(armid.UNL_PROPERTY, prop_name, values[unlProperty], unlRationale)
+                    attr = AssetSecurityAttribute(armid.UNL_PROPERTY, prop_name, values[unlProperty], unlRationale)
+                    envPropertyDict.attributesDictionary[prop_name] = attr
 
                 unoProperty = syProperties[armid.UNO_PROPERTY]
                 unoRationale = pRationale[armid.UNO_PROPERTY]
-                if (unoProperty != armid.NONE_VALUE):
+                if unoProperty != armid.NONE_VALUE:
                     prop_name = 'Unobservability'
-                    envPropertyDict.attributesDictionary[prop_name] = AssetSecurityAttribute(armid.UNO_PROPERTY, prop_name, values[unoProperty], unoRationale)
+                    attr = AssetSecurityAttribute(armid.UNO_PROPERTY, prop_name, values[unoProperty], unoRationale)
+                    envPropertyDict.attributesDictionary[prop_name] = attr
 
                 if envProperty.theAssociations is not None:
                     envPropertyDict.associations = envProperty.theAssociations
@@ -497,11 +571,11 @@ class AssetEnvironmentPropertiesAPI(Resource):
             resp.contenttype = 'application/json'
             return resp
 
-    #region Swagger Doc
+    # region Swagger Doc
     @swagger.operation(
         notes='Updates the environment properties for a specific asset',
         nickname='asset-envprops-by-name-put',
-        responseClass=AssetEnvironmentPropertiesMessage.__name__,
+        responseClass=str.__name__,
         parameters=[
             {
                 "name": "body",
@@ -570,9 +644,11 @@ class AssetEnvironmentPropertiesAPI(Resource):
         else:
             values = ['None', 'Low', 'Medium', 'High']
             envProperties = []
-            class_def = AssetEnvironmentPropertiesModel.__module__+'.'+AssetEnvironmentPropertiesModel.__name__
+            class_def = AssetEnvironmentPropertiesModel.__module__ + '.' + AssetEnvironmentPropertiesModel.__name__
+            assert isinstance(new_env_props, collections.Iterable)
+
             for new_env_prop in new_env_props:
-                obj_def = new_env_prop.__class__.__module__+'.'+new_env_prop.__class__.__name__
+                obj_def = new_env_prop.__class__.__module__ + '.' + new_env_prop.__class__.__name__
                 if class_def != obj_def:
                     raise MalformedJSONHTTPError()
                 env_name = new_env_prop.environment
@@ -583,8 +659,8 @@ class AssetEnvironmentPropertiesAPI(Resource):
                     associations.append(tuple(new_env_prop.associations[idx]))
 
                 # Security attributes are represented by properties and rationales
-                properties = array((0,0,0,0,0,0,0,0)).astype(numpy.int32)
-                rationales =  8*['None']
+                properties = array((0, 0, 0, 0, 0, 0, 0, 0)).astype(numpy.int32)
+                rationales = 8 * ['None']
                 for attribute in new_env_prop.attributes:
                     assert isinstance(attribute, AssetSecurityAttribute)
                     if attribute.id < 0 or attribute.id > 7:
