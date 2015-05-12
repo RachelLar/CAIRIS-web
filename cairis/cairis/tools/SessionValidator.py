@@ -3,7 +3,7 @@ import httplib
 from ARM import DatabaseProxyException
 from Borg import Borg
 from MySQLDatabaseProxy import MySQLDatabaseProxy
-from CairisHTTPError import MissingParameterHTTPError, CairisHTTPError
+from CairisHTTPError import MissingParameterHTTPError, CairisHTTPError, ObjectNotFoundHTTPError
 
 __author__ = 'Robin Quetin'
 
@@ -115,3 +115,10 @@ def validate_fonts(session, id):
             status_code=httplib.BAD_REQUEST,
             message='The method is not callable without setting up the project settings.'
         )
+
+def check_environment(environment_name, session, session_id):
+    db_proxy = validate_proxy(session, session_id)
+
+    environment_names = db_proxy.getEnvironmentNames()
+    if not environment_name in environment_names:
+        raise ObjectNotFoundHTTPError('The specified environment')
