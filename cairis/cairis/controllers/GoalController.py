@@ -6,15 +6,14 @@ from flask_restful import Resource
 
 import ARM
 from Borg import Borg
-from CairisHTTPError import ARMHTTPError, CairisHTTPError
+from CairisHTTPError import ARMHTTPError, CairisHTTPError, ObjectNotFoundHTTPError
 from CairisHTTPError import MalformedJSONHTTPError
-from controllers import EnvironmentController
 from GoalParameters import GoalParameters
 from KaosModel import KaosModel
 from tools.JsonConverter import json_serialize, json_deserialize
 from tools.MessageDefinitions import GoalMessage
 from tools.ModelDefinitions import GoalModel as SwaggerGoalModel
-from tools.SessionValidator import validate_proxy, validate_fonts
+from tools.SessionValidator import validate_proxy, validate_fonts, check_environment
 
 
 __author__ = 'Robin Quetin'
@@ -106,7 +105,12 @@ class GoalsAPI(Resource):
         except ARM.ARMException as ex:
             raise ARMHTTPError(ex)
 
-        goalParams = GoalParameters(goal.theName, goal.originator(). goal.tags(), goal.environmentProperties())
+        goalParams = GoalParameters(
+            goalName=goal.theName,
+            goalOrig=goal.originator(),
+            tags=goal.tags(),
+            properties=goal.environmentProperties()
+        )
 
         try:
             resp_dict = dict()
@@ -237,19 +241,21 @@ class GoalByIdAPI(Resource):
 
         session_id = new_json_goal.get('session_id', session_id)
         db_proxy = validate_proxy(session, session_id)
-        goal = json_deserialize(new_json_goal['object'], 'goal')
+        goal = json_deserialize(new_json_goal['object'])
 
         try:
             db_proxy.nameCheck(goal.theName, 'goal')
+            raise ObjectNotFoundHTTPError('The provided goal name')
         except ARM.ARMException as ex:
             if str(ex.value).find(' already exists') < 0:
-                raise CairisHTTPError(
-                    status_code=httplib.NOT_FOUND,
-                    message='The goal does not exist in the database and can therefore not be updated',
-                    status='Goal not found'
-                )
+                raise ARMHTTPError(ex)
 
-        goalParams = GoalParameters(goal.theName, goal.originator(). goal.tags(), goal.environmentProperties())
+        goalParams = GoalParameters(
+            goalName=goal.theName,
+            goalOrig=goal.originator(),
+            tags=goal.tags(),
+            properties=goal.environmentProperties()
+        )
         goalParams.setId(id)
 
         try:
@@ -351,7 +357,7 @@ class GoalModelAPI(Resource):
                 status='Environment not defined'
             )
 
-        EnvironmentController.checkEnvironment(environment, session_id)
+        check_environment(environment, session, session_id)
 
         db_proxy = validate_proxy(session, session_id)
         fontName, fontSize, apFontName = validate_fonts(session, session_id)
