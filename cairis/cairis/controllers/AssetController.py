@@ -14,7 +14,8 @@ from AssetEnvironmentProperties import AssetEnvironmentProperties
 from AssetModel import AssetModel
 from AssetParameters import AssetParameters
 from Borg import Borg
-from CairisHTTPError import MalformedJSONHTTPError, ARMHTTPError, CairisHTTPError, SilentHTTPError
+from CairisHTTPError import MalformedJSONHTTPError, ARMHTTPError, CairisHTTPError, SilentHTTPError, \
+    ObjectNotFoundHTTPError
 from tools.JsonConverter import json_serialize, json_deserialize
 from tools.MessageDefinitions import AssetMessage, AssetEnvironmentPropertiesMessage
 from tools.ModelDefinitions import AssetModel as SwaggerAssetModel, AssetEnvironmentPropertiesModel, \
@@ -172,6 +173,13 @@ class AssetByNameAPI(Resource):
 
         if assets is not None:
             found_asset = assets.get(name, None)
+
+        if found_asset is None:
+            raise ObjectNotFoundHTTPError(obj='The provided asset name')
+
+        assert isinstance(found_asset, Asset)
+        found_asset.theEnvironmentDictionary = {}
+        found_asset.theEnvironmentProperties = []
 
         resp = make_response(json_serialize(found_asset, session_id=session_id))
         resp.headers['Content-Type'] = "application/json"
