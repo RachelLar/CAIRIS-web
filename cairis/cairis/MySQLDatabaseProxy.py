@@ -21,6 +21,7 @@ import string
 import MySQLdb
 import _mysql_exceptions
 from numpy import *
+import os
 
 from Borg import Borg
 import RequirementFactory
