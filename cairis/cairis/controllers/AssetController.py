@@ -180,6 +180,7 @@ class AssetByNameAPI(Resource):
         assert isinstance(found_asset, Asset)
         found_asset.theEnvironmentDictionary = {}
         found_asset.theEnvironmentProperties = []
+        found_asset.theAssetPropertyDictionary = {}
 
         resp = make_response(json_serialize(found_asset, session_id=session_id))
         resp.headers['Content-Type'] = "application/json"
@@ -348,6 +349,14 @@ class AssetByIdAPI(Resource):
             if assets.values()[idx].theId == id:
                 found_asset = assets.values()[idx]
             idx += 1
+
+        if found_asset is None:
+            raise ObjectNotFoundHTTPError('The provided asset ID')
+
+        assert isinstance(found_asset, Asset)
+        found_asset.theEnvironmentDictionary = {}
+        found_asset.theEnvironmentProperties = []
+        found_asset.theAssetPropertyDictionary = {}
 
         resp = make_response(json_serialize(found_asset, session_id=session_id))
         resp.headers['Content-Type'] = "application/json"
