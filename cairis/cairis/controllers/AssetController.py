@@ -116,7 +116,7 @@ class AssetsAPI(Resource):
         new_json_message = request.get_json(silent=True)
 
         if new_json_message is False or new_json_message is None:
-            raise MalformedJSONHTTPError()
+            raise MalformedJSONHTTPError(data=request.get_data())
 
         session_id = new_json_message.get('session_id', session_id)
         new_json_asset = json_serialize(new_json_message['object'])
@@ -234,9 +234,7 @@ class AssetByNameAPI(Resource):
         new_json_asset = request.get_json(silent=True)
 
         if new_json_asset is False or new_json_asset is None:
-            b = Borg()
-            b.logger.debug('Body: '+request.get_data())
-            raise MalformedJSONHTTPError()
+            raise MalformedJSONHTTPError(data=request.get_data())
 
         session_id = new_json_asset.get('session_id', session_id)
         db_proxy = validate_proxy(session, session_id)
@@ -309,10 +307,7 @@ class AssetByNameAPI(Resource):
             found_asset = assets.get(name, None)
 
         if found_asset is None or not isinstance(found_asset, Asset):
-            raise CairisHTTPError(
-                status_code=httplib.NOT_FOUND,
-                message='The provided asset name could not be found in the database',
-            )
+            raise ObjectNotFoundHTTPError('The provided asset name')
 
         db_proxy.deleteAsset(found_asset.theId)
 
@@ -627,8 +622,7 @@ class AssetEnvironmentPropertiesAPI(Resource):
         new_json_props = request.get_json(silent=True)
 
         if new_json_props is False or not isinstance(new_json_props, dict):
-
-            raise MalformedJSONHTTPError()
+            raise MalformedJSONHTTPError(data=request.get_data())
 
         session_id = new_json_props.get('session_id', session_id)
         new_env_props = json_deserialize(new_json_props['object'])
@@ -672,7 +666,7 @@ class AssetEnvironmentPropertiesAPI(Resource):
             for new_env_prop in new_env_props:
                 obj_def = new_env_prop.__class__.__module__ + '.' + new_env_prop.__class__.__name__
                 if class_def != obj_def:
-                    raise MalformedJSONHTTPError()
+                    raise MalformedJSONHTTPError(data=request.get_data())
                 env_name = new_env_prop.environment
 
                 # Associations should be a list of tuples

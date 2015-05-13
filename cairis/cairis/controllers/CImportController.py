@@ -56,8 +56,8 @@ class CImportAPI(Resource):
         session_id = request.args.get('session_id', None)
         json_dict = request.get_json(silent=True)
 
-        if json_dict is False:
-            raise MalformedJSONHTTPError()
+        if json_dict is False or json_dict is None:
+            raise MalformedJSONHTTPError(data=request.get_data())
 
         session_id = json_dict.get('session_id', session_id)
         check_required_keys(json_dict, ('file_contents','type'))

@@ -8,7 +8,8 @@ from flask.ext.restful import Api
 from flask.ext.restful_swagger import swagger
 
 from Borg import Borg
-from CairisHTTPError import CairisHTTPError
+from CairisHTTPError import CairisHTTPError, ARMHTTPError
+from ARM import ARMException, DatabaseProxyException
 from controllers import AssetController, CImportController, DimensionController, EnvironmentController, GoalController, RequirementController, RiskController, RoleController, UserController
 
 
@@ -60,6 +61,16 @@ def handle_asserterror(error):
 def handle_keyerror(error):
     err = CairisHTTPError(httplib.BAD_REQUEST, str(error.message), 'Missing attribute')
     return handle_error(err)
+
+@app.errorhandler(ARMException)
+@app.errorhandler(DatabaseProxyException)
+def handle_keyerror(e):
+    err = ARMHTTPError(e)
+    return handle_error(err)
+
+@app.errorhandler(500)
+def handle_internalerror(e):
+    return handle_exception(e)
 
 def handle_exception(e):
     if isinstance(e, AssertionError):

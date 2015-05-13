@@ -18,8 +18,10 @@
 import os
 import logging
 from string import strip
+from ARM import DatabaseProxyException
 
 from Borg import Borg
+from CairisHTTPError import ARMHTTPError
 import DatabaseProxyFactory
 from tools.GraphicsGenerator import GraphicsGenerator
 from MySQLDatabaseProxy import MySQLDatabaseProxy

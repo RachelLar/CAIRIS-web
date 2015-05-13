@@ -1,6 +1,6 @@
 from json import dumps, loads
 
-from flask import session
+from flask import session, request
 from jsonpickle import encode as serialize, set_preferred_backend
 from jsonpickle import decode as deserialize
 

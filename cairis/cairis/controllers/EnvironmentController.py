@@ -97,14 +97,14 @@ class EnvironmentsAPI(Resource):
         session_id = request.args.get('session_id', None)
         new_json_environment = request.get_json(silent=False)
 
-        if new_json_environment is False:
-            raise MalformedJSONHTTPError()
+        if new_json_environment is False or new_json_environment is None:
+            raise MalformedJSONHTTPError(data=request.get_data())
 
         session_id = new_json_environment.get('session_id', session_id)
         new_environment = json_deserialize(new_json_environment['object'])
 
         if not isinstance(new_environment, EnvironmentModel):
-            raise MalformedJSONHTTPError()
+            raise MalformedJSONHTTPError(data=request.get_data())
 
         new_environment_params = new_environment.to_environment_params()
         db_proxy = validate_proxy(session, session_id)
@@ -209,8 +209,8 @@ class EnvironmentByNameAPI(Resource):
         session_id = request.args.get('session_id', None)
         new_json_environment = request.get_json(silent=False)
 
-        if new_json_environment is False:
-            raise MalformedJSONHTTPError()
+        if new_json_environment is False or new_json_environment is None:
+            raise MalformedJSONHTTPError(data=request.get_data())
 
         session_id = new_json_environment.get('session_id', session_id)
         new_environment = json_deserialize(new_json_environment['object'])
@@ -218,7 +218,7 @@ class EnvironmentByNameAPI(Resource):
         check_environment(name, session, session_id)
 
         if not isinstance(new_environment, EnvironmentModel):
-            raise MalformedJSONHTTPError()
+            raise MalformedJSONHTTPError(data=request.get_data())
 
         new_environment_params = new_environment.to_environment_params(for_update=True)
         db_proxy = validate_proxy(session, session_id)

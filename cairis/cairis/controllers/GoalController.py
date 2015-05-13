@@ -100,8 +100,8 @@ class GoalsAPI(Resource):
     def post(self):
         session_id = request.args.get('session_id', None)
         new_json_goal = request.get_json(silent=True)
-        if new_json_goal is False:
-            raise MalformedJSONHTTPError()
+        if new_json_goal is False or new_json_goal is None:
+            raise MalformedJSONHTTPError(data=request.get_data())
 
         session_id = new_json_goal.get('session_id', session_id)
         db_proxy = validate_proxy(session, session_id)
@@ -250,8 +250,8 @@ class GoalByIdAPI(Resource):
         session_id = request.args.get('session_id', None)
         new_json_goal = request.get_json(silent=True)
 
-        if new_json_goal is False:
-            raise MalformedJSONHTTPError()
+        if new_json_goal is False or new_json_goal is None:
+            raise MalformedJSONHTTPError(data=request.get_data())
 
         session_id = new_json_goal.get('session_id', session_id)
         db_proxy = validate_proxy(session, session_id)
@@ -427,8 +427,8 @@ class GoalByNameAPI(Resource):
         session_id = request.args.get('session_id', None)
         new_json_goal = request.get_json(silent=True)
 
-        if new_json_goal is False:
-            raise MalformedJSONHTTPError()
+        if new_json_goal is False or new_json_goal is None:
+            raise MalformedJSONHTTPError(data=request.get_data())
 
         session_id = new_json_goal.get('session_id', session_id)
         db_proxy = validate_proxy(session, session_id)

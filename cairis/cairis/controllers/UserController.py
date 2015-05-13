@@ -96,8 +96,8 @@ class UserConfigAPI(Resource):
             b = Borg()
             dict_form = request.get_json(silent=True)
 
-            if dict_form is False:
-                raise MalformedJSONHTTPError()
+            if dict_form is False or dict_form is None:
+                raise MalformedJSONHTTPError(data=request.get_data())
 
             b.logger.info(dict_form)
             s = set_dbproxy(dict_form)

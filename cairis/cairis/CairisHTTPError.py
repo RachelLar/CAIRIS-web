@@ -82,7 +82,14 @@ class MalformedJSONHTTPError(CairisHTTPError):
     status='Unreadable JSON data'
     status_code=httplib.BAD_REQUEST,
 
-    def __init__(self):
+    def __init__(self, data=None):
+        if data is not None:
+            b = Borg()
+            try:
+                b.logger.debug('Data: '+data)
+            except AttributeError:
+                pass
+
         CairisHTTPError.__init__(self,
             status_code=httplib.BAD_REQUEST,
             message='The request body could not be converted to a JSON object.' +
