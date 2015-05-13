@@ -1,5 +1,6 @@
 import httplib
 import collections
+import logging
 
 from flask import request, session, make_response
 from flask_restful_swagger import swagger
@@ -233,6 +234,8 @@ class AssetByNameAPI(Resource):
         new_json_asset = request.get_json(silent=True)
 
         if new_json_asset is False or new_json_asset is None:
+            b = Borg()
+            b.logger.debug('Body: '+request.get_data())
             raise MalformedJSONHTTPError()
 
         session_id = new_json_asset.get('session_id', session_id)
@@ -624,6 +627,7 @@ class AssetEnvironmentPropertiesAPI(Resource):
         new_json_props = request.get_json(silent=True)
 
         if new_json_props is False or not isinstance(new_json_props, dict):
+
             raise MalformedJSONHTTPError()
 
         session_id = new_json_props.get('session_id', session_id)

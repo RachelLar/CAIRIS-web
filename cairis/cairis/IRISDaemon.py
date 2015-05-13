@@ -117,6 +117,7 @@ def start():
     api.add_resource(UserController.UserConfigAPI, '/api/user/config')
 
     # Set server specific settings
+    b.logger.setLevel(b.logLevel)
     b.logger.debug('Error handlers: {0}'.format(app.error_handler_spec))
     app.secret_key = os.urandom(24)
     app.static_folder = b.staticDir
