@@ -114,7 +114,7 @@ class AssetsAPI(Resource):
         session_id = request.args.get('session_id', None)
         new_json_message = request.get_json(silent=True)
 
-        if new_json_message is False:
+        if new_json_message is False or new_json_message is None:
             raise MalformedJSONHTTPError()
 
         session_id = new_json_message.get('session_id', session_id)
@@ -232,7 +232,7 @@ class AssetByNameAPI(Resource):
         session_id = request.args.get('session_id', None)
         new_json_asset = request.get_json(silent=True)
 
-        if new_json_asset is False:
+        if new_json_asset is False or new_json_asset is None:
             raise MalformedJSONHTTPError()
 
         session_id = new_json_asset.get('session_id', session_id)
