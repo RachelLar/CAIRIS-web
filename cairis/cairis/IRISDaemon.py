@@ -138,4 +138,10 @@ def start():
     logger.setLevel(b.logLevel)
     enable_debug = b.logLevel == logging.DEBUG
 
-    app.run(host='0.0.0.0', port=b.webPort, debug=enable_debug)
+    try:
+        if b.unit_testing:
+            return app.test_client()
+        else:
+            raise AttributeError()
+    except AttributeError:
+        app.run(host='0.0.0.0', port=b.webPort, debug=enable_debug)

@@ -23,6 +23,8 @@ def config(settings):
         setPort(int(settings['port']))
     if settings.has_key('loggingLevel'):
         setLoglevel(settings['loggingLevel'])
+    if settings.has_key('unitTesting'):
+        setUnitTesting(settings['unitTesting'])
 
     logParams()
 
@@ -65,14 +67,20 @@ def logParams():
 
     logger.info('Port: %d', b.webPort)
     logger.info('Static content directory: %s', b.staticDir)
+    logger.info('Unit testing: %s', str(b.unit_testing).lower())
 
-def setStaticDir(self, static_dir):
-    self.logger.info('Setting static web content directory...')
+def setStaticDir(static_dir):
+    logger.info('Setting static web content directory...')
     b = Borg()
     try:
         os.listdir(static_dir)
     except EnvironmentError as ex:
-        self.logger.warning('The directory for static web content is not readable: %s' % ex.strerror)
-        self.logger.warning('Static content may not be available')
+        logger.warning('The directory for static web content is not readable: %s' % ex.strerror)
+        logger.warning('Static content may not be available')
 
     b.staticDir = os.path.abspath(static_dir)
+
+def setUnitTesting(setting=False):
+    logger.info('Setting unit testing property...')
+    b = Borg()
+    b.unit_testing = setting

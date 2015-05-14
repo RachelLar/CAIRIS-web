@@ -19,15 +19,23 @@ import sys
 import IRISDaemon
 import WebConfig
 
+def start(args):
+    options = {
+        'port': 0,
+        'unitTesting': False
+    }
+
+    if len(args) > 1:
+        for arg in args[1:]:
+            if arg == '-d':
+                options['loggingLevel'] = 'debug'
+            if arg == '--unit-test':
+                options['unitTesting'] = True
+
+    WebConfig.config(options)
+    client = IRISDaemon.start()
+    if client is not None:
+        return client
+
 if __name__ == '__main__':
-  options = {
-    'port': 0
-  }
-
-  if len(sys.argv) > 1:
-    for arg in sys.argv[1:]:
-      if arg == '-d':
-        options['loggingLevel'] = 'debug'
-
-  WebConfig.config(options)
-  IRISDaemon.start()
+  start(sys.argv)
