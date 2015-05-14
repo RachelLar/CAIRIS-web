@@ -182,6 +182,24 @@ class AssetDAO(CairisDAO):
         except ARM.DatabaseProxyException as ex:
             raise ARMHTTPError(ex)
 
+    def delete_asset(self, name=None, asset_id=-1):
+        if name is not None:
+            found_asset = self.get_asset_by_name(name)
+        elif asset_id > -1:
+            found_asset = self.get_asset_by_id(asset_id)
+        else:
+            raise MissingParameterHTTPError(param_names=['name'])
+
+        if found_asset is None or not isinstance(found_asset, Asset):
+            raise ObjectNotFoundHTTPError('The provided asset name')
+
+        try:
+            self.db_proxy.deleteAsset(found_asset.theId)
+        except ARM.DatabaseProxyException as ex:
+            raise ARMHTTPError(ex)
+        except ARM.ARMException as ex:
+            raise ARMHTTPError(ex)
+
     def simplify_props(self, props):
         envPropertiesDict = dict()
         for envProperty in props:
@@ -288,13 +306,16 @@ class AssetDAO(CairisDAO):
 
         return envProperties
 
-    def from_json(self, request):
+    def from_json(self, request, to_props=False):
         json = request.get_json(silent=True)
         if json is False or json is None:
             raise MalformedJSONHTTPError(data=request.get_data())
 
         json_dict = json['object']
-        json_dict['__python_obj__'] = Asset.__module__+'.'+Asset.__name__
+        if to_props:
+            json['property_0'] = json['object']
+        else:
+            json_dict['__python_obj__'] = Asset.__module__+'.'+Asset.__name__
         new_json_asset = json_serialize(json_dict)
         new_json_asset_props = json.get('property_0', None)
 
@@ -310,7 +331,7 @@ class AssetDAO(CairisDAO):
             new_json_asset_props = json_deserialize(new_json_asset_props)
 
         asset = json_deserialize(new_json_asset)
-        if not isinstance(asset, Asset):
+        if not isinstance(asset, Asset) and not to_props:
             raise MalformedJSONHTTPError(data=request.get_data())
         else:
             return asset, new_json_asset_props

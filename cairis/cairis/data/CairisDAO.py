@@ -11,6 +11,12 @@ class CairisDAO(object):
     def __init__(self, session_id):
         self.db_proxy = self.get_dbproxy(session_id)
 
+    def from_json(self, request):
+        raise NotImplementedError('from_json is not yet implemented by subclass')
+
+    def simplify(self, obj):
+        raise NotImplementedError('from_json is not yet implemented by subclass')
+
     def get_dbproxy(self, session_id):
         """
         Searches the MySQLDatabaseProxy instance associated with the session ID.

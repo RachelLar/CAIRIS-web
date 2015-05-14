@@ -31,20 +31,40 @@ class AssetSecurityAttribute(object):
         self.value = value
         self.rationale = rationale
 
+    # region Swagger Doc
     resource_fields = {
         "__python_obj__": fields.String,
         "name": fields.String,
         "value": fields.String,
         "rationale": fields.String
     }
-
-    required = ["__python_obj__", "id", "name", "value", "rationale"]
-
+    required = resource_fields.keys()
     swagger_metadata = {
         "__python_obj__": {
             "enum": ["tools.ModelDefinitions.AssetSecurityAttribute"]
+        },
+        "name": {
+            "enum": [
+                'Confidentiality',
+                'Integrity',
+                'Availability',
+                'Accountability',
+                'Anonymity',
+                'Pseudonymity',
+                'Unlinkability',
+                'Unobservability'
+            ]
+        },
+        "value": {
+            "enum": [
+                "None",
+                "Low",
+                "Medium",
+                "High"
+            ]
         }
     }
+    # endregion
 
     def get_attr_value(self, enum_obj):
         """
@@ -87,9 +107,7 @@ class AssetEnvironmentPropertiesModel(object):
         "attributes": fields.List(fields.Nested(AssetSecurityAttribute.resource_fields)),
         "environment": fields.String
     }
-
-    required = ["__python_obj__", "associations", "attributes", "environment"]
-
+    required = resource_fields.keys()
     swagger_metadata = {
         "__python_obj__": {
             "enum": ["tools.ModelDefinitions.AssetEnvironmentPropertiesModel"]
@@ -115,12 +133,10 @@ class AssetModel(object):
         "theShortCode": fields.String,
         "theEnvironmentProperties": fields.List(fields.Nested(AssetEnvironmentPropertiesModel.resource_fields))
     }
-
     required = [
         obj_id_field, "theDescription", "theSignificance", "theId", "theTags", "theCriticalRationale",
         "theInterfaces", "theType", "theName", "isCritical", "theShortCode", "theEnvironmentProperties"
     ]
-
     swagger_metadata = {
         obj_id_field : gen_class_metadata(Asset)
     }
@@ -133,7 +149,6 @@ class CImportParams(object):
         'type': fields.String,
         'overwrite': fields.Integer
     }
-
     required = ['file_contents', 'type']
 
 @swagger.model
@@ -152,9 +167,7 @@ class GoalEnvironmentPropertiesModel(object):
         "thePriority": fields.String,
         "theSubGoalRefinements": fields.List(fields.String)
     }
-
     required = resource_fields.keys()
-
     swagger_metadata = {
         obj_id_field : gen_class_metadata(GoalEnvironmentProperties)
     }
@@ -174,9 +187,7 @@ class GoalModel(object):
         "theOriginator": fields.String,
         "theTags": fields.List(fields.String)
     }
-
     required = [obj_id_field, "theColour","theEnvironmentProperties","theId","theName","theOriginator","theTags"]
-
     swagger_metadata = {
         obj_id_field : gen_class_metadata(Goal)
     }
@@ -290,6 +301,15 @@ class RoleModel(object):
     }
 
 @swagger.model
+class RoleEnvironmentPropertiesModel(object):
+    resource_fields = {
+        "theEnvironmentName": fields.String,
+        "theResponses": fields.List(fields.List(fields.String)),
+        "theCountermeasures": fields.List(fields.String)
+    }
+    required = resource_fields.keys()
+
+@swagger.model
 class UserConfigModel(object):
     resource_fields = {
         "user": fields.String,
@@ -299,10 +319,8 @@ class UserConfigModel(object):
         "port": fields.Integer,
         "jsonPrettyPrint": fields.String
     }
-
     required = resource_fields.keys()
     required.remove("jsonPrettyPrint")
-
     swagger_metadata = {
         'jsonPrettyPrint':
             {

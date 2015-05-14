@@ -127,3 +127,28 @@ class AssetTests(unittest.TestCase):
         self.assertIsNotNone(message, 'No message returned')
         url = '/api/assets/name/Test2?session_id=test'.format(quote(self.new_asset.theName))
         rv = self.app.delete(url)
+
+    def test_update_props_name_put(self):
+        method = 'test_update_props_name_put'
+        url = '/api/assets/name/%s/properties' % quote(self.new_asset.theName)
+        self.logger.info('[%s] Old asset property environment name: %s', method, self.new_asset_props[0].environment)
+
+        upd_asset_props = self.new_asset_props
+        upd_asset_props[0].environment = 'Psychosis'
+        upd_asset_props_dict = {
+            'session_id': 'test',
+            'object': upd_asset_props
+        }
+        upd_asset_props_body = jsonpickle.encode(upd_asset_props_dict)
+        self.logger.info('[%s] JSON data: %s', method, upd_asset_props_body)
+
+        rv = self.app.put(url, content_type='application/json', data=upd_asset_props_body)
+        self.logger.info('[%s] Response data: %s', method, rv.data)
+        json_resp = json_deserialize(rv.data)
+        self.assertIsNotNone(json_resp, 'No results after deserialization')
+        message = json_resp.get('message', None)
+        self.assertIsNotNone(message, 'No message returned')
+
+        rv = self.app.get('/api/assets/name/Test2/properties?session_id=test')
+        asset_props = json_deserialize(rv.data)
+        self.logger.info('[%s] Asset property environment: %s', method, asset_props[0].environment)

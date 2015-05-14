@@ -2,7 +2,8 @@ import httplib
 from flask import session, request, make_response
 from flask.ext.restful import Resource
 from flask.ext.restful_swagger import swagger
-from tools.JsonConverter import json_serialize
+from CairisHTTPError import MalformedJSONHTTPError
+from tools.JsonConverter import json_serialize, json_deserialize
 from tools.ModelDefinitions import RiskModel as SwaggerRiskModel
 from tools.SessionValidator import validate_proxy
 
@@ -50,5 +51,17 @@ class RisksAPI(Resource):
         risks = db_proxy.getRisks(constraint_id)
 
         resp = make_response(json_serialize(risks, session_id=session_id), 200)
-        resp.contenttype = 'application/json'
         return resp
+
+    def post(self):
+        session_id = request.args.get('session_id', None)
+        new_json_message = request.get_json(silent=True)
+
+        if new_json_message is False or new_json_message is None:
+            raise MalformedJSONHTTPError(data=request.get_data())
+
+        session_id = new_json_message.get('session_id', session_id)
+        new_json_risk = json_serialize(new_json_message)
+        db_proxy = validate_proxy(session, session_id)
+        new_risk = json_deserialize(new_json_risk, 'risk')
+        #TODO: finish Risk post

@@ -7,7 +7,7 @@ from flask.ext.restful import Resource
 from Asset import Asset
 from AssetModel import AssetModel
 from Borg import Borg
-from CairisHTTPError import CairisHTTPError, ObjectNotFoundHTTPError
+from CairisHTTPError import CairisHTTPError, ObjectNotFoundHTTPError, MissingParameterHTTPError
 from data.AssetDAO import AssetDAO
 from tools.JsonConverter import json_serialize
 from tools.MessageDefinitions import AssetMessage
@@ -202,7 +202,7 @@ class AssetByNameAPI(Resource):
 
         dao = AssetDAO(session_id)
         asset, props = dao.from_json(request)
-        dao.update_asset(asset, name, asset_props=props)
+        dao.update_asset(asset, name=name, asset_props=props)
 
         resp_dict = {'message': 'Update successful'}
         resp = make_response(json_serialize(resp_dict), httplib.OK)
@@ -245,17 +245,9 @@ class AssetByNameAPI(Resource):
     # endregion
     def delete(self, name):
         session_id = request.args.get('session_id', None)
-        db_proxy = validate_proxy(session, session_id)
-        assets = db_proxy.getAssets()
-        found_asset = None
+        dao = AssetDAO(session_id)
 
-        if assets is not None:
-            found_asset = assets.get(name, None)
-
-        if found_asset is None or not isinstance(found_asset, Asset):
-            raise ObjectNotFoundHTTPError('The provided asset name')
-
-        db_proxy.deleteAsset(found_asset.theId)
+        dao.delete_asset(name=name)
 
         resp_dict = {'message': 'Asset successfully deleted'}
         resp = make_response(json_serialize(resp_dict), httplib.OK)
@@ -373,10 +365,7 @@ class AssetModelAPI(Resource):
         environment = request.args.get('environment', None)
 
         if environment is None:
-            raise CairisHTTPError(
-                status_code=405,
-                message='Environment not defined'
-            )
+            raise MissingParameterHTTPError(param_names=['environment'])
 
         db_proxy = validate_proxy(session, session_id)
         fontName, fontSize, apFontName = validate_fonts(session, session_id)
@@ -463,9 +452,10 @@ class AssetEnvironmentPropertiesAPI(Resource):
         session_id = get_session_id(session, request)
 
         dao = AssetDAO(session_id)
-        asset_prop = dao.from_json(request)
+        asset, asset_prop = dao.from_json(request, to_props=True)
         dao.update_asset_properties(asset_prop, name=asset_name)
 
-        resp = make_response({'message': 'The asset properties were successfully updated.'}, httplib.OK)
+        resp_dict = {'message': 'The asset properties were successfully updated.'}
+        resp = make_response(json_serialize(resp_dict), httplib.OK)
         resp.contenttype = 'application/json'
         return resp

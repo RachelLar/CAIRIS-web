@@ -90,9 +90,10 @@ class RiskMessage(DefaultMessage):
 # region Swagger Doc
 @swagger.model
 @swagger.nested(
-    object=ModelDefinitions.RoleModel.__name__
+    object=ModelDefinitions.RoleModel.__name__,
+    property_0=ModelDefinitions.RoleEnvironmentPropertiesModel.__name__
 )
 # endregion
 class RoleMessage(DefaultMessage):
-    resource_fields = gen_message_fields(ModelDefinitions.RoleModel)
+    resource_fields = gen_message_fields(ModelDefinitions.RoleModel, ModelDefinitions.RoleEnvironmentPropertiesModel)
     required = DefaultMessage.required

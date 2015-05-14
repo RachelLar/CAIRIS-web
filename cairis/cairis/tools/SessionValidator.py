@@ -26,6 +26,11 @@ def get_logger():
     return log
 
 def get_session_id(session, request):
+    """
+    Looks up the session ID in the HTTP session, request URL and body
+    :type session: flask.session
+    :type request: flask.request
+    """
     # Look if HTTP session is being used
     if session is not None:
         session_id = session.get('session_id', -1)
