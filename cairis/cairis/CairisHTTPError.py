@@ -124,7 +124,7 @@ class MissingParameterHTTPError(CairisHTTPError):
             status='One or more parameters are missing'
         )
 
-class ObjectNotFoundHTTPError(HTTPException):
+class ObjectNotFoundHTTPError(CairisHTTPError):
     status_code=httplib.NOT_FOUND
     status='Object not found'
 
