@@ -8,6 +8,7 @@ from MisuseCase import MisuseCase
 from MisuseCaseEnvironmentProperties import MisuseCaseEnvironmentProperties
 from Requirement import Requirement
 from Risk import Risk
+from Role import Role
 
 
 __author__ = 'Robin Quetin'
@@ -20,15 +21,18 @@ def gen_class_metadata(class_ref):
 
 @swagger.model
 class AssetSecurityAttribute(object):
-    def __init__(self, id=-1, name=None, value=None, rationale=None):
-        self.id = id
+    def __init__(self, name=None, value=None, rationale=None):
+        """
+        :type name: str
+        :type value: str
+        :type rationale: str
+        """
         self.name = name
         self.value = value
         self.rationale = rationale
 
     resource_fields = {
         "__python_obj__": fields.String,
-        "id": fields.Integer,
         "name": fields.String,
         "value": fields.String,
         "rationale": fields.String
@@ -65,10 +69,10 @@ class AssetSecurityAttribute(object):
 @swagger.model
 @swagger.nested(attributes=AssetSecurityAttribute.__name__)
 class AssetEnvironmentPropertiesModel(object):
-    def __init__(self, env_name=''):
+    def __init__(self, env_name='', associations=[], attributes=[]):
         self.environment = env_name
-        self.associations = []
-        self.attributes = []
+        self.associations = associations
+        self.attributes = attributes
         self.attributesDictionary = {}
 
     def json_prepare(self):
@@ -149,20 +153,7 @@ class GoalEnvironmentPropertiesModel(object):
         "theSubGoalRefinements": fields.List(fields.String)
     }
 
-    required = [
-        obj_id_field,
-        "theCategory",
-        "theConcernAssociations",
-        "theConcerns",
-        "theDefinition",
-        "theEnvironmentName",
-        "theFitCriterion",
-        "theGoalRefinements",
-        "theIssue",
-        "theLabel",
-        "thePriority",
-        "theSubGoalRefinements"
-    ]
+    required = resource_fields.keys()
 
     swagger_metadata = {
         obj_id_field : gen_class_metadata(GoalEnvironmentProperties)
@@ -280,6 +271,25 @@ class RiskModel(object):
     }
 
 @swagger.model
+class RoleModel(object):
+    resource_fields = {
+        obj_id_field: fields.String,
+        "theId": fields.Integer,
+        "theName": fields.String,
+        "theType": fields.String,
+        "theShortCode": fields.String,
+        "theDescription": fields.String,
+        "theEnvironmentProperties": None
+    }
+
+    required = resource_fields.keys()
+    required.remove("theEnvironmentProperties")
+
+    swagger_metadata = {
+        obj_id_field : gen_class_metadata(Role)
+    }
+
+@swagger.model
 class UserConfigModel(object):
     resource_fields = {
         "user": fields.String,
@@ -290,7 +300,9 @@ class UserConfigModel(object):
         "jsonPrettyPrint": fields.String
     }
 
-    required = ["user", "passwd", "db", "host", "port"]
+    required = resource_fields.keys()
+    required.remove("jsonPrettyPrint")
+
     swagger_metadata = {
         'jsonPrettyPrint':
             {
