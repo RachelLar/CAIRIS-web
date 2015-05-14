@@ -122,7 +122,7 @@ class EnvironmentsAPI(Resource):
 class EnvironmentByNameAPI(Resource):
     #region Swagger Docs
     @swagger.operation(
-        notes='Get detailed information about an environment',
+        notes='Get an environment by name',
         nickname='environment-by-name-get',
         responseClass=EnvironmentModel.__name__,
         parameters=[

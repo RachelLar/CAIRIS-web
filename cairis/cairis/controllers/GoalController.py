@@ -170,7 +170,7 @@ class ColouredGoalsAPI(Resource):
 class GoalByIdAPI(Resource):
     # region Swagger Doc
     @swagger.operation(
-        notes='Get detailed information about a goal',
+        notes='Get a goal by ID',
         responseClass=SwaggerGoalModel.__name__,
         nickname='goal-by-id-get',
         parameters=[
@@ -348,7 +348,7 @@ class GoalByIdAPI(Resource):
 class GoalByNameAPI(Resource):
     # region Swagger Doc
     @swagger.operation(
-        notes='Get detailed information about a goal',
+        notes='Get a goal by name',
         responseClass=SwaggerGoalModel.__name__,
         nickname='goal-by-name-get',
         parameters=[
