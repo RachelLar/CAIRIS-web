@@ -1,4 +1,5 @@
 import httplib
+import logging
 
 from ARM import DatabaseProxyException
 from Borg import Borg
@@ -14,9 +15,33 @@ def check_required_keys(json_dict, required):
 
 def get_logger():
     b = Borg()
-    return b.logger
+    log = logging.getLogger('cairisd')
+    log.setLevel(logging.INFO)
 
-def validate_proxy(session, id, conf=None):
+    try:
+        log = b.logger
+    except AttributeError:
+        pass
+
+    return log
+
+def get_session_id(session, request):
+    # Look if HTTP session is being used
+    if session is not None:
+        session_id = session.get('session_id', -1)
+    else:
+        session_id = -1
+
+    # Look if body contains session ID
+    json = request.get_json(silent=True)
+    if json is not False and json is not None:
+        session_id = json.get('session_id', session_id)
+
+    # Check if the session ID is provided by query parameters
+    session_id = request.args.get('session_id', session_id)
+    return session_id
+
+def validate_proxy(session, id, request=None, conf=None):
     """
     Validates that the DB proxy object is properly set up
     :param session: The session object of the request
