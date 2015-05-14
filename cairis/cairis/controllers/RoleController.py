@@ -138,7 +138,7 @@ class RolesAPI(Resource):
         except ARM.ARMException as ex:
             raise ARMHTTPError(ex)
 
-class AssetByNameAPI(Resource):
+class RolesByNameAPI(Resource):
     # region Swagger Doc
     @swagger.operation(
         notes='Get an role by name',
