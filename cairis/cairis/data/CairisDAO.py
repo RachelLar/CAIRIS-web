@@ -1,4 +1,5 @@
 import httplib
+import logging
 
 from Borg import Borg
 from CairisHTTPError import CairisHTTPError
@@ -9,7 +10,10 @@ __author__ = 'Robin Quetin'
 
 class CairisDAO(object):
     def __init__(self, session_id):
+        b = Borg()
         self.db_proxy = self.get_dbproxy(session_id)
+        self.logger = logging.getLogger('cairisd')
+        self.logger.setLevel(b.logLevel)
 
     def from_json(self, request):
         raise NotImplementedError('from_json is not yet implemented by subclass')
