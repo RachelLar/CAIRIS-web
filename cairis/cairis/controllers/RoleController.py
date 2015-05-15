@@ -107,6 +107,139 @@ class RolesAPI(Resource):
         resp.contenttype = 'application/json'
         return resp
 
+class RolesByIdAPI(Resource):
+    # region Swagger Doc
+    @swagger.operation(
+        notes='Get an role by name',
+        responseClass=RoleModel.__name__,
+        nickname='role-by-name-get',
+        parameters=[
+            {
+                "name": "session_id",
+                "description": "The ID of the user's session",
+                "required": False,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "paramType": "query"
+            }
+        ],
+        responseMessages=[
+            {
+                "code": httplib.BAD_REQUEST,
+                "message": "The database connection was not properly set up"
+            }
+        ]
+    )
+    # endregion
+    def get(self, id):
+        session_id = get_session_id(session, request)
+        dao = RoleDAO(session_id)
+
+        found_role = dao.get_role_by_id(id)
+
+        resp = make_response(json_serialize(found_role, session_id=session_id))
+        resp.headers['Content-Type'] = "application/json"
+        return resp
+
+    # region Swagger Doc
+    @swagger.operation(
+        notes='Updates an existing role',
+        nickname='role-put',
+        parameters=[
+            {
+                "name": "body",
+                "description": "The session ID and the serialized version of the role to be updated",
+                "required": True,
+                "allowMultiple": False,
+                "type": RoleMessage.__name__,
+                "paramType": "body"
+            },
+            {
+                "name": "session_id",
+                "description": "The ID of the user's session",
+                "required": False,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "paramType": "query"
+            }
+        ],
+        responseMessages=[
+            {
+                'code': httplib.BAD_REQUEST,
+                'message': 'One or more attributes are missing'
+            },
+            {
+                'code': httplib.CONFLICT,
+                'message': 'Some problems were found during the name check'
+            },
+            {
+                'code': httplib.NOT_FOUND,
+                'message': 'The provided role name could not be found in the database'
+            },
+            {
+                'code': httplib.CONFLICT,
+                'message': 'A database error has occurred'
+            }
+        ]
+    )
+    # endregion
+    def put(self, id):
+        session_id = get_session_id(session, request)
+        dao = RoleDAO(session_id)
+
+        upd_role, upd_role_props = dao.from_json(request)
+        dao.update_role(upd_role, id=id, role_props=upd_role_props)
+
+        resp_dict = {'message': 'Update successful'}
+        resp = make_response(json_serialize(resp_dict, session_id=session_id), httplib.OK)
+        resp.contenttype = 'application/json'
+        return resp
+
+    # region Swagger Doc
+    @swagger.operation(
+        notes='Deletes an existing role',
+        nickname='role-delete',
+        parameters=[
+            {
+                "name": "session_id",
+                "description": "The ID of the user's session",
+                "required": False,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "paramType": "query"
+            }
+        ],
+        responseMessages=[
+            {
+                'code': httplib.BAD_REQUEST,
+                'message': 'One or more attributes are missing'
+            },
+            {
+                'code': httplib.CONFLICT,
+                'message': 'Some problems were found during the name check'
+            },
+            {
+                'code': httplib.NOT_FOUND,
+                'message': 'The provided role name could not be found in the database'
+            },
+            {
+                'code': httplib.CONFLICT,
+                'message': 'A database error has occurred'
+            }
+        ]
+    )
+    # endregion
+    def delete(self, id):
+        session_id = get_session_id(session, request)
+        dao = RoleDAO(session_id)
+
+        dao.delete_role(role_id=id)
+
+        resp_dict = {'message': 'Role successfully deleted'}
+        resp = make_response(json_serialize(resp_dict, session_id=session_id), httplib.OK)
+        resp.contenttype = 'application/json'
+        return resp
+
 class RolesByNameAPI(Resource):
     # region Swagger Doc
     @swagger.operation(

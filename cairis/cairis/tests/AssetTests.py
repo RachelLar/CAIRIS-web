@@ -14,7 +14,7 @@ __author__ = 'Robin Quetin'
 
 class AssetTests(CairisTests):
     # region Class fields
-    logger = logging.getLogger('AssetTests')
+    logger = logging.getLogger(__name__)
     existing_asset_name = 'Data node'
     new_asset = Asset(
         assetId=-1,

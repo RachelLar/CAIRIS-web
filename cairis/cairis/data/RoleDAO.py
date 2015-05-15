@@ -43,8 +43,8 @@ class RoleDAO(CairisDAO):
         idx = 0
 
         while found_role is None and idx < len(roles):
-            if roles[idx].theId == role_id:
-                found_role = roles[idx]
+            if roles.values()[idx].theId == role_id:
+                found_role = roles.values()[idx]
             idx += 1
 
         if found_role is None:
@@ -86,12 +86,12 @@ class RoleDAO(CairisDAO):
 
     def update_role(self, role, name=None, role_id=-1, role_props=None):
         if name is not None:
-            old_role = self.get_asset_by_name(name, simplify=False)
+            old_role = self.get_role_by_name(name, simplify=False)
             if role is None:
                 raise ObjectNotFoundHTTPError('The asset')
-            id = old_role.theId
+            role_id = old_role.theId
 
-        if id > -1:
+        if role_id > -1:
             params = RoleParameters(
                 name=role.theName,
                 rType=role.theType,
@@ -144,11 +144,11 @@ class RoleDAO(CairisDAO):
         except ARM.DatabaseProxyException as ex:
             raise ARMHTTPError(ex)
 
-    def delete_role(self, name=None, asset_id=-1):
+    def delete_role(self, name=None, role_id=-1):
         if name is not None:
             found_role = self.get_role_by_name(name)
-        elif asset_id > -1:
-            found_role = self.get_role_by_id(asset_id)
+        elif role_id > -1:
+            found_role = self.get_role_by_id(role_id)
         else:
             raise MissingParameterHTTPError(param_names=['name'])
 

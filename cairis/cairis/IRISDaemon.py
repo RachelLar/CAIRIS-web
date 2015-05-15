@@ -124,6 +124,7 @@ def start():
     # Role routes
     api.add_resource(RoleController.RolesAPI, '/api/roles')
     api.add_resource(RoleController.RolesByNameAPI, '/api/roles/name/<string:name>')
+    api.add_resource(RoleController.RolesByIdAPI, '/api/roles/id/<int:id>')
     api.add_resource(RoleController.RoleEnvironmentPropertiesAPI, '/api/roles/name/<string:name>/properties')
 
     # User routes

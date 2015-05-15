@@ -72,7 +72,7 @@ class AssetDAO(CairisDAO):
             found_asset = assets.get(name)
 
         if found_asset is None:
-            raise ObjectNotFoundHTTPError('The provided asset ID')
+            raise ObjectNotFoundHTTPError('The provided asset name')
 
         if simplify:
             found_asset = self.simplify(found_asset)

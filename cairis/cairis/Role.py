@@ -16,7 +16,7 @@
 #  under the License.
 
 
-class Role:
+class Role(object):
   def __init__(self,roleId,roleName,rType,sCode,roleDesc,cProps):
     self.theId = roleId
     self.theName = roleName
