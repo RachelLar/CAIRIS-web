@@ -307,12 +307,15 @@ class AssetDAO(CairisDAO):
         return envProperties
 
     def from_json(self, request, to_props=False):
+        self.logger.debug('Request data: %s', request.data)
         json = request.get_json(silent=True)
         if json is False or json is None:
             raise MalformedJSONHTTPError(data=request.get_data())
 
         json_dict = json['object']
         if to_props:
+            if not isinstance(json['object'], list):
+                raise MalformedJSONHTTPError(data=request.get_data())
             json['property_0'] = json['object']
         else:
             json_dict['__python_obj__'] = Asset.__module__+'.'+Asset.__name__
