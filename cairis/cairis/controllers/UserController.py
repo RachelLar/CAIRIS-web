@@ -14,7 +14,7 @@ __author__ = 'Robin Quetin'
 
 def set_dbproxy(conf):
     b = Borg()
-    db_proxy = validate_proxy(None, -1, conf)
+    db_proxy = validate_proxy(None, -1, conf=conf)
     pSettings = db_proxy.getProjectSettings()
 
     id = b.init_settings()
