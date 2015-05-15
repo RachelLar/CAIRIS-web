@@ -1,12 +1,14 @@
 import httplib
+import logging
 from flask.ext.restful_swagger import swagger
 from flask import request, make_response, session
 from flask.ext.restful import Resource
+from jsonpickle import encode
 
 from Borg import Borg
 from CairisHTTPError import MissingParameterHTTPError, MalformedJSONHTTPError
 from tools.ModelDefinitions import UserConfigModel
-from tools.SessionValidator import validate_proxy
+from tools.SessionValidator import validate_proxy, get_logger
 
 
 __author__ = 'Robin Quetin'
@@ -42,6 +44,7 @@ def serve_user_config_form():
 def handle_user_config_form():
     try:
         dict_form = request.form
+
         conf = {
             'host': dict_form['host'],
             'port': int(dict_form['port']),
@@ -102,9 +105,9 @@ class UserConfigAPI(Resource):
             b.logger.info(dict_form)
             s = set_dbproxy(dict_form)
 
-            resp = make_response('session_id={0}'.format(s['session_id']), httplib.OK)
-            resp.headers['Content-type'] = 'text/plain'
-            resp.headers['Access-Control-Allow-Origin'] = "*"
+            resp_dict = {'session_id': s['session_id'], 'message': 'Configuration successfully applied'}
+            resp = make_response(encode(resp_dict), httplib.OK)
+            resp.headers['Content-type'] = 'application/json'
             return resp
 
         except KeyError:
