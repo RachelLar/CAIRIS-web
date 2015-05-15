@@ -23,6 +23,14 @@ def gen_message_fields(class_ref, *prop_class_refs):
 
     return resource_fields
 
+def gen_message_multival_fields(class_ref):
+    resource_fields = {
+        "session_id": fields.String,
+        "object": fields.List(fields.Nested(class_ref.resource_fields))
+    }
+
+    return resource_fields
+
 class DefaultMessage(object):
     required = ['object']
 
@@ -33,7 +41,7 @@ class DefaultMessage(object):
 )
 # endregion
 class AssetEnvironmentPropertiesMessage(DefaultMessage):
-    resource_fields = gen_message_fields(ModelDefinitions.AssetEnvironmentPropertiesModel)
+    resource_fields = gen_message_multival_fields(ModelDefinitions.AssetEnvironmentPropertiesModel)
     required = DefaultMessage.required
 
 # region Swagger Doc

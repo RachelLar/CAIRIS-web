@@ -7,10 +7,10 @@ from flask.ext.restful import Resource
 from Asset import Asset
 from AssetModel import AssetModel
 from Borg import Borg
-from CairisHTTPError import CairisHTTPError, ObjectNotFoundHTTPError, MissingParameterHTTPError
+from CairisHTTPError import ObjectNotFoundHTTPError, MissingParameterHTTPError
 from data.AssetDAO import AssetDAO
 from tools.JsonConverter import json_serialize
-from tools.MessageDefinitions import AssetMessage
+from tools.MessageDefinitions import AssetMessage, AssetEnvironmentPropertiesMessage
 from tools.ModelDefinitions import AssetModel as SwaggerAssetModel, AssetEnvironmentPropertiesModel
 from tools.SessionValidator import validate_proxy, validate_fonts, get_session_id
 
@@ -422,13 +422,12 @@ class AssetEnvironmentPropertiesAPI(Resource):
     @swagger.operation(
         notes='Updates the environment properties for a specific asset',
         nickname='asset-envprops-by-name-put',
-        responseClass=str.__name__,
         parameters=[
             {
                 "name": "body",
                 "required": True,
                 "allowMultiple": False,
-                "dataType": AssetEnvironmentPropertiesModel.__name__,
+                "dataType": AssetEnvironmentPropertiesMessage.__name__,
                 "paramType": "body"
             },
             {

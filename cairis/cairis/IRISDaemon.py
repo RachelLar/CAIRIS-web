@@ -142,6 +142,7 @@ def start():
 
     try:
         if b.unit_testing:
+            app.config['TESTING'] = True
             return app.test_client()
         else:
             raise AttributeError()

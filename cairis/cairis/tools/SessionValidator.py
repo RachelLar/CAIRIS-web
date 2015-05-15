@@ -21,7 +21,12 @@ def get_logger():
     try:
         log = b.logger
     except AttributeError:
-        pass
+        b.logger = log
+        try:
+            log.setLevel(b.logLevel)
+            b.logger.setLevel(b.logLevel)
+        except AttributeError:
+            b.logLevel = logging.INFO
 
     return log
 
