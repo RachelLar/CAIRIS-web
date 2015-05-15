@@ -1,19 +1,21 @@
 import logging
 from urllib import quote
+
 import jsonpickle
+
 from Asset import Asset
-import cairisd
-import unittest
+from tests.CairisTests import CairisTests
 from tools.JsonConverter import json_deserialize
 from tools.ModelDefinitions import AssetEnvironmentPropertiesModel, AssetSecurityAttribute
+
 
 __author__ = 'Robin Quetin'
 
 
-class AssetTests(unittest.TestCase):
+class AssetTests(CairisTests):
     # region Class fields
-    app = cairisd.start(['-d', '--unit-test'])
     logger = logging.getLogger('AssetTests')
+    existing_asset_name = 'Data node'
     new_asset = Asset(
         assetId=-1,
         assetName='Test',
@@ -88,7 +90,8 @@ class AssetTests(unittest.TestCase):
 
     def test_get_name(self):
         method = 'test_get_name'
-        rv = self.app.get('/api/assets/name/Data%20node?session_id=test')
+        url = '/api/assets/name/%s?session_id=test' % quote(self.existing_asset_name)
+        rv = self.app.get(url)
         asset = json_deserialize(rv.data)
         self.assertIsNotNone(asset, 'No results after deserialization')
         self.assertIsInstance(asset, Asset, 'The result is not an asset as expected')
@@ -127,6 +130,20 @@ class AssetTests(unittest.TestCase):
         self.assertIsNotNone(message, 'No message returned')
         url = '/api/assets/name/Test2?session_id=test'.format(quote(self.new_asset.theName))
         rv = self.app.delete(url)
+
+    def test_get_props_name_get(self):
+        method = 'test_get_props_name_get'
+        url = '/api/assets/name/%s/properties?session_id=test' % quote(self.existing_asset_name)
+        cls_asset_prop = AssetEnvironmentPropertiesModel.__module__+'.'+AssetEnvironmentPropertiesModel.__name__
+
+        rv = self.app.get(url)
+        asset_props = json_deserialize(rv.data)
+        self.assertIsNotNone(asset_props, 'No results after deserialization')
+        self.assertGreater(len(asset_props), 0, 'List does not contain any elements')
+        asset_prop = asset_props[0]
+        asset_prop_class_name = asset_prop.__class__.__module__ +'.'+ asset_prop.__class__.__name__
+        self.assertEqual(cls_asset_prop, asset_prop_class_name, 'The result is not an asset as expected')
+        self.logger.info('[%s] Asset property: %s', method, asset_props[0].environment)
 
     def test_update_props_name_put(self):
         method = 'test_update_props_name_put'
