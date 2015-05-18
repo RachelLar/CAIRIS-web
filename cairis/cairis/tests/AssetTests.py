@@ -70,7 +70,7 @@ class AssetTests(CairisTests):
     def test_post(self):
         method = 'test_post_new'
         rv = self.app.post('/api/assets', content_type='application/json', data=self.new_asset_body)
-        self.logger.info('[%s] Response data: %s', method, rv.data)
+        self.logger.debug('[%s] Response data: %s', method, rv.data)
         json_resp = json_deserialize(rv.data)
         self.assertIsNotNone(json_resp, 'No results after deserialization')
         asset_id = json_resp.get('asset_id', None)
@@ -109,7 +109,7 @@ class AssetTests(CairisTests):
         self.logger.info('[%s] JSON data: %s', method, upd_asset_body)
 
         rv = self.app.put(url, content_type='application/json', data=upd_asset_body)
-        self.logger.info('[%s] Response data: %s', method, rv.data)
+        self.logger.debug('[%s] Response data: %s', method, rv.data)
         json_resp = json_deserialize(rv.data)
         self.assertIsNotNone(json_resp, 'No results after deserialization')
         message = json_resp.get('message', None)
@@ -125,7 +125,7 @@ class AssetTests(CairisTests):
         rv = self.app.delete(url)
         url = '/api/assets/name/Test2?session_id=test'.format(quote(self.new_asset.theName))
         rv = self.app.delete(url)
-        self.logger.info('[%s] Response data: %s', method, rv.data)
+        self.logger.debug('[%s] Response data: %s', method, rv.data)
         json_resp = json_deserialize(rv.data)
         self.assertIsNotNone(json_resp, 'No results after deserialization')
         message = json_resp.get('message', None)
@@ -161,7 +161,7 @@ class AssetTests(CairisTests):
         self.logger.info('[%s] JSON data: %s', method, upd_asset_props_body)
 
         rv = self.app.put(url, content_type='application/json', data=upd_asset_props_body)
-        self.logger.info('[%s] Response data: %s', method, rv.data)
+        self.logger.debug('[%s] Response data: %s', method, rv.data)
         json_resp = json_deserialize(rv.data)
         self.assertIsNotNone(json_resp, 'No results after deserialization')
         message = json_resp.get('message', None)

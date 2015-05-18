@@ -116,7 +116,6 @@ def start():
     api.add_resource(RequirementController.RequirementsByAssetAPI, '/api/requirements/asset/<string:name>')
     api.add_resource(RequirementController.RequirementsByEnvironmentAPI, '/api/requirements/environment/<string:name>')
     api.add_resource(RequirementController.RequirementByIdAPI, '/api/requirements/id/<int:id>')
-    api.add_resource(RequirementController.RequirementUpdateAPI, '/api/requirements/update')
 
     # Risk routes
     #api.add_resource(RiskController.RisksAPI, '/api/risks')

@@ -1,15 +1,15 @@
 import httplib
 
-from CairisHTTPError import MalformedJSONHTTPError, MissingParameterHTTPError, handle_exception
 from flask import session, request, make_response
-
 from flask.ext.restful import Resource
 from flask.ext.restful_swagger import swagger
+
 from Requirement import Requirement
+from data.RequirementDAO import RequirementDAO
 from tools.MessageDefinitions import RequirementMessage
 from tools.ModelDefinitions import RequirementModel
-from tools.SessionValidator import validate_proxy
-from tools.JsonConverter import json_serialize, json_deserialize
+from tools.SessionValidator import get_session_id
+from tools.JsonConverter import json_serialize
 
 
 __author__ = 'Robin Quetin'
@@ -50,14 +50,12 @@ class RequirementsAPI(Resource):
     )
     # endregion
     def get(self):
-        session_id = request.args.get('session_id', None)
-        ordered = request.args.get('ordered', 1)
-        db_proxy = validate_proxy(session, session_id)
+        session_id = get_session_id(session, request)
+        ordered = request.args.get('ordered', 0)
+        constraint_id = request.args.get('constraint_id', '')
 
-        if ordered == 1:
-            reqs = db_proxy.getOrderedRequirements('', 1)
-        else:
-            reqs = db_proxy.getRequirements('', 1)
+        dao = RequirementDAO(session_id)
+        reqs = dao.get_requirements(constraint_id=constraint_id, ordered=(ordered=='1'))
 
         resp = make_response(json_serialize(reqs, session_id=session_id), httplib.OK)
         resp.headers['Content-type'] = 'application/json'
@@ -119,33 +117,63 @@ class RequirementsAPI(Resource):
     )
     # endregion
     def post(self):
-        session_id = request.args.get('session_id', None)
+        session_id = get_session_id(session, request)
         asset_name = request.args.get('asset', None)
         environment_name = request.args.get('environment', None)
-        json_new_req = request.get_json(silent=True)
 
-        if json_new_req is False or json_new_req is None:
-            raise MalformedJSONHTTPError(data=request.get_data())
+        dao = RequirementDAO(session_id)
+        new_req = dao.from_json(request)
+        req_id = dao.add_requirement(new_req, asset_name=asset_name, environment_name=environment_name)
 
-        session_id = json_new_req.get('session_id', session_id)
-        db_proxy = validate_proxy(session, session_id)
-        new_req = json_deserialize(json_new_req['object'])
+        resp_dict = {'message': 'Successfully added requirement', 'requirement_id': req_id}
+        resp = make_response(json_serialize(resp_dict), httplib.OK)
+        resp.contenttype = 'application/json'
+        return resp
 
-        if asset_name is not None:
-            try:
-                db_proxy.addRequirement(new_req, assetName=asset_name, isAsset=True)
-            except Exception as ex:
-                handle_exception(ex)
-        elif environment_name is not None:
-            try:
-                db_proxy.addRequirement(new_req, assetName=environment_name, isAsset=False)
-            except Exception as ex:
-                handle_exception(ex)
-        else:
-            raise MissingParameterHTTPError(param_names=['asset', 'environment'])
+    # region Swagger Docs
+    @swagger.operation(
+        notes='Imports data from an XML file',
+        nickname='requirement-update-put',
+        parameters=[
+            {
+                'name': 'body',
+                "description": "Options to be passed to the import tool",
+                "required": True,
+                "allowMultiple": False,
+                'type': RequirementMessage.__name__,
+                'paramType': 'body'
+            },
+            {
+                "name": "session_id",
+                "description": "The ID of the user's session",
+                "required": False,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "paramType": "query"
+            }
+        ],
+        responseMessages=[
+            {
+                'code': httplib.BAD_REQUEST,
+                'message': 'The provided file is not a valid XML file'
+            },
+            {
+                'code': httplib.BAD_REQUEST,
+                'message': '''Some parameters are missing. Be sure 'requirement' is defined.'''
+            }
+        ]
+    )
+    # endregion
+    def put(self):
+        session_id = get_session_id(session, request)
 
-        resp = make_response('Successfully added new requirement', httplib.OK)
-        resp.contenttype = 'text/plain'
+        dao = RequirementDAO(session_id)
+        req = dao.from_json(request)
+        dao.update_requirement(req, req_id=req.theId)
+
+        resp_dict = {'message': 'Requirement successfully updated'}
+        resp = make_response(json_serialize(resp_dict), httplib.OK)
+        resp.headers['Content-type'] = 'application/json'
         return resp
 
 
@@ -184,20 +212,11 @@ class RequirementsByAssetAPI(Resource):
     )
     # endregion
     def get(self, name):
-        session_id = request.args.get('session_id', None)
-        ordered = request.args.get('ordered', 1)
-        db_proxy = validate_proxy(session, session_id)
+        session_id = get_session_id(session, request)
+        ordered = request.args.get('ordered', '1')
 
-        if ordered == 1:
-            try:
-                reqs = db_proxy.getOrderedRequirements(name, 1)
-            except Exception as ex:
-                handle_exception(ex)
-        else:
-            try:
-                reqs = db_proxy.getRequirements(name, 1)
-            except Exception as ex:
-                handle_exception(ex)
+        dao = RequirementDAO(session_id)
+        reqs = dao.get_requirements(constraint_id=name, is_asset=True, ordered=(ordered=='1'))
 
         resp = make_response(json_serialize(reqs, session_id=session_id), httplib.OK)
         resp.headers['Content-type'] = 'application/json'
@@ -239,20 +258,11 @@ class RequirementsByEnvironmentAPI(Resource):
     )
     # endregion
     def get(self, name):
-        session_id = request.args.get('session_id', None)
-        ordered = request.args.get('ordered', 1)
-        db_proxy = validate_proxy(session, session_id)
+        session_id = get_session_id(session, request)
+        ordered = request.args.get('ordered', '1')
 
-        if ordered == 1:
-            try:
-                reqs = db_proxy.getOrderedRequirements(name, 0)
-            except Exception as ex:
-                handle_exception(ex)
-        else:
-            try:
-                reqs = db_proxy.getRequirements(name, 0)
-            except Exception as ex:
-                handle_exception(ex)
+        dao = RequirementDAO(session_id)
+        reqs = dao.get_requirements(constraint_id=name, is_asset=False, ordered=(ordered=='1'))
 
         resp = make_response(json_serialize(reqs, session_id=session_id), httplib.OK)
         resp.headers['Content-type'] = 'application/json'
@@ -284,33 +294,20 @@ class RequirementByIdAPI(Resource):
     )
     # endregion
     def get(self, id):
-        session_id = request.args.get('session_id', None)
-        db_proxy = validate_proxy(session, session_id)
+        session_id = get_session_id(session, request)
 
-        try:
-            req = db_proxy.getRequirement(id)
-        except Exception as ex:
-            handle_exception(ex)
+        dao = RequirementDAO(session_id)
+        req = dao.get_requirement_by_id(id)
 
         resp = make_response(json_serialize(req, session_id=session_id), httplib.OK)
         resp.headers['Content-type'] = 'application/json'
         return resp
 
-
-class RequirementUpdateAPI(Resource):
-    # region Swagger Docs
+    # region Swagger Doc
     @swagger.operation(
-        notes='Imports data from an XML file',
-        nickname='requirement-update-put',
+        notes='Deletes an existing requirement',
+        nickname='requirement-delete',
         parameters=[
-            {
-                'name': 'body',
-                "description": "Options to be passed to the import tool",
-                "required": True,
-                "allowMultiple": False,
-                'type': RequirementMessage.__name__,
-                'paramType': 'body'
-            },
             {
                 "name": "session_id",
                 "description": "The ID of the user's session",
@@ -323,37 +320,30 @@ class RequirementUpdateAPI(Resource):
         responseMessages=[
             {
                 'code': httplib.BAD_REQUEST,
-                'message': 'The provided file is not a valid XML file'
+                'message': 'One or more attributes are missing'
             },
             {
-                'code': httplib.BAD_REQUEST,
-                'message': '''Some parameters are missing. Be sure 'requirement' is defined.'''
+                'code': httplib.CONFLICT,
+                'message': 'Some problems were found during the name check'
+            },
+            {
+                'code': httplib.NOT_FOUND,
+                'message': 'The provided requirement name could not be found in the database'
+            },
+            {
+                'code': httplib.CONFLICT,
+                'message': 'A database error has occurred'
             }
         ]
     )
     # endregion
-    def put(self):
-        session_id = request.args.get('session_id', None)
-        json_dict = request.get_json(silent=True)
+    def delete(self, id):
+        session_id = get_session_id(session, request)
 
-        if json_dict is False or json_dict is None:
-            raise MalformedJSONHTTPError(data=request.get_data())
+        dao = RequirementDAO(session_id)
+        dao.delete_requirement(req_id=id)
 
-        session_id = json_dict.get('session_id', session_id)
-        db_proxy = validate_proxy(session, session_id)
-        json_string = json_serialize(json_dict['object'])
-
-        reqObj = json_deserialize(json_string, 'requirement')
-        if not isinstance(reqObj, Requirement):
-            raise MissingParameterHTTPError()
-
-        reqObj.incrementVersion()
-
-        try:
-            db_proxy.updateRequirement(reqObj)
-        except Exception as ex:
-            handle_exception(ex)
-
-        resp = make_response('Requirement successfully updated', httplib.OK)
-        resp.headers['Content-type'] = 'text/plain'
+        resp_dict = {'message': 'Requirement successfully deleted'}
+        resp = make_response(json_serialize(resp_dict), httplib.OK)
+        resp.headers['Content-type'] = 'application/json'
         return resp

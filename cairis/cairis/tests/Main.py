@@ -2,6 +2,7 @@ import unittest
 from tests.AssetTests import AssetTests
 from tests.UserTests import UserTests
 from tests.RoleTests import RoleTests
+from tests.RequirementTests import RequirementTests
 
 __author__ = 'Robin Quetin'
 

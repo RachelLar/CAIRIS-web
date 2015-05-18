@@ -53,7 +53,7 @@ class RoleTests(CairisTests):
     def test_post(self):
         method = 'test_post_new'
         rv = self.app.post('/api/roles', content_type='application/json', data=self.new_role_body)
-        self.logger.info('[%s] Response data: %s', method, rv.data)
+        self.logger.debug('[%s] Response data: %s', method, rv.data)
         json_resp = json_deserialize(rv.data)
         self.assertIsNotNone(json_resp, 'No results after deserialization')
         role_id = json_resp.get('role_id', None)
@@ -70,7 +70,7 @@ class RoleTests(CairisTests):
         self.logger.info('[%s] URL: %s', method, url)
         rv = self.app.get(url)
         self.assertIsNotNone(rv.data, 'No response')
-        self.logger.info('[%s] Response data: %s', method, rv.data)
+        self.logger.debug('[%s] Response data: %s', method, rv.data)
         role = jsonpickle.decode(rv.data)
         self.assertIsNotNone(role, 'No results after deserialization')
         self.assertEqual(role['__python_obj__'], self.role_class, 'The result is not an role as expected')
@@ -97,7 +97,7 @@ class RoleTests(CairisTests):
         self.logger.info('[%s] JSON data: %s', method, upd_role_body)
 
         rv = self.app.put(url, content_type='application/json', data=upd_role_body)
-        self.logger.info('[%s] Response data: %s', method, rv.data)
+        self.logger.debug('[%s] Response data: %s', method, rv.data)
         json_resp = json_deserialize(rv.data)
         self.assertIsNotNone(json_resp, 'No results after deserialization')
         message = json_resp.get('message', None)
@@ -122,7 +122,7 @@ class RoleTests(CairisTests):
         self.logger.info('[%s] JSON data: %s', method, upd_role_body)
 
         rv = self.app.put(url, content_type='application/json', data=upd_role_body)
-        self.logger.info('[%s] Response data: %s', method, rv.data)
+        self.logger.debug('[%s] Response data: %s', method, rv.data)
         json_resp = json_deserialize(rv.data)
         self.assertIsNotNone(json_resp, 'No results after deserialization')
         message = json_resp.get('message', None)
@@ -132,11 +132,11 @@ class RoleTests(CairisTests):
         role = json_deserialize(rv.data)
         self.logger.info('[%s] Role: %s [%d]', method, role.theName, role.theId)
 
-    def test_delete_name(self):
+    def test_x_delete_name(self):
         method = 'test_delete_name'
         url = '/api/roles/name/{}?session_id=test'.format(quote(self.new_role.theName))
         rv = self.app.delete(url)
-        self.logger.info('[%s] Response data: %s', method, rv.data)
+        self.logger.debug('[%s] Response data: %s', method, rv.data)
         json_resp = json_deserialize(rv.data)
         self.assertIsNotNone(json_resp, 'No results after deserialization')
         message = json_resp.get('message', None)
