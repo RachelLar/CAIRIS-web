@@ -188,7 +188,7 @@ class RolesByIdAPI(Resource):
         dao = RoleDAO(session_id)
 
         upd_role = dao.from_json(request)
-        dao.update_role(upd_role, id=id)
+        dao.update_role(upd_role, role_id=id)
 
         resp_dict = {'message': 'Update successful'}
         resp = make_response(json_serialize(resp_dict, session_id=session_id), httplib.OK)

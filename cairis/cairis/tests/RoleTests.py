@@ -90,6 +90,31 @@ class RoleTests(CairisTests):
         url = '/api/roles/name/%s' % quote(self.new_role.theName)
 
         upd_role = self.new_role
+        upd_role.theName = 'Test3'
+        upd_role_dict = self.new_role_dict
+        upd_role_dict['object'] = upd_role
+        upd_role_body = jsonpickle.encode(upd_role_dict)
+        self.logger.info('[%s] JSON data: %s', method, upd_role_body)
+
+        rv = self.app.put(url, content_type='application/json', data=upd_role_body)
+        self.logger.info('[%s] Response data: %s', method, rv.data)
+        json_resp = json_deserialize(rv.data)
+        self.assertIsNotNone(json_resp, 'No results after deserialization')
+        message = json_resp.get('message', None)
+        self.assertIsNotNone(message, 'No message returned')
+
+        rv = self.app.get('/api/roles/name/Test3?session_id=test')
+        role = json_deserialize(rv.data)
+        self.logger.info('[%s] Role: %s [%d]', method, role.theName, role.theId)
+
+    def test_put_id(self):
+        method = 'test_put_id'
+        rv = self.app.get('/api/roles?session_id=test')
+        roles = json_deserialize(rv.data)
+        role = roles.get(self.new_role.theName)
+        url = '/api/roles/id/%d' % role.theId
+
+        upd_role = self.new_role
         upd_role.theName = 'Test2'
         upd_role_dict = self.new_role_dict
         upd_role_dict['object'] = upd_role
@@ -117,6 +142,8 @@ class RoleTests(CairisTests):
         message = json_resp.get('message', None)
         self.assertIsNotNone(message, 'No message returned')
         url = '/api/roles/name/Test2?session_id=test'.format(quote(self.new_role.theName))
+        rv = self.app.delete(url)
+        url = '/api/roles/name/Test3?session_id=test'.format(quote(self.new_role.theName))
         rv = self.app.delete(url)
 
     def test_get_props_name_get(self):
