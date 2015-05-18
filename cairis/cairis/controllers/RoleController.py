@@ -403,6 +403,6 @@ class RoleEnvironmentPropertiesAPI(Resource):
 
         props = dao.get_role_props(name)
 
-        resp = make_response(json_serialize(props), httplib.OK)
+        resp = make_response(json_serialize(props, session_id=session_id), httplib.OK)
         resp.contenttype = 'application/json'
         return resp
