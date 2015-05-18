@@ -39,6 +39,7 @@ class AssetSecurityAttribute(object):
         "rationale": fields.String
     }
     required = resource_fields.keys()
+    required.remove(obj_id_field)
     swagger_metadata = {
         "__python_obj__": {
             "enum": ["tools.ModelDefinitions.AssetSecurityAttribute"]
@@ -108,6 +109,7 @@ class AssetEnvironmentPropertiesModel(object):
         "environment": fields.String
     }
     required = resource_fields.keys()
+    required.remove(obj_id_field)
     swagger_metadata = {
         "__python_obj__": {
             "enum": ["tools.ModelDefinitions.AssetEnvironmentPropertiesModel"]
@@ -133,10 +135,8 @@ class AssetModel(object):
         "theShortCode": fields.String,
         "theEnvironmentProperties": fields.List(fields.Nested(AssetEnvironmentPropertiesModel.resource_fields))
     }
-    required = [
-        obj_id_field, "theDescription", "theSignificance", "theId", "theTags", "theCriticalRationale",
-        "theInterfaces", "theType", "theName", "isCritical", "theShortCode", "theEnvironmentProperties"
-    ]
+    required = resource_fields.keys()
+    required.remove(obj_id_field)
     swagger_metadata = {
         obj_id_field : gen_class_metadata(Asset)
     }
@@ -257,7 +257,8 @@ class RequirementModel(object):
         "thePriority": fields.Integer,
         "theVersion": fields.Integer
     }
-    required = [obj_id_field, "theId", "dirtyAttrs", "attrs", "theName", "theLabel", "theDescription", "thePriority", "theVersion"]
+    required = resource_fields.keys()
+    required.remove(obj_id_field)
     swagger_metadata = {
         obj_id_field : gen_class_metadata(Requirement)
     }
@@ -294,6 +295,7 @@ class RoleModel(object):
     }
 
     required = resource_fields.keys()
+    required.remove(obj_id_field)
     required.remove("theEnvironmentProperties")
 
     swagger_metadata = {

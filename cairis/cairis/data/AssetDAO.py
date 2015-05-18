@@ -9,7 +9,8 @@ from CairisHTTPError import ObjectNotFoundHTTPError, MalformedJSONHTTPError, ARM
 import armid
 from data.CairisDAO import CairisDAO
 from tools.JsonConverter import json_serialize, json_deserialize
-from tools.ModelDefinitions import AssetEnvironmentPropertiesModel, AssetSecurityAttribute
+from tools.ModelDefinitions import AssetEnvironmentPropertiesModel, AssetSecurityAttribute, AssetModel
+from tools.SessionValidator import check_required_keys
 
 __author__ = 'Robin Quetin'
 
@@ -316,17 +317,25 @@ class AssetDAO(CairisDAO):
         if to_props:
             if not isinstance(json['object'], list):
                 raise MalformedJSONHTTPError(data=request.get_data())
-            json['property_0'] = json['object']
+            else:
+                for idx in range(0, len(json_dict)):
+                    check_required_keys(json_dict[idx], AssetEnvironmentPropertiesModel.required)
+                    json_dict[idx]['__python_obj__'] = AssetEnvironmentPropertiesModel.__module__+'.'+AssetEnvironmentPropertiesModel.__name__
+
+            json['property_0'] = json_dict
         else:
+            check_required_keys(json_dict, AssetModel.required)
             json_dict['__python_obj__'] = Asset.__module__+'.'+Asset.__name__
         new_json_asset = json_serialize(json_dict)
         new_json_asset_props = json.get('property_0', None)
 
         if new_json_asset_props is not None:
             for idx1 in range(0, len(new_json_asset_props)):
+                check_required_keys(new_json_asset_props[idx1], AssetEnvironmentPropertiesModel.required)
                 new_json_asset_props[idx1]['__python_obj__'] = AssetEnvironmentPropertiesModel.__module__+'.'+AssetEnvironmentPropertiesModel.__name__
                 attrs = new_json_asset_props[idx1].get('attributes', [])
                 for idx2 in range(0, len(attrs)):
+                    check_required_keys(attrs[idx2], AssetSecurityAttribute.required)
                     attrs[idx2]['__python_obj__'] = AssetSecurityAttribute.__module__+'.'+AssetSecurityAttribute.__name__
                 new_json_asset_props[idx1]['attributes'] = attrs
 

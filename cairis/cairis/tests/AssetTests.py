@@ -123,13 +123,14 @@ class AssetTests(CairisTests):
         method = 'test_delete_name'
         url = '/api/assets/name/{}?session_id=test'.format(quote(self.new_asset.theName))
         rv = self.app.delete(url)
+        url = '/api/assets/name/Test2?session_id=test'.format(quote(self.new_asset.theName))
+        rv = self.app.delete(url)
         self.logger.info('[%s] Response data: %s', method, rv.data)
         json_resp = json_deserialize(rv.data)
         self.assertIsNotNone(json_resp, 'No results after deserialization')
         message = json_resp.get('message', None)
         self.assertIsNotNone(message, 'No message returned')
-        url = '/api/assets/name/Test2?session_id=test'.format(quote(self.new_asset.theName))
-        rv = self.app.delete(url)
+
 
     def test_get_props_name_get(self):
         method = 'test_get_props_name_get'
