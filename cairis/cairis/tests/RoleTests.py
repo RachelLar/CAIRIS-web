@@ -58,6 +58,7 @@ class RoleTests(CairisTests):
         self.assertIsNotNone(json_resp, 'No results after deserialization')
         role_id = json_resp.get('role_id', None)
         self.assertIsNotNone(role_id, 'No role ID returned')
+        self.logger.info('[%s] Role ID: %d', method, role_id)
 
         rv = self.app.get('/api/roles/id/%d?session_id=test' % role_id)
         role = jsonpickle.decode(rv.data)
@@ -130,28 +131,3 @@ class RoleTests(CairisTests):
         role_prop = role_props[0]
         self.assertEqual(cls_role_prop, role_prop['__python_obj__'], 'The result is not an role as expected')
         self.logger.info('[%s] Role property: %s', method, role_props[0]['theEnvironmentName'])
-
-    def test_update_props_name_put(self):
-        method = 'test_update_props_name_put'
-        url = '/api/roles/name/%s/properties' % quote(self.new_role.theName)
-        self.logger.info('[%s] Old role property environment name: %s', method, self.new_role_props[0].environment)
-
-        upd_role_props = self.new_role_props
-        upd_role_props[0].environment = 'Psychosis'
-        upd_role_props_dict = {
-            'session_id': 'test',
-            'object': upd_role_props
-        }
-        upd_role_props_body = jsonpickle.encode(upd_role_props_dict)
-        self.logger.info('[%s] JSON data: %s', method, upd_role_props_body)
-
-        rv = self.app.put(url, content_type='application/json', data=upd_role_props_body)
-        self.logger.info('[%s] Response data: %s', method, rv.data)
-        json_resp = json_deserialize(rv.data)
-        self.assertIsNotNone(json_resp, 'No results after deserialization')
-        message = json_resp.get('message', None)
-        self.assertIsNotNone(message, 'No message returned')
-
-        rv = self.app.get('/api/roles/name/Test2/properties?session_id=test')
-        role_props = json_deserialize(rv.data)
-        self.logger.info('[%s] Role property environment: %s', method, role_props[0].environment)

@@ -100,7 +100,7 @@ class RolesAPI(Resource):
 
         dao = RoleDAO(session_id)
         new_role, new_role_props = dao.from_json(request)
-        role_id = dao.add_role(new_role, new_role_props)
+        role_id = dao.add_role(new_role)
 
         resp_dict = {'role_id': role_id}
         resp = make_response(json_serialize(resp_dict, session_id=session_id), httplib.OK)
@@ -188,7 +188,7 @@ class RolesByIdAPI(Resource):
         dao = RoleDAO(session_id)
 
         upd_role, upd_role_props = dao.from_json(request)
-        dao.update_role(upd_role, id=id, role_props=upd_role_props)
+        dao.update_role(upd_role, id=id)
 
         resp_dict = {'message': 'Update successful'}
         resp = make_response(json_serialize(resp_dict, session_id=session_id), httplib.OK)
@@ -321,7 +321,7 @@ class RolesByNameAPI(Resource):
         dao = RoleDAO(session_id)
 
         upd_role, upd_role_props = dao.from_json(request)
-        dao.update_role(upd_role, name=name, role_props=upd_role_props)
+        dao.update_role(upd_role, name=name)
 
         resp_dict = {'message': 'Update successful'}
         resp = make_response(json_serialize(resp_dict, session_id=session_id), httplib.OK)
@@ -404,46 +404,5 @@ class RoleEnvironmentPropertiesAPI(Resource):
         props = dao.get_role_props(name)
 
         resp = make_response(json_serialize(props), httplib.OK)
-        resp.contenttype = 'application/json'
-        return resp
-
-    # region Swagger Doc
-    @swagger.operation(
-        notes='Updates the environment properties for a specific role',
-        nickname='role-envprops-by-name-put',
-        responseClass=str.__name__,
-        parameters=[
-            {
-                "name": "body",
-                "required": True,
-                "allowMultiple": False,
-                "dataType": RoleEnvironmentPropertiesModel.__name__,
-                "paramType": "body"
-            },
-            {
-                "name": "session_id",
-                "description": "The ID of the user's session",
-                "required": False,
-                "allowMultiple": False,
-                "dataType": str.__name__,
-                "paramType": "query"
-            }
-        ],
-        responseMessages=[
-            {
-                "code": httplib.BAD_REQUEST,
-                "message": "The database connection was not properly set up"
-            }
-        ]
-    )
-    # endregion
-    def put(self, name):
-        session_id = get_session_id(session, request)
-
-        dao = RoleDAO(session_id)
-        role, role_props = dao.from_json(request, to_props=True)
-        dao.update_role_properties(role_props, name=name)
-
-        resp = make_response({'message': 'The role properties were successfully updated.'}, httplib.OK)
         resp.contenttype = 'application/json'
         return resp

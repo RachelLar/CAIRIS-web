@@ -55,7 +55,7 @@ class RoleDAO(CairisDAO):
 
         return found_role
 
-    def add_role(self, role, role_props=None):
+    def add_role(self, role):
         """
         Adds a new Role to the database
         :type role_props: RoleEnvironmentProperties
@@ -78,13 +78,9 @@ class RoleDAO(CairisDAO):
 
         role_id = self.db_proxy.addRole(role_params)
 
-        if role_props is not None and isinstance(role_props, list):
-            role_params.setId(role_id)
-            self.update_role_properties(role_props, existing_params=role_params)
-
         return role_id
 
-    def update_role(self, role, name=None, role_id=-1, role_props=None):
+    def update_role(self, role, name=None, role_id=-1):
         if name is not None:
             old_role = self.get_role_by_name(name, simplify=False)
             if role is None:
@@ -99,50 +95,19 @@ class RoleDAO(CairisDAO):
                 desc=role.theDescription,
                 cProperties=[]
             )
-            params.setId(id)
-
-            if role_props is not None:
-                params.theEnvironmentProperties = role_props
+            params.setId(role_id)
 
             try:
-                self.db_proxy.updateAsset(params)
+                self.db_proxy.updateRole(params)
             except ARM.DatabaseProxyException as ex:
                 raise ARMHTTPError(ex)
         else:
             raise MissingParameterHTTPError(param_names=['id'])
 
-    def get_role_props(self, name, simplify=True):
+    def get_role_props(self, name):
         role = self.get_role_by_name(name, simplify=False)
         props = role.theEnvironmentProperties
         return props
-
-    def update_role_properties(self, props, name=None, role_id=-1, existing_params=None):
-        if existing_params is None:
-            if role_id > -1:
-                role = self.get_role_by_id(role_id, simplify=False)
-            elif name is not None:
-                role = self.get_role_by_name(name, simplify=False)
-            else:
-                raise MissingParameterHTTPError(param_names=['name'])
-
-            if role is None:
-                raise ObjectNotFoundHTTPError('The asset')
-
-            existing_params = RoleParameters(
-                name=role.theName,
-                rType=role.theType,
-                sCode=role.theShortCode,
-                desc=role.theDescription,
-                cProperties=[]
-            )
-            existing_params.setId(role.theId)
-
-        existing_params.theEnvironmentProperties = props
-
-        try:
-            self.db_proxy.updateAsset(existing_params)
-        except ARM.DatabaseProxyException as ex:
-            raise ARMHTTPError(ex)
 
     def delete_role(self, name=None, role_id=-1):
         if name is not None:
@@ -180,20 +145,24 @@ class RoleDAO(CairisDAO):
 
         if role_props is not None:
             for idx1 in range(0, len(role_props)):
-                assert isinstance(role_props[idx1], RoleEnvironmentProperties)
                 role_props[idx1]['__python_obj__'] = RoleEnvironmentProperties.__module__+'.'+RoleEnvironmentProperties.__name__
                 responses = role_props[idx1]['theResponses']
                 if len(responses) > 0:
                     for idx2 in range(0, len(responses)):
-                        if isinstance(responses[idx2], list):
-                            responses[idx2] = tuple(responses[idx2])
+                        new_response = ()
+                        for resp_data in responses[idx2]:
+                            if isinstance(resp_data, str):
+                                if resp_data.find('py/') == -1:
+                                    new_response.__add__(resp_data)
+                        responses[idx2] = new_response
+
                 role_props[idx1]['theResponses'] = responses
 
             role_props = json_serialize(role_props)
             role_props = json_deserialize(role_props)
 
         role = json_deserialize(role)
-        if not isinstance(role, Role):
+        if not isinstance(role, Role) and not to_props:
             raise MalformedJSONHTTPError(data=request.get_data())
         else:
             return role, role_props
