@@ -99,7 +99,7 @@ class RolesAPI(Resource):
         session_id = get_session_id(session, request)
 
         dao = RoleDAO(session_id)
-        new_role, new_role_props = dao.from_json(request)
+        new_role = dao.from_json(request)
         role_id = dao.add_role(new_role)
 
         resp_dict = {'role_id': role_id}
@@ -187,7 +187,7 @@ class RolesByIdAPI(Resource):
         session_id = get_session_id(session, request)
         dao = RoleDAO(session_id)
 
-        upd_role, upd_role_props = dao.from_json(request)
+        upd_role = dao.from_json(request)
         dao.update_role(upd_role, id=id)
 
         resp_dict = {'message': 'Update successful'}
@@ -320,7 +320,7 @@ class RolesByNameAPI(Resource):
         session_id = get_session_id(session, request)
         dao = RoleDAO(session_id)
 
-        upd_role, upd_role_props = dao.from_json(request)
+        upd_role = dao.from_json(request)
         dao.update_role(upd_role, name=name)
 
         resp_dict = {'message': 'Update successful'}

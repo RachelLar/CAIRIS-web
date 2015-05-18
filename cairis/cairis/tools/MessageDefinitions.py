@@ -103,5 +103,5 @@ class RiskMessage(DefaultMessage):
 )
 # endregion
 class RoleMessage(DefaultMessage):
-    resource_fields = gen_message_fields(ModelDefinitions.RoleModel, ModelDefinitions.RoleEnvironmentPropertiesModel)
+    resource_fields = gen_message_fields(ModelDefinitions.RoleModel)
     required = DefaultMessage.required

@@ -5,6 +5,8 @@ from RoleEnvironmentProperties import RoleEnvironmentProperties
 from RoleParameters import RoleParameters
 from data.CairisDAO import CairisDAO
 from tools.JsonConverter import json_serialize, json_deserialize
+from tools.ModelDefinitions import RoleModel
+from tools.SessionValidator import check_required_keys
 
 __author__ = 'Robin Quetin'
 
@@ -127,45 +129,23 @@ class RoleDAO(CairisDAO):
         except ARM.ARMException as ex:
             raise ARMHTTPError(ex)
 
-    def from_json(self, request, to_props=False):
+    def from_json(self, request):
         """
-        :rtype tuple
+        :rtype Role
         """
         json = request.get_json(silent=True)
         if json is False or json is None:
             raise MalformedJSONHTTPError(data=request.get_data())
 
         json_dict = json['object']
-        if to_props:
-            json['property_0'] = json['object']
-        else:
-            json_dict['__python_obj__'] = Role.__module__+'.'+Role.__name__
+        check_required_keys(json_dict, RoleModel.required)
+        json_dict['__python_obj__'] = Role.__module__+'.'+Role.__name__
         role = json_serialize(json_dict)
-        role_props = json.get('property_0', None)
-
-        if role_props is not None:
-            for idx1 in range(0, len(role_props)):
-                role_props[idx1]['__python_obj__'] = RoleEnvironmentProperties.__module__+'.'+RoleEnvironmentProperties.__name__
-                responses = role_props[idx1]['theResponses']
-                if len(responses) > 0:
-                    for idx2 in range(0, len(responses)):
-                        new_response = ()
-                        for resp_data in responses[idx2]:
-                            if isinstance(resp_data, str):
-                                if resp_data.find('py/') == -1:
-                                    new_response.__add__(resp_data)
-                        responses[idx2] = new_response
-
-                role_props[idx1]['theResponses'] = responses
-
-            role_props = json_serialize(role_props)
-            role_props = json_deserialize(role_props)
-
         role = json_deserialize(role)
-        if not isinstance(role, Role) and not to_props:
+        if not isinstance(role, Role):
             raise MalformedJSONHTTPError(data=request.get_data())
         else:
-            return role, role_props
+            return role
 
     def simplify(self, obj):
         """
