@@ -4,13 +4,12 @@ from flask import session, request, make_response
 from flask.ext.restful import Resource
 from flask.ext.restful_swagger import swagger
 
-import ARM
 from CairisHTTPError import MalformedJSONHTTPError, ARMHTTPError, ObjectNotFoundHTTPError
-from Environment import Environment
+from data.EnvironmentDAO import EnvironmentDAO
 from tools.MessageDefinitions import EnvironmentMessage
-from tools.PseudoClasses import EnvironmentModel
-from tools.SessionValidator import validate_proxy, check_environment
-from tools.JsonConverter import json_serialize, json_deserialize
+from tools.ModelDefinitions import EnvironmentModel
+from tools.SessionValidator import get_session_id
+from tools.JsonConverter import json_serialize
 
 
 __author__ = 'Robin Quetin'
@@ -41,17 +40,13 @@ class EnvironmentsAPI(Resource):
     )
     #endregion
     def get(self):
-        session_id = request.args.get('session_id', None)
+        session_id = get_session_id(session, request)
         constraintsId = request.args.get('constraints_id', -1)
-        db_proxy = validate_proxy(session, session_id)
 
-        environments = db_proxy.getEnvironments(constraintsId)
-        env_models = {}
+        dao = EnvironmentDAO(session_id)
+        environments = dao.get_environments(constraintsId)
 
-        for key in environments:
-            env_models[key] = EnvironmentModel(origEnv=environments[key])
-
-        resp = make_response(json_serialize(env_models, session_id=session_id), httplib.OK)
+        resp = make_response(json_serialize(environments, session_id=session_id), httplib.OK)
         resp.headers['Content-type'] = 'application/json'
         return resp
 
@@ -94,28 +89,14 @@ class EnvironmentsAPI(Resource):
     )
     #endregion
     def post(self):
-        session_id = request.args.get('session_id', None)
-        new_json_environment = request.get_json(silent=False)
+        session_id = get_session_id(session, request)
 
-        if new_json_environment is False or new_json_environment is None:
-            raise MalformedJSONHTTPError(data=request.get_data())
+        dao = EnvironmentDAO(session_id)
+        new_environment = dao.from_json(request)
+        new_environment_id = dao.add_environment(new_environment)
 
-        session_id = new_json_environment.get('session_id', session_id)
-        new_environment = json_deserialize(new_json_environment['object'])
-
-        if not isinstance(new_environment, EnvironmentModel):
-            raise MalformedJSONHTTPError(data=request.get_data())
-
-        new_environment_params = new_environment.to_environment_params()
-        db_proxy = validate_proxy(session, session_id)
-        try:
-            db_proxy.addEnvironment(new_environment_params)
-        except ARM.ARMException as ex:
-            raise ARMHTTPError(ex)
-        except ARM.DatabaseProxyException as ex:
-            raise ARMHTTPError(ex)
-
-        resp = make_response('Environment successfully added', httplib.OK)
+        resp_dict = {'message': 'Environment successfully added', 'new_environment_id': new_environment_id}
+        resp = make_response(json_serialize(resp_dict), httplib.OK)
         resp.headers['Content-type'] = 'application/json'
         return resp
 
@@ -144,20 +125,10 @@ class EnvironmentByNameAPI(Resource):
     )
     #endregion
     def get(self, name):
-        session_id = request.args.get('session_id', None)
-        constraintsId = request.args.get('constraints_id', -1)
-        db_proxy = validate_proxy(session, session_id)
+        session_id = get_session_id(session, request)
 
-        environments = db_proxy.getEnvironments(constraintsId)
-        if environments is None:
-            raise ObjectNotFoundHTTPError(obj='The specified environment name')
-
-        found_environment = environments.get(name, None)
-        if found_environment is None:
-            raise ObjectNotFoundHTTPError(obj='The specified environment name')
-
-        assert isinstance(found_environment, Environment)
-        found_environment = EnvironmentModel(origEnv = found_environment)
+        dao = EnvironmentDAO(session_id)
+        found_environment = dao.get_environment_by_name(name)
 
         resp = make_response(json_serialize(found_environment, session_id=session_id), httplib.OK)
         resp.headers['Content-type'] = 'application/json'
@@ -207,29 +178,13 @@ class EnvironmentByNameAPI(Resource):
     # endregion
     def put(self, name):
         session_id = request.args.get('session_id', None)
-        new_json_environment = request.get_json(silent=False)
 
-        if new_json_environment is False or new_json_environment is None:
-            raise MalformedJSONHTTPError(data=request.get_data())
+        dao = EnvironmentDAO(session_id)
+        new_environment = dao.from_json(request)
+        dao.update_environment(new_environment, name=name)
 
-        session_id = new_json_environment.get('session_id', session_id)
-        new_environment = json_deserialize(new_json_environment['object'])
-
-        check_environment(name, session, session_id)
-
-        if not isinstance(new_environment, EnvironmentModel):
-            raise MalformedJSONHTTPError(data=request.get_data())
-
-        new_environment_params = new_environment.to_environment_params(for_update=True)
-        db_proxy = validate_proxy(session, session_id)
-        try:
-            db_proxy.updateEnvironment(new_environment_params)
-        except ARM.ARMException as ex:
-            raise ARMHTTPError(ex)
-        except ARM.DatabaseProxyException as ex:
-            raise ARMHTTPError(ex)
-
-        resp = make_response('Environment successfully updated', httplib.OK)
+        resp_dict = {'message': 'Environment successfully updated'}
+        resp = make_response(json_serialize(resp_dict), httplib.OK)
         resp.headers['Content-type'] = 'application/json'
         return resp
 
@@ -268,28 +223,13 @@ class EnvironmentByNameAPI(Resource):
     )
     # endregion
     def delete(self, name):
-        session_id = request.args.get('session_id', None)
-        check_environment(name, session, session_id)
+        session_id = get_session_id(session, request)
 
-        db_proxy = validate_proxy(session, session_id)
-        environments = db_proxy.getEnvironments()
+        dao = EnvironmentDAO(session_id)
+        dao.delete_environment(name=name)
 
-        found_environment = None
-        if environments is not None:
-            found_environment = environments.get(name, None)
-
-        if found_environment is None:
-            raise ObjectNotFoundHTTPError(obj='The provided environment name')
-
-        try:
-            assert isinstance(found_environment, Environment)
-            db_proxy.deleteEnvironment(found_environment.theId)
-        except ARM.ARMException as ex:
-            raise ARMHTTPError(ex)
-        except ARM.DatabaseProxyException as ex:
-            raise ARMHTTPError(ex)
-
-        resp = make_response('Environment successfully updated', httplib.OK)
+        resp_dict = {'message': 'Environment successfully deleted'}
+        resp = make_response(resp_dict, httplib.OK)
         resp.headers['Content-type'] = 'application/json'
         return resp
 
@@ -318,10 +258,11 @@ class EnvironmentNamesAPI(Resource):
     )
     #endregion
     def get(self):
-        session_id = request.args.get('session_id', None)
-        db_proxy = validate_proxy(session, session_id)
+        session_id = get_session_id(session, request)
 
-        environment_names = db_proxy.getEnvironmentNames()
+        dao = EnvironmentDAO(session_id)
+        environment_names = dao.get_environment_names()
+
         resp = make_response(json_serialize(environment_names, session_id=session_id), httplib.OK)
         resp.headers['Content-type'] = 'application/json'
         return resp
