@@ -100,7 +100,7 @@ class EnvironmentsAPI(Resource):
         new_environment = dao.from_json(request)
         new_environment_id = dao.add_environment(new_environment)
 
-        resp_dict = {'message': 'Environment successfully added', 'new_environment_id': new_environment_id}
+        resp_dict = {'message': 'Environment successfully added', 'environment_id': new_environment_id}
         resp = make_response(json_serialize(resp_dict), httplib.OK)
         resp.headers['Content-type'] = 'application/json'
         return resp
@@ -182,7 +182,7 @@ class EnvironmentByNameAPI(Resource):
     )
     # endregion
     def put(self, name):
-        session_id = request.args.get('session_id', None)
+        session_id = get_session_id(session, request)
 
         dao = EnvironmentDAO(session_id)
         new_environment = dao.from_json(request)
@@ -234,7 +234,7 @@ class EnvironmentByNameAPI(Resource):
         dao.delete_environment(name=name)
 
         resp_dict = {'message': 'Environment successfully deleted'}
-        resp = make_response(resp_dict, httplib.OK)
+        resp = make_response(json_serialize(resp_dict), httplib.OK)
         resp.headers['Content-type'] = 'application/json'
         return resp
 

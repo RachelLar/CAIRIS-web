@@ -68,6 +68,33 @@ class EnvironmentDAO(CairisDAO):
 
         return found_environment
 
+    def get_environment_by_id(self, env_id, simplify=True):
+        """
+        :rtype: Environment
+        :raise ObjectNotFoundHTTPError:
+        """
+        found_environment = None
+        try:
+            environments = self.db_proxy.getEnvironments()
+        except ARM.DatabaseProxyException as ex:
+            raise ARMHTTPError(ex)
+
+        if environments is not None:
+            found_environment = None
+            idx = 0
+            while found_environment is None and idx < len(environments):
+                if environments.values()[idx].theId == env_id:
+                    found_environment = environments.values()[idx]
+                idx += 1
+
+        if found_environment is None:
+            raise ObjectNotFoundHTTPError('The provided environment name')
+
+        if simplify:
+            found_environment = self.simplify(found_environment)
+
+        return found_environment
+
     def add_environment(self, environment):
         """
         :return: Returns the ID of the new environment
@@ -75,7 +102,10 @@ class EnvironmentDAO(CairisDAO):
         """
         env_params = self.to_environment_parameters(environment)
         try:
-            self.db_proxy.addEnvironment(env_params)
+            if not self.check_existing_environment(environment.theName):
+                self.db_proxy.addEnvironment(env_params)
+            else:
+                raise ARM.DatabaseProxyException('Environment name already exists within the database.')
         except ARM.DatabaseProxyException as ex:
             raise ARMHTTPError(ex)
         except ARM.ARMException as ex:
@@ -91,14 +121,18 @@ class EnvironmentDAO(CairisDAO):
             return -1
 
     def update_environment(self, environment, name=None, env_id=None):
-        env_params = self.to_environment_parameters(environment)
         if name is not None:
-            env_params.theName = name
+            environment_to_update = self.get_environment_by_name(name)
         elif env_id is not None:
-            env_params.theId = env_id
+            environment_to_update = self.get_environment_by_id(env_id)
+
+        env_params = self.to_environment_parameters(environment)
+        env_params.setId(environment_to_update.theId)
+        if env_id is not None:
+            name = environment.theName
 
         try:
-            if not self.check_existing_environment(name):
+            if self.check_existing_environment(name):
                 self.db_proxy.updateEnvironment(env_params)
         except ARM.DatabaseProxyException as ex:
             raise ARMHTTPError(ex)
@@ -123,6 +157,9 @@ class EnvironmentDAO(CairisDAO):
             raise MissingParameterHTTPError(param_names=['id'])
 
     def check_existing_environment(self, environment_name):
+        """
+        :raise ARMHTTPError:
+        """
         try:
             self.db_proxy.nameCheck(environment_name, 'environment')
             return False
@@ -132,7 +169,10 @@ class EnvironmentDAO(CairisDAO):
             else:
                 raise ARMHTTPError(ex)
         except ARM.ARMException as ex:
-            raise ARMHTTPError(ex)
+            if str(ex.value).find(' already exists') > -1:
+                return True
+            else:
+                raise ARMHTTPError(ex)
 
     def to_environment_parameters(self, environment):
         assert isinstance(environment, Environment)
@@ -163,7 +203,9 @@ class EnvironmentDAO(CairisDAO):
             json_dict['theTensions'] = {}
             for tension in tensions:
                 check_required_keys(tension, EnvironmentTensionModel.required)
-                tensions[(tension['base_attr_id'], tension['attr_id'])] = (tension['value'], tension['rationale'])
+                key = tuple([tension['base_attr_id'], tension['attr_id']])
+                value = tuple([tension['value'], tension['rationale']])
+                json_dict['theTensions'][key] = value
 
         new_json_environment = json_serialize(json_dict)
         environment = json_deserialize(new_json_environment)
