@@ -10,7 +10,7 @@ from flask.ext.restful_swagger import swagger
 from Borg import Borg
 from CairisHTTPError import CairisHTTPError, ARMHTTPError
 from ARM import ARMException, DatabaseProxyException
-from controllers import AssetController, CImportController, DimensionController, EnvironmentController, GoalController, RequirementController, RiskController, RoleController, UserController
+from controllers import AssetController, CImportController, DimensionController, EnvironmentController, GoalController, RequirementController, RiskController, RoleController, UserController, VulnerabilityController
 
 
 __author__ = 'Robin Quetin'
@@ -116,6 +116,7 @@ def start():
     api.add_resource(RequirementController.RequirementsByAssetAPI, '/api/requirements/asset/<string:name>')
     api.add_resource(RequirementController.RequirementsByEnvironmentAPI, '/api/requirements/environment/<string:name>')
     api.add_resource(RequirementController.RequirementByIdAPI, '/api/requirements/id/<int:id>')
+    api.add_resource(RequirementController.RequirementByNameAPI, '/api/requirements/name/<string:name>')
 
     # Risk routes
     #api.add_resource(RiskController.RisksAPI, '/api/risks')
@@ -128,6 +129,11 @@ def start():
 
     # User routes
     api.add_resource(UserController.UserConfigAPI, '/api/user/config')
+
+    # Vulnerability routes
+    # api.add_resource(VulnerabilityController.VulnerabilityAPI, '/api/vulnerabilities')
+    # api.add_resource(VulnerabilityController.VulnerabilityByIdAPI, '/api/vulnerabilities/<int:id>')
+    # api.add_resource(VulnerabilityController.VulnerabilityByNameAPI, '/api/vulnerabilities/<string:name>')
 
     # Set server specific settings
     b.logger.setLevel(b.logLevel)

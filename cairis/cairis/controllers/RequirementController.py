@@ -274,7 +274,7 @@ class RequirementByIdAPI(Resource):
     @swagger.operation(
         notes='Get a requirement by ID',
         nickname='requirement-by-id-get',
-        responseClass=Requirement.__name__,
+        responseClass=RequirementModel.__name__,
         parameters=[
             {
                 "name": "session_id",
@@ -306,7 +306,7 @@ class RequirementByIdAPI(Resource):
     # region Swagger Doc
     @swagger.operation(
         notes='Deletes an existing requirement',
-        nickname='requirement-delete',
+        nickname='requirement-by-id-delete',
         parameters=[
             {
                 "name": "session_id",
@@ -342,6 +342,85 @@ class RequirementByIdAPI(Resource):
 
         dao = RequirementDAO(session_id)
         dao.delete_requirement(req_id=id)
+
+        resp_dict = {'message': 'Requirement successfully deleted'}
+        resp = make_response(json_serialize(resp_dict), httplib.OK)
+        resp.headers['Content-type'] = 'application/json'
+        return resp
+
+class RequirementByNameAPI(Resource):
+    # region Swagger Doc
+    @swagger.operation(
+        notes='Get a requirement by name',
+        nickname='requirement-by-name-get',
+        responseClass=RequirementModel.__name__,
+        parameters=[
+            {
+                "name": "session_id",
+                "description": "The ID of the user's session",
+                "required": False,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "paramType": "query"
+            }
+        ],
+        responseMessages=[
+            {
+                "code": httplib.BAD_REQUEST,
+                "message": "The database connection was not properly set up"
+            }
+        ]
+    )
+    # endregion
+    def get(self, name):
+        session_id = get_session_id(session, request)
+
+        dao = RequirementDAO(session_id)
+        req = dao.get_requirement_by_name(name)
+
+        resp = make_response(json_serialize(req, session_id=session_id), httplib.OK)
+        resp.headers['Content-type'] = 'application/json'
+        return resp
+
+    # region Swagger Doc
+    @swagger.operation(
+        notes='Deletes an existing requirement',
+        nickname='requirement-by-name-delete',
+        parameters=[
+            {
+                "name": "session_id",
+                "description": "The ID of the user's session",
+                "required": False,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "paramType": "query"
+            }
+        ],
+        responseMessages=[
+            {
+                'code': httplib.BAD_REQUEST,
+                'message': 'One or more attributes are missing'
+            },
+            {
+                'code': httplib.CONFLICT,
+                'message': 'Some problems were found during the name check'
+            },
+            {
+                'code': httplib.NOT_FOUND,
+                'message': 'The provided requirement name could not be found in the database'
+            },
+            {
+                'code': httplib.CONFLICT,
+                'message': 'A database error has occurred'
+            }
+        ]
+    )
+    # endregion
+    def delete(self, name):
+        session_id = get_session_id(session, request)
+
+        dao = RequirementDAO(session_id)
+        dao.delete_requirement(name=name)
 
         resp_dict = {'message': 'Requirement successfully deleted'}
         resp = make_response(json_serialize(resp_dict), httplib.OK)
