@@ -6,6 +6,7 @@ from jsonpickle import decode as deserialize
 
 from Asset import Asset
 from Borg import Borg
+from Environment import Environment
 from Goal import Goal
 from MisuseCase import MisuseCase
 from MisuseCaseEnvironmentProperties import MisuseCaseEnvironmentProperties
@@ -78,6 +79,28 @@ def json_deserialize(string, class_name=None):
 
     try:
         obj = deserialize(string)
+        if isinstance(obj, Environment):
+            tensions = {}
+            for key, value in obj.theTensions.items():
+                key = str(key)
+                attrs = key.strip('(').strip(')').split(',')
+                if len(attrs) == 2:
+                    idx1 = int(attrs[0].strip(' '))
+                    idx2 = int(attrs[1].strip(' '))
+                    tuple_key = (idx1, idx2)
+                    tensions[tuple_key] = value
+
+            obj = Environment(
+                id=obj.theId,
+                name=obj.theName,
+                sc=obj.theShortCode,
+                description=obj.theDescription,
+                environments=obj.theEnvironments,
+                duplProperty=obj.theDuplicateProperty,
+                overridingEnvironment=obj.theOverridingEnvironment,
+                envTensions=tensions
+            )
+
         if isinstance(obj, dict):
             if class_name == 'asset':
                 from CairisHTTPError import MalformedJSONHTTPError
