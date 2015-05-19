@@ -48,7 +48,7 @@ class RoleTests(CairisTests):
         self.assertGreater(len(roles), 0, 'No roles in the dictionary')
         self.assertIsInstance(roles.values()[0], Role)
         self.logger.info('[%s] Roles found: %d', method, len(roles))
-        self.logger.info('[%s] First role: %s [%d]', method, roles.values()[0].theName, roles.values()[0].theId)
+        self.logger.info('[%s] First role: %s [%d]\n', method, roles.values()[0].theName, roles.values()[0].theId)
 
     def test_post(self):
         method = 'test_post_new'
@@ -62,7 +62,7 @@ class RoleTests(CairisTests):
 
         rv = self.app.get('/api/roles/id/%d?session_id=test' % role_id)
         role = jsonpickle.decode(rv.data)
-        self.logger.info('[%s] Role: %s [%d]', method, role['theName'], role['theId'])
+        self.logger.info('[%s] Role: %s [%d]\n', method, role['theName'], role['theId'])
 
     def test_get_id(self):
         method = 'test_get_id'
@@ -74,7 +74,7 @@ class RoleTests(CairisTests):
         role = jsonpickle.decode(rv.data)
         self.assertIsNotNone(role, 'No results after deserialization')
         self.assertEqual(role['__python_obj__'], self.role_class, 'The result is not an role as expected')
-        self.logger.info('[%s] Role: %s [%d]', method, role['theName'], role['theId'])
+        self.logger.info('[%s] Role: %s [%d]\n', method, role['theName'], role['theId'])
 
     def test_get_name(self):
         method = 'test_get_name'
@@ -83,7 +83,7 @@ class RoleTests(CairisTests):
         role = json_deserialize(rv.data)
         self.assertIsNotNone(role, 'No results after deserialization')
         self.assertIsInstance(role, Role, 'The result is not an role as expected')
-        self.logger.info('[%s] Role: %s [%d]', method, role.theName, role.theId)
+        self.logger.info('[%s] Role: %s [%d]\n', method, role.theName, role.theId)
 
     def test_put_name(self):
         method = 'test_put_name'
@@ -105,7 +105,7 @@ class RoleTests(CairisTests):
 
         rv = self.app.get('/api/roles/name/Test3?session_id=test')
         role = json_deserialize(rv.data)
-        self.logger.info('[%s] Role: %s [%d]', method, role.theName, role.theId)
+        self.logger.info('[%s] Role: %s [%d]\n', method, role.theName, role.theId)
 
     def test_put_id(self):
         method = 'test_put_id'
@@ -130,7 +130,7 @@ class RoleTests(CairisTests):
 
         rv = self.app.get('/api/roles/name/Test2?session_id=test')
         role = json_deserialize(rv.data)
-        self.logger.info('[%s] Role: %s [%d]', method, role.theName, role.theId)
+        self.logger.info('[%s] Role: %s [%d]\n', method, role.theName, role.theId)
 
     def test_x_delete_name(self):
         method = 'test_delete_name'
@@ -141,6 +141,7 @@ class RoleTests(CairisTests):
         self.assertIsNotNone(json_resp, 'No results after deserialization')
         message = json_resp.get('message', None)
         self.assertIsNotNone(message, 'No message returned')
+        self.logger.info('[%s] Message: %s\n', method, message)
         url = '/api/roles/name/Test2?session_id=test'.format(quote(self.new_role.theName))
         rv = self.app.delete(url)
         url = '/api/roles/name/Test3?session_id=test'.format(quote(self.new_role.theName))
@@ -157,4 +158,4 @@ class RoleTests(CairisTests):
         self.assertGreater(len(role_props), 0, 'List does not contain any elements')
         role_prop = role_props[0]
         self.assertEqual(cls_role_prop, role_prop['__python_obj__'], 'The result is not an role as expected')
-        self.logger.info('[%s] Role property: %s', method, role_props[0]['theEnvironmentName'])
+        self.logger.info('[%s] Role property: %s\n', method, role_props[0]['theEnvironmentName'])

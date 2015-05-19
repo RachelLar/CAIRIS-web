@@ -65,7 +65,7 @@ class AssetTests(CairisTests):
         self.assertGreater(len(assets), 0, 'No assets in the dictionary')
         self.assertIsInstance(assets.values()[0], Asset)
         self.logger.info('[%s] Assets found: %d', method, len(assets))
-        self.logger.info('[%s] First asset: %s [%d]', method, assets.values()[0].theName, assets.values()[0].theId)
+        self.logger.info('[%s] First asset: %s [%d]\n', method, assets.values()[0].theName, assets.values()[0].theId)
 
     def test_post(self):
         method = 'test_post_new'
@@ -78,7 +78,7 @@ class AssetTests(CairisTests):
 
         rv = self.app.get('/api/assets/id/%d?session_id=test' % asset_id)
         asset = json_deserialize(rv.data)
-        self.logger.info('[%s] Asset: %s [%d]', method, asset.theName, asset.theId)
+        self.logger.info('[%s] Asset: %s [%d]\n', method, asset.theName, asset.theId)
 
     def test_get_id(self):
         method = 'test_get_id'
@@ -86,7 +86,7 @@ class AssetTests(CairisTests):
         asset = json_deserialize(rv.data)
         self.assertIsNotNone(asset, 'No results after deserialization')
         self.assertIsInstance(asset, Asset, 'The result is not an asset as expected')
-        self.logger.info('[%s] Asset: %s [%d]', method, asset.theName, asset.theId)
+        self.logger.info('[%s] Asset: %s [%d]\n', method, asset.theName, asset.theId)
 
     def test_get_name(self):
         method = 'test_get_name'
@@ -95,7 +95,7 @@ class AssetTests(CairisTests):
         asset = json_deserialize(rv.data)
         self.assertIsNotNone(asset, 'No results after deserialization')
         self.assertIsInstance(asset, Asset, 'The result is not an asset as expected')
-        self.logger.info('[%s] Asset: %s [%d]', method, asset.theName, asset.theId)
+        self.logger.info('[%s] Asset: %s [%d]\n', method, asset.theName, asset.theId)
 
     def test_put_name(self):
         method = 'test_put_name'
@@ -117,7 +117,7 @@ class AssetTests(CairisTests):
 
         rv = self.app.get('/api/assets/name/Test2?session_id=test')
         asset = json_deserialize(rv.data)
-        self.logger.info('[%s] Asset: %s [%d]', method, asset.theName, asset.theId)
+        self.logger.info('[%s] Asset: %s [%d]\n', method, asset.theName, asset.theId)
 
     def test_delete_name(self):
         method = 'test_delete_name'
@@ -130,7 +130,7 @@ class AssetTests(CairisTests):
         self.assertIsNotNone(json_resp, 'No results after deserialization')
         message = json_resp.get('message', None)
         self.assertIsNotNone(message, 'No message returned')
-
+        self.logger.info('[%s] Message: %s\n', method, message)
 
     def test_get_props_name_get(self):
         method = 'test_get_props_name_get'
@@ -144,7 +144,7 @@ class AssetTests(CairisTests):
         asset_prop = asset_props[0]
         asset_prop_class_name = asset_prop.__class__.__module__ +'.'+ asset_prop.__class__.__name__
         self.assertEqual(cls_asset_prop, asset_prop_class_name, 'The result is not an asset as expected')
-        self.logger.info('[%s] Asset property: %s', method, asset_props[0].environment)
+        self.logger.info('[%s] Asset property: %s\n', method, asset_props[0].environment)
 
     def test_update_props_name_put(self):
         method = 'test_update_props_name_put'
@@ -169,4 +169,4 @@ class AssetTests(CairisTests):
 
         rv = self.app.get('/api/assets/name/Test2/properties?session_id=test')
         asset_props = json_deserialize(rv.data)
-        self.logger.info('[%s] Asset property environment: %s', method, asset_props[0].environment)
+        self.logger.info('[%s] Asset property environment: %s\n', method, asset_props[0].environment)

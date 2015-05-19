@@ -25,7 +25,7 @@ class EnvironmentTests(CairisTests):
         self.assertGreater(len(environments), 0, 'No environments in the dictionary')
         self.logger.info('[%s] Environments found: %d', method, len(environments))
         environment = environments.values()[0]
-        self.logger.info('[%s] First environment: %s [%d]', method, environment['theName'], environment['theId'])
+        self.logger.info('[%s] First environment: %s [%d]\n', method, environment['theName'], environment['theId'])
 
     def test_get_all_names(self):
         method = 'test_get_all_names'
@@ -36,7 +36,7 @@ class EnvironmentTests(CairisTests):
         self.assertGreater(len(environments), 0, 'No environments in the list')
         self.logger.info('[%s] Environments found: %d', method, len(environments))
         list_str = ' - '.join(environments)
-        self.logger.info('[%s] Environment names: %s', method, list_str)
+        self.logger.info('[%s] Environment names: %s\n', method, list_str)
 
     def test_get_by_name(self):
         method = 'test_get_by_name'
@@ -46,15 +46,32 @@ class EnvironmentTests(CairisTests):
         self.logger.debug('[%s] Response data: %s', method, rv.data)
         environment = jsonpickle.decode(rv.data)
         self.assertIsNotNone(environment, 'No results after deserialization')
-        self.logger.info('[%s] Environment: %s [%d]', method, environment['theName'], environment['theId'])
-        
+        self.logger.info('[%s] Environment: %s [%d]\n', method, environment['theName'], environment['theId'])
+
+    def test_delete(self):
+        method = 'test_delete'
+        url = '/api/environments/name/%s?session_id=test' % quote(self.prepare_new_environment().theName)
+        new_environment_body = self.prepare_json()
+
+        self.app.delete(url)
+        self.logger.info('[%s] Object to delete: %s', method, new_environment_body)
+        self.app.post('/api/environments', content_type='application/json', data=new_environment_body)
+        self.logger.info('[%s] URL: %s', method, url)
+        rv = self.app.delete(url)
+        self.assertIsNotNone(rv.data, 'No response')
+        json_resp = jsonpickle.decode(rv.data)
+        self.assertIsInstance(json_resp, dict, 'The response cannot be converted to a dictionary')
+        message = json_resp.get('message', None)
+        self.assertIsNotNone(message, 'No message in response')
+        self.logger.info('[%s] Message: %s\n', method, message)
+
     def test_post(self):
         method = 'test_post'
         url = '/api/environments'
         self.logger.info('[%s] URL: %s', method, url)
         new_environment_body = self.prepare_json()
 
-        self.app.delete('/api/environments/name/%s?session_id=test' % self.prepare_new_environment().theName)
+        self.app.delete('/api/environments/name/%s?session_id=test' % quote(self.prepare_new_environment().theName))
         rv = self.app.post(url, content_type='application/json', data=new_environment_body)
         self.logger.debug('[%s] Response data: %s', method, rv.data)
         json_resp = jsonpickle.decode(rv.data)
@@ -62,9 +79,9 @@ class EnvironmentTests(CairisTests):
         env_id = json_resp.get('environment_id', None)
         self.assertIsNotNone(env_id, 'No environment ID returned')
         self.assertGreater(env_id, 0, 'Invalid environment ID returned [%d]' % env_id)
-        self.logger.info('[%s] Environment ID: %d', method, env_id)
+        self.logger.info('[%s] Environment ID: %d\n', method, env_id)
 
-        rv = self.app.delete('/api/environments/name/%s?session_id=test' % self.prepare_new_environment().theName)
+        rv = self.app.delete('/api/environments/name/%s?session_id=test' % quote(self.prepare_new_environment().theName))
 
     def test_put(self):
         method = 'test_put'
@@ -100,7 +117,7 @@ class EnvironmentTests(CairisTests):
         upd_environment = jsonpickle.decode(rv.data)
         self.assertIsNotNone(upd_environment, 'Unable to decode JSON data')
         self.logger.debug('[%s] Response data: %s', method, rv.data)
-        self.logger.info('[%s] Environment: %s [%d]', method, upd_environment['theName'], upd_environment['theId'])
+        self.logger.info('[%s] Environment: %s [%d]\n', method, upd_environment['theName'], upd_environment['theId'])
 
         rv = self.app.delete('/api/environments/name/%s?session_id=test' % quote(environment_to_update.theName))
 
