@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from flask.ext.restful import fields
 from flask.ext.restful_swagger import swagger
 from Countermeasure import Countermeasure
@@ -8,6 +9,10 @@ from RoleEnvironmentProperties import RoleEnvironmentProperties
 
 __author__ = 'Robin Quetin'
 obj_id_field = '__python_obj__'
+def gen_class_metadata(class_ref):
+    return {
+        "enum": [class_ref.__module__+'.'+class_ref.__name__]
+    }
 
 
 @swagger.model
@@ -33,7 +38,7 @@ class AssetSecurityAttribute(object):
     required.remove(obj_id_field)
     swagger_metadata = {
         "__python_obj__": {
-            "enum": ["tools.ModelDefinitions.AssetSecurityAttribute"]
+            "enum": ["tools.PseudoClasses.AssetSecurityAttribute"]
         },
         "name": {
             "enum": [
@@ -81,6 +86,7 @@ class AssetSecurityAttribute(object):
 
 @swagger.model
 class EnvironmentTensionModel(object):
+    # region Swagger Doc
     resource_fields = {
         obj_id_field: fields.String,
         "base_attr_id": fields.Integer,
@@ -90,6 +96,32 @@ class EnvironmentTensionModel(object):
     }
     required = resource_fields.keys()
     required.remove(obj_id_field)
+    swagger_metadata = {
+        obj_id_field: {
+            "enum": ["tools.PseudoClasses."+__name__]
+        },
+        "base_attr_id": {
+            "enum": range(0,4)
+        },
+        "attr_id": {
+            "enum": range(4,8)
+        },
+        "value": {
+            "enum": [-1,0,1]
+        }
+    }
+    attr_dictionary = {
+        'Confidentiality': 0,
+        'Integrity': 1,
+        'Availability': 2,
+        'Accountability': 3,
+        'Anonymity': 4,
+        'Pseudonymity': 5,
+        'Unlinkability': 6,
+        'Unobservability': 7
+    }
+    attr_dictionary = OrderedDict(sorted(attr_dictionary.items(), key=lambda t: t[1]))
+    # endregion
 
     base_attr_values = range(-1,4)
     attr_values = range(4,8)

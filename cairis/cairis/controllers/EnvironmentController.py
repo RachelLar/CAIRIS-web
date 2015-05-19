@@ -8,6 +8,7 @@ from CairisHTTPError import MalformedJSONHTTPError, ARMHTTPError, ObjectNotFound
 from data.EnvironmentDAO import EnvironmentDAO
 from tools.MessageDefinitions import EnvironmentMessage
 from tools.ModelDefinitions import EnvironmentModel
+from tools.PseudoClasses import EnvironmentTensionModel
 from tools.SessionValidator import get_session_id
 from tools.JsonConverter import json_serialize
 
@@ -51,8 +52,12 @@ class EnvironmentsAPI(Resource):
         return resp
 
     #region Swagger Docs
+    const_str = ''
+    for key, value in EnvironmentTensionModel.attr_dictionary.items():
+        formatted_str = '<br/>- %s: %d' % (key, value)
+        const_str += formatted_str
     @swagger.operation(
-        notes='Add a new environment',
+        notes='Add a new environment.<br/>Constant values for tensions:<br/>'+const_str,
         nickname='environments-post',
         parameters=[
             {
