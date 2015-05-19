@@ -58,11 +58,11 @@ class AssetMessage(DefaultMessage):
 # region Swagger Doc
 @swagger.model
 @swagger.nested(
-    object=PseudoClasses.EnvironmentModel.__name__
+    object=ModelDefinitions.EnvironmentModel.__name__
 )
 # endregion
 class EnvironmentMessage(DefaultMessage):
-    resource_fields = gen_message_fields(PseudoClasses.EnvironmentModel)
+    resource_fields = gen_message_fields(ModelDefinitions.EnvironmentModel)
     required = DefaultMessage.required
 
 # region Swagger Doc

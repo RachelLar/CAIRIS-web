@@ -9,6 +9,7 @@ from MisuseCaseEnvironmentProperties import MisuseCaseEnvironmentProperties
 from Requirement import Requirement
 from Risk import Risk
 from Role import Role
+from tools.PseudoClasses import EnvironmentTensionModel, AssetSecurityAttribute
 
 
 __author__ = 'Robin Quetin'
@@ -18,74 +19,6 @@ def gen_class_metadata(class_ref):
     return {
         "enum": [class_ref.__module__+'.'+class_ref.__name__]
     }
-
-@swagger.model
-class AssetSecurityAttribute(object):
-    def __init__(self, name=None, value=None, rationale=None):
-        """
-        :type name: str
-        :type value: str
-        :type rationale: str
-        """
-        self.name = name
-        self.value = value
-        self.rationale = rationale
-
-    # region Swagger Doc
-    resource_fields = {
-        "__python_obj__": fields.String,
-        "name": fields.String,
-        "value": fields.String,
-        "rationale": fields.String
-    }
-    required = resource_fields.keys()
-    required.remove(obj_id_field)
-    swagger_metadata = {
-        "__python_obj__": {
-            "enum": ["tools.ModelDefinitions.AssetSecurityAttribute"]
-        },
-        "name": {
-            "enum": [
-                'Confidentiality',
-                'Integrity',
-                'Availability',
-                'Accountability',
-                'Anonymity',
-                'Pseudonymity',
-                'Unlinkability',
-                'Unobservability'
-            ]
-        },
-        "value": {
-            "enum": [
-                "None",
-                "Low",
-                "Medium",
-                "High"
-            ]
-        }
-    }
-    # endregion
-
-    def get_attr_value(self, enum_obj):
-        """
-        Gets the database value for the security attribute
-        :type enum_obj: list|tuple
-        """
-        value = 0
-
-        if self.value is not None:
-            found = False
-            idx = 0
-
-            while not found and idx < len(enum_obj):
-                if enum_obj[idx] == self.value:
-                    value = idx
-                    found = True
-                else:
-                    idx += 1
-
-        return value
 
 @swagger.model
 @swagger.nested(attributes=AssetSecurityAttribute.__name__)
@@ -150,6 +83,25 @@ class CImportParams(object):
         'overwrite': fields.Integer
     }
     required = ['file_contents', 'type']
+
+@swagger.model
+@swagger.nested(
+    theTensions=EnvironmentTensionModel.__name__,
+)
+class EnvironmentModel(object):
+    resource_fields = {
+        obj_id_field: fields.String,
+        "theId": fields.Integer,
+        "theName": fields.String,
+        "theShortCode": fields.String,
+        "theDescription": fields.String,
+        "theEnvironments": fields.List(fields.String),
+        "theDuplicateProperty": fields.String,
+        "theOverridingEnvironment": fields.String,
+        "theTensions": fields.List(fields.Nested(EnvironmentTensionModel.resource_fields)),
+        }
+    required = resource_fields.keys()
+    required.remove(obj_id_field)
 
 @swagger.model
 class GoalEnvironmentPropertiesModel(object):
