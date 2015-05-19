@@ -10,6 +10,9 @@ __author__ = 'Robin Quetin'
 
 
 def check_required_keys(json_dict, required):
+    """
+    :raise MissingParameterHTTPError:
+    """
     if not all(reqKey in json_dict for reqKey in required):
         raise MissingParameterHTTPError(param_names=required)
 
