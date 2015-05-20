@@ -10,7 +10,8 @@ from flask.ext.restful_swagger import swagger
 from Borg import Borg
 from CairisHTTPError import CairisHTTPError, ARMHTTPError
 from ARM import ARMException, DatabaseProxyException
-from controllers import AssetController, CImportController, DimensionController, EnvironmentController, GoalController, RequirementController, RiskController, RoleController, UserController, VulnerabilityController
+from controllers import AssetController, CImportController, DimensionController, EnvironmentController, GoalController, RequirementController, \
+    RoleController, UserController, VulnerabilityController
 
 
 __author__ = 'Robin Quetin'
@@ -22,6 +23,7 @@ api = swagger.docs(Api(app), apiVersion='0.1', description='CAIRIS API', api_spe
 cors = CORS(app)
 b = Borg()
 
+
 @app.route('/')
 def index():
     if session.has_key('session_id'):
@@ -31,6 +33,7 @@ def index():
         resp.headers['Location'] = '/user/config.html'
         return resp
 
+
 @app.route('/user/config.html', methods=['GET','POST'])
 def user_config_get():
     if request.method == 'GET':
@@ -39,6 +42,7 @@ def user_config_get():
         return UserController.handle_user_config_form()
     else:
         raise CairisHTTPError(httplib.NOT_FOUND, message='Not found')
+
 
 @app.errorhandler(CairisHTTPError)
 def handle_error(error):
@@ -52,15 +56,18 @@ def handle_error(error):
         resp.headers['Content-type'] = 'application/json'
         return resp
 
+
 @app.errorhandler(AssertionError)
 def handle_asserterror(error):
     err = CairisHTTPError(httplib.CONFLICT, str(error.message), 'Unmet requirement')
     return handle_error(err)
 
+
 @app.errorhandler(KeyError)
 def handle_keyerror(error):
     err = CairisHTTPError(httplib.BAD_REQUEST, str(error.message), 'Missing attribute')
     return handle_error(err)
+
 
 @app.errorhandler(ARMException)
 @app.errorhandler(DatabaseProxyException)
@@ -68,9 +75,11 @@ def handle_keyerror(e):
     err = ARMHTTPError(e)
     return handle_error(err)
 
+
 @app.errorhandler(500)
 def handle_internalerror(e):
     return handle_exception(e)
+
 
 def handle_exception(e):
     if isinstance(e, AssertionError):
@@ -131,9 +140,9 @@ def start():
     api.add_resource(UserController.UserConfigAPI, '/api/user/config')
 
     # Vulnerability routes
-    # api.add_resource(VulnerabilityController.VulnerabilityAPI, '/api/vulnerabilities')
-    # api.add_resource(VulnerabilityController.VulnerabilityByIdAPI, '/api/vulnerabilities/<int:id>')
-    # api.add_resource(VulnerabilityController.VulnerabilityByNameAPI, '/api/vulnerabilities/<string:name>')
+    api.add_resource(VulnerabilityController.VulnerabilityAPI, '/api/vulnerabilities')
+    api.add_resource(VulnerabilityController.VulnerabilityByIdAPI, '/api/vulnerabilities/id/<int:id>')
+    api.add_resource(VulnerabilityController.VulnerabilityByNameAPI, '/api/vulnerabilities/name/<string:name>')
 
     # Set server specific settings
     b.logger.setLevel(b.logLevel)

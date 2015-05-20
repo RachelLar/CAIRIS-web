@@ -9,6 +9,8 @@ from MisuseCaseEnvironmentProperties import MisuseCaseEnvironmentProperties
 from Requirement import Requirement
 from Risk import Risk
 from Role import Role
+from Vulnerability import Vulnerability
+from VulnerabilityEnvironmentProperties import VulnerabilityEnvironmentProperties
 from tools.PseudoClasses import EnvironmentTensionModel, AssetSecurityAttribute
 
 
@@ -280,4 +282,49 @@ class UserConfigModel(object):
             {
                 'enum': ['on', 'off']
             }
+    }
+
+@swagger.model
+class VulnerabilityEnvironmentPropertiesModel(object):
+    resource_fields = {
+        obj_id_field: fields.String,
+        "theAssets": fields.List(fields.String),
+        "theEnvironmentName": fields.String,
+        "theSeverity": fields.String
+    }
+    required = resource_fields.keys()
+    required.remove(obj_id_field)
+    swagger_metadata = {
+        obj_id_field : gen_class_metadata(VulnerabilityEnvironmentProperties),
+        "theSeverity": {
+            "enum": ['Negligible', 'Marginal', 'Critical','Catastrophic']
+        }
+    }
+
+@swagger.model
+@swagger.nested(
+    theEnvironmentProperties=VulnerabilityEnvironmentPropertiesModel.__name__,
+    theEnvironmentDictionary=VulnerabilityEnvironmentPropertiesModel.__name__
+)
+class VulnerabilityModel(object):
+    resource_fields = {
+        obj_id_field: fields.String,
+        'theEnvironmentDictionary': fields.List(fields.Nested(VulnerabilityEnvironmentPropertiesModel.resource_fields)),
+        'theVulnerabilityName': fields.String,
+        'theVulnerabilityType': fields.String,
+        'theTags': fields.List(fields.String),
+        'theVulnerabilityDescription': fields.String,
+        'theVulnerabilityId': fields.Integer,
+        'severityLookup': fields.List(fields.String),
+        'theEnvironmentProperties': fields.List(fields.Nested(VulnerabilityEnvironmentPropertiesModel.resource_fields))
+    }
+    required = resource_fields.keys()
+    required.remove(obj_id_field)
+    required.remove('theEnvironmentDictionary')
+    required.remove('severityLookup')
+    swagger_metadata = {
+        obj_id_field: gen_class_metadata(Vulnerability),
+        'theVulnerabilityType' : {
+            "enum": ['Configuration', 'Design', 'Implementation']
+        }
     }

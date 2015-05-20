@@ -5,6 +5,7 @@ from tests.EnvironmentTests import EnvironmentTests
 from tests.RequirementTests import RequirementTests
 from tests.RoleTests import RoleTests
 from tests.UserTests import UserTests
+from tests.VulnerabilityTests import VulnerabilityTests
 
 __author__ = 'Robin Quetin'
 
@@ -13,6 +14,7 @@ tests_dict = {
     'environment': [0, EnvironmentTests],
     'requirement': [0, RequirementTests],
     'role': [0, RoleTests],
+    'vulnerability': [0, VulnerabilityTests],
     'user': [0, UserTests]
 }
 

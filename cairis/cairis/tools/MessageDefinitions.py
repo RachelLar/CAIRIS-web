@@ -1,7 +1,6 @@
 from flask.ext.restful import fields
 from flask.ext.restful_swagger import swagger
 
-from tools import PseudoClasses
 from tools.SessionValidator import get_logger
 
 
@@ -104,4 +103,14 @@ class RiskMessage(DefaultMessage):
 # endregion
 class RoleMessage(DefaultMessage):
     resource_fields = gen_message_fields(ModelDefinitions.RoleModel)
+    required = DefaultMessage.required
+
+# region Swagger Doc
+@swagger.model
+@swagger.nested(
+    object=ModelDefinitions.VulnerabilityModel.__name__
+)
+# endregion
+class VulnerabilityMessage(DefaultMessage):
+    resource_fields = gen_message_fields(ModelDefinitions.VulnerabilityModel)
     required = DefaultMessage.required
