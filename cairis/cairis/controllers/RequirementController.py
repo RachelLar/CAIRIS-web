@@ -4,7 +4,6 @@ from flask import session, request, make_response
 from flask.ext.restful import Resource
 from flask.ext.restful_swagger import swagger
 
-from Requirement import Requirement
 from data.RequirementDAO import RequirementDAO
 from tools.MessageDefinitions import RequirementMessage
 from tools.ModelDefinitions import RequirementModel
@@ -125,14 +124,14 @@ class RequirementsAPI(Resource):
         new_req = dao.from_json(request)
         req_id = dao.add_requirement(new_req, asset_name=asset_name, environment_name=environment_name)
 
-        resp_dict = {'message': 'Successfully added requirement', 'requirement_id': req_id}
+        resp_dict = {'message': 'Requirement successfully added', 'requirement_id': req_id}
         resp = make_response(json_serialize(resp_dict), httplib.OK)
         resp.contenttype = 'application/json'
         return resp
 
     # region Swagger Docs
     @swagger.operation(
-        notes='Imports data from an XML file',
+        notes='Updates a requirement',
         nickname='requirement-update-put',
         parameters=[
             {
