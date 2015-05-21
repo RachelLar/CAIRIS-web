@@ -125,9 +125,9 @@ class ThreatTests(CairisTests):
         self.assertIsNotNone(threats, 'No results after deserialization')
         self.assertIsInstance(threats, list, 'The result is not a dictionary as expected')
         self.assertGreater(len(threats), 0, 'No threats in the dictionary')
-        self.logger.info('[%s] Threats found: %d', method, len(threats))
+        self.logger.info('[%s] Threat types found: %d', method, len(threats))
         threat_type = threats[0]
-        self.logger.info('[%s] First threat: %s [%d]\n', method, threat_type['theName'], threat_type['theId'])
+        self.logger.info('[%s] First threat type: %s [%d]\n', method, threat_type['theName'], threat_type['theId'])
 
     def test_types_delete(self):
         method = 'test_types_delete'

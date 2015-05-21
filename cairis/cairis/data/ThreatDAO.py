@@ -171,7 +171,7 @@ class ThreatDAO(CairisDAO):
         threat_types = self.get_threat_types(environment_name=environment_name)
 
         if threat_types is None or len(threat_types) < 1:
-            raise ObjectNotFoundHTTPError('Thread types')
+            raise ObjectNotFoundHTTPError('Threat types')
 
         idx = 0
         while found_type is None and idx < len(threat_types):
