@@ -98,6 +98,8 @@ def start():
     api.add_resource(AssetController.AssetByNameAPI, '/api/assets/name/<string:name>')
     api.add_resource(AssetController.AssetByIdAPI, '/api/assets/id/<int:id>')
     api.add_resource(AssetController.AssetNamesAPI, '/api/assets/all/names')
+    api.add_resource(AssetController.AssetTypesAPI, '/api/assets/types')
+    api.add_resource(AssetController.AssetTypeByNameAPI, '/api/assets/types/name/<string:name>')
     api.add_resource(AssetController.AssetModelAPI, '/api/assets/view')
     api.add_resource(AssetController.AssetEnvironmentPropertiesAPI, '/api/assets/name/<string:asset_name>/properties')
 

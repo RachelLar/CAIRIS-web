@@ -5,7 +5,9 @@ from Asset import Asset
 from AssetEnvironmentProperties import AssetEnvironmentProperties
 from AssetParameters import AssetParameters
 from CairisHTTPError import ObjectNotFoundHTTPError, MalformedJSONHTTPError, ARMHTTPError, SilentHTTPError, \
-    MissingParameterHTTPError
+    MissingParameterHTTPError, OverwriteNotAllowedHTTPError
+from ValueType import ValueType
+from ValueTypeParameters import ValueTypeParameters
 import armid
 from data.CairisDAO import CairisDAO
 from tools.JsonConverter import json_serialize, json_deserialize
@@ -200,6 +202,95 @@ class AssetDAO(CairisDAO):
             raise ARMHTTPError(ex)
         except ARM.ARMException as ex:
             raise ARMHTTPError(ex)
+
+    def get_asset_types(self, environment_name=''):
+        try:
+            asset_types = self.db_proxy.getValueTypes('asset_type', environment_name)
+            return asset_types
+        except ARM.DatabaseProxyException as ex:
+            raise ARMHTTPError(ex)
+        except ARM.ARMException as ex:
+            raise ARMHTTPError(ex)
+
+    def get_asset_type_by_name(self, name, environment_name=''):
+        found_type = None
+        asset_types = self.get_asset_types(environment_name=environment_name)
+
+        if asset_types is None or len(asset_types) < 1:
+            raise ObjectNotFoundHTTPError('Asset types')
+
+        idx = 0
+        while found_type is None and idx < len(asset_types):
+            if asset_types[idx].theName == name:
+                found_type = asset_types[idx]
+            idx += 1
+
+        if found_type is None:
+            raise ObjectNotFoundHTTPError('The provided asset type name')
+
+        return found_type
+
+    def add_asset_type(self, asset_type, environment_name=''):
+        assert isinstance(asset_type, ValueType)
+        type_exists = self.check_existing_asset_type(asset_type.theName, environment_name=environment_name)
+
+        if type_exists:
+            raise OverwriteNotAllowedHTTPError(obj_name='The asset type')
+
+        params = ValueTypeParameters(
+            vtName=asset_type.theName,
+            vtDesc=asset_type.theDescription,
+            vType='asset_type',
+            envName=environment_name,
+            vtScore=asset_type.theScore,
+            vtRat=asset_type.theRationale
+        )
+
+        try:
+            return self.db_proxy.addValueType(params)
+        except ARM.DatabaseProxyException as ex:
+            raise ARMHTTPError(ex)
+        except ARM.ARMException as ex:
+            raise ARMHTTPError(ex)
+
+    def update_asset_type(self, asset_type, name, environment_name=''):
+        assert isinstance(asset_type, ValueType)
+
+        found_type = self.get_asset_type_by_name(name, environment_name)
+
+        params = ValueTypeParameters(
+            vtName=asset_type.theName,
+            vtDesc=asset_type.theDescription,
+            vType='asset_type',
+            envName=environment_name,
+            vtScore=asset_type.theScore,
+            vtRat=asset_type.theRationale
+        )
+        params.setId(found_type.theId)
+
+        try:
+            self.db_proxy.updateValueType(params)
+        except ARM.DatabaseProxyException as ex:
+            raise ARMHTTPError(ex)
+        except ARM.ARMException as ex:
+            raise ARMHTTPError(ex)
+
+    def delete_asset_type(self, name, environment_name=''):
+        found_type = self.get_asset_type_by_name(name, environment_name)
+
+        try:
+            self.db_proxy.deleteAssetType(found_type.theId)
+        except ARM.DatabaseProxyException as ex:
+            raise ARMHTTPError(ex)
+        except ARM.ARMException as ex:
+            raise ARMHTTPError(ex)
+
+    def check_existing_asset_type(self, name, environment_name):
+        try:
+            self.get_asset_type_by_name(name, environment_name)
+            return True
+        except ObjectNotFoundHTTPError:
+            return False
 
     def simplify_props(self, props):
         envPropertiesDict = dict()

@@ -9,8 +9,8 @@ from Borg import Borg
 from CairisHTTPError import ObjectNotFoundHTTPError, MissingParameterHTTPError
 from data.AssetDAO import AssetDAO
 from tools.JsonConverter import json_serialize
-from tools.MessageDefinitions import AssetMessage, AssetEnvironmentPropertiesMessage
-from tools.ModelDefinitions import AssetModel as SwaggerAssetModel, AssetEnvironmentPropertiesModel
+from tools.MessageDefinitions import AssetMessage, AssetEnvironmentPropertiesMessage, ValueTypeMessage
+from tools.ModelDefinitions import AssetModel as SwaggerAssetModel, AssetEnvironmentPropertiesModel, ValueTypeModel
 from tools.SessionValidator import validate_proxy, validate_fonts, get_session_id
 
 
@@ -445,4 +445,219 @@ class AssetEnvironmentPropertiesAPI(Resource):
         resp_dict = {'message': 'The asset properties were successfully updated.'}
         resp = make_response(json_serialize(resp_dict), httplib.OK)
         resp.contenttype = 'application/json'
+        return resp
+
+class AssetTypesAPI(Resource):
+    #region Swagger Doc
+    @swagger.operation(
+        notes='Get all asset types',
+        nickname='assets-types-get',
+        responseClass=ValueTypeModel.__name__,
+        responseContainer='List',
+        parameters=[
+            {
+                "name": "session_id",
+                "description": "The ID of the user's session",
+                "required": False,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "paramType": "query"
+            }
+        ],
+        responseMessages=[
+            {
+                "code": httplib.BAD_REQUEST,
+                "message": "The database connection was not properly set up"
+            }
+        ]
+    )
+    #endregion
+    def get(self):
+        session_id = get_session_id(session, request)
+        environment_name = request.args.get('environment', '')
+
+        dao = AssetDAO(session_id)
+        assets = dao.get_asset_types(environment_name=environment_name)
+
+        resp = make_response(json_serialize(assets, session_id=session_id), httplib.OK)
+        resp.contenttype = 'application/json'
+        return resp
+
+    # region Swagger Doc
+    @swagger.operation(
+        notes='Creates a new asset type',
+        nickname='asset-type-by-name-post',
+        parameters=[
+            {
+                "name": "body",
+                "description": "The serialized version of the new asset type to be added",
+                "required": True,
+                "allowMultiple": False,
+                "type": AssetMessage.__name__,
+                "paramType": "body"
+            },
+            {
+                "name": "session_id",
+                "description": "The ID of the user's session",
+                "required": False,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "paramType": "query"
+            }
+        ],
+        responseMessages=[
+            {
+                'code': httplib.BAD_REQUEST,
+                'message': 'One or more attributes are missing'
+            },
+            {
+                'code': httplib.CONFLICT,
+                'message': 'Some problems were found during the name check'
+            },
+            {
+                'code': httplib.CONFLICT,
+                'message': 'A database error has occurred'
+            }
+        ]
+    )
+    # endregion
+    def post(self):
+        session_id = get_session_id(session, request)
+        environment_name = request.args.get('environment', '')
+
+        dao = AssetDAO(session_id)
+        new_value_type = dao.type_from_json(request)
+        asset_type_id = dao.add_asset_type(new_value_type, environment_name=environment_name)
+
+        resp_dict = {'message': 'Asset type successfully added', 'asset_type_id': asset_type_id}
+        resp = make_response(json_serialize(resp_dict), httplib.OK)
+        resp.contenttype = 'application/json'
+        return resp
+
+class AssetTypeByNameAPI(Resource):
+    # region Swagger Doc
+    @swagger.operation(
+        notes='Get a asset type by name',
+        nickname='asset-type-by-name-get',
+        responseClass=ValueTypeModel.__name__,
+        parameters=[
+            {
+                "name": "session_id",
+                "description": "The ID of the user's session",
+                "required": False,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "paramType": "query"
+            }
+        ],
+        responseMessages=[
+            {
+                "code": httplib.BAD_REQUEST,
+                "message": "The database connection was not properly set up"
+            }
+        ]
+    )
+    # endregion
+    def get(self, name):
+        session_id = get_session_id(session, request)
+        environment_name = request.args.get('environment', '')
+
+        dao = AssetDAO(session_id)
+        asset_type = dao.get_asset_type_by_name(name=name, environment_name=environment_name)
+
+        resp = make_response(json_serialize(asset_type, session_id=session_id), httplib.OK)
+        resp.headers['Content-type'] = 'application/json'
+        return resp
+
+    # region Swagger Docs
+    @swagger.operation(
+        notes='Updates a asset type',
+        nickname='asset-type-by-name-put',
+        parameters=[
+            {
+                'name': 'body',
+                "description": "",
+                "required": True,
+                "allowMultiple": False,
+                'type': ValueTypeMessage.__name__,
+                'paramType': 'body'
+            },
+            {
+                "name": "session_id",
+                "description": "The ID of the user's session",
+                "required": False,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "paramType": "query"
+            }
+        ],
+        responseMessages=[
+            {
+                'code': httplib.BAD_REQUEST,
+                'message': 'The provided file is not a valid XML file'
+            },
+            {
+                'code': httplib.BAD_REQUEST,
+                'message': '''Some parameters are missing. Be sure 'asset' is defined.'''
+            }
+        ]
+    )
+    # endregion
+    def put(self, name):
+        session_id = get_session_id(session, request)
+        environment_name = request.args.get('environment', '')
+
+        dao = AssetDAO(session_id)
+        asset_type = dao.type_from_json(request)
+        dao.update_asset_type(asset_type, name=name, environment_name=environment_name)
+
+        resp_dict = {'message': 'Asset type successfully updated'}
+        resp = make_response(json_serialize(resp_dict), httplib.OK)
+        resp.headers['Content-type'] = 'application/json'
+        return resp
+
+    # region Swagger Doc
+    @swagger.operation(
+        notes='Deletes an existing asset type',
+        nickname='asset-type-by-name-delete',
+        parameters=[
+            {
+                "name": "session_id",
+                "description": "The ID of the user's session",
+                "required": False,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "paramType": "query"
+            }
+        ],
+        responseMessages=[
+            {
+                'code': httplib.BAD_REQUEST,
+                'message': 'One or more attributes are missing'
+            },
+            {
+                'code': httplib.NOT_FOUND,
+                'message': 'The provided asset name could not be found in the database'
+            },
+            {
+                'code': httplib.CONFLICT,
+                'message': 'Some problems were found during the name check'
+            },
+            {
+                'code': httplib.CONFLICT,
+                'message': 'A database error has occurred'
+            }
+        ]
+    )
+    # endregion
+    def delete(self, name):
+        session_id = get_session_id(session, request)
+        environment_name = request.args.get('environment', '')
+
+        dao = AssetDAO(session_id)
+        dao.delete_asset_type(name=name, environment_name=environment_name)
+
+        resp_dict = {'message': 'Asset type successfully deleted'}
+        resp = make_response(json_serialize(resp_dict), httplib.OK)
+        resp.headers['Content-type'] = 'application/json'
         return resp

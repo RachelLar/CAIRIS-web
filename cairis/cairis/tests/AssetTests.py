@@ -4,6 +4,7 @@ from urllib import quote
 import jsonpickle
 
 from Asset import Asset
+from ValueType import ValueType
 from tests.CairisTests import CairisTests
 from tools.JsonConverter import json_deserialize
 from tools.ModelDefinitions import AssetEnvironmentPropertiesModel, SecurityAttribute
@@ -170,3 +171,102 @@ class AssetTests(CairisTests):
         rv = self.app.get('/api/assets/name/Test2/properties?session_id=test')
         asset_props = json_deserialize(rv.data)
         self.logger.info('[%s] Asset property environment: %s\n', method, asset_props[0].environment)
+
+    def test_types_get(self):
+        method = 'test_types_get'
+        rv = self.app.get('/api/assets/types?session_id=test')
+        assets = jsonpickle.decode(rv.data)
+        self.assertIsNotNone(assets, 'No results after deserialization')
+        self.assertIsInstance(assets, list, 'The result is not a dictionary as expected')
+        self.assertGreater(len(assets), 0, 'No assets in the dictionary')
+        self.logger.info('[%s] Asset types found: %d', method, len(assets))
+        asset_type = assets[0]
+        self.logger.info('[%s] First asset types: %s [%d]\n', method, asset_type['theName'], asset_type['theId'])
+
+    def test_types_delete(self):
+        method = 'test_types_delete'
+        url = '/api/assets/types/name/%s?session_id=test' % quote(self.prepare_new_asset_type().theName)
+        new_asset_type_body = jsonpickle.encode(self.prepare_new_asset_type(), unpicklable=False)
+
+        self.app.delete(url)
+        self.logger.info('[%s] Object to delete: %s', method, new_asset_type_body)
+        self.app.post('/api/assets/types', content_type='application/json', data=new_asset_type_body)
+        self.logger.info('[%s] URL: %s', method, url)
+        rv = self.app.delete(url)
+        self.logger.info('[%s] Response data: %s', method, rv.data)
+        self.assertIsNotNone(rv.data, 'No response')
+        json_resp = jsonpickle.decode(rv.data)
+        self.assertIsInstance(json_resp, dict, 'The response cannot be converted to a dictionary')
+        message = json_resp.get('message', None)
+        self.assertIsNotNone(message, 'No message in response')
+        self.logger.info('[%s] Message: %s\n', method, message)
+
+    def test_types_post(self):
+        method = 'test_types_post'
+        url = '/api/assets/types'
+        self.logger.info('[%s] URL: %s', method, url)
+        json_dict = {'session_id': 'test', 'object': self.prepare_new_asset_type()}
+        new_asset_type_body = jsonpickle.encode(json_dict, unpicklable=False)
+        self.logger.info('JSON data: %s', new_asset_type_body)
+
+        self.app.delete('/api/assets/types/name/%s?session_id=test' % quote(self.prepare_new_asset_type().theName))
+        rv = self.app.post(url, content_type='application/json', data=new_asset_type_body)
+        self.logger.debug('[%s] Response data: %s', method, rv.data)
+        json_resp = jsonpickle.decode(rv.data)
+        self.assertIsNotNone(json_resp, 'No results after deserialization')
+        type_id = json_resp.get('asset_type_id', None)
+        self.assertIsNotNone(type_id, 'No asset type ID returned')
+        self.assertGreater(type_id, 0, 'Invalid asset type ID returned [%d]' % type_id)
+        self.logger.info('[%s] Asset type ID: %d\n', method, type_id)
+
+        rv = self.app.delete('/api/assets/types/name/%s?session_id=test' % quote(self.prepare_new_asset_type().theName))
+
+    def test_types_put(self):
+        method = 'test_types_put'
+        url = '/api/assets/types'
+        self.logger.info('[%s] URL: %s', method, url)
+        json_dict = {'session_id': 'test', 'object': self.prepare_new_asset_type()}
+        new_asset_type_body = jsonpickle.encode(json_dict)
+        self.logger.info('JSON data: %s', new_asset_type_body)
+
+        rv = self.app.delete('/api/assets/types/name/%s?session_id=test' % quote(self.prepare_new_asset_type().theName))
+        rv = self.app.post(url, content_type='application/json', data=new_asset_type_body)
+        self.logger.debug('[%s] Response data: %s', method, rv.data)
+        json_resp = jsonpickle.decode(rv.data)
+        self.assertIsNotNone(json_resp, 'No results after deserialization')
+        type_id = json_resp.get('asset_type_id', None)
+        self.assertIsNotNone(type_id, 'No asset type ID returned')
+        self.assertGreater(type_id, 0, 'Invalid asset type ID returned [%d]' % type_id)
+        self.logger.info('[%s] Asset type ID: %d', method, type_id)
+
+        type_to_update = self.prepare_new_asset_type()
+        type_to_update.theName = 'Edited test asset type'
+        type_to_update.theId = type_id
+        json_dict = {'session_id': 'test', 'object': type_to_update}
+        upd_type_body = jsonpickle.encode(json_dict)
+        rv = self.app.put('/api/assets/types/name/%s?session_id=test' % quote(self.prepare_new_asset_type().theName), data=upd_type_body, content_type='application/json')
+        self.assertIsNotNone(rv.data, 'No response')
+        json_resp = jsonpickle.decode(rv.data)
+        self.assertIsNotNone(json_resp)
+        self.assertIsInstance(json_resp, dict)
+        message = json_resp.get('message', None)
+        self.assertIsNotNone(message, 'No message in response')
+        self.logger.info('[%s] Message: %s', method, message)
+        self.assertGreater(message.find('successfully updated'), -1, 'The asset was not successfully updated')
+
+        rv = self.app.get('/api/assets/types/name/%s?session_id=test' % quote(type_to_update.theName))
+        upd_asset_type = jsonpickle.decode(rv.data)
+        self.assertIsNotNone(upd_asset_type, 'Unable to decode JSON data')
+        self.logger.debug('[%s] Response data: %s', method, rv.data)
+        self.logger.info('[%s] Asset type: %s [%d]\n', method, upd_asset_type['theName'], upd_asset_type['theId'])
+
+        rv = self.app.delete('/api/assets/types/name/%s?session_id=test' % quote(type_to_update.theName))
+
+    def prepare_new_asset_type(self):
+        new_type = ValueType(
+            valueTypeId=-1,
+            valueTypeName='Test asset type',
+            valueTypeDescription='This is a test asset type',
+            vType='asset-type'
+        )
+        return new_type
