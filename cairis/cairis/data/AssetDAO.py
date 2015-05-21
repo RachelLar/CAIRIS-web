@@ -9,7 +9,7 @@ from CairisHTTPError import ObjectNotFoundHTTPError, MalformedJSONHTTPError, ARM
 import armid
 from data.CairisDAO import CairisDAO
 from tools.JsonConverter import json_serialize, json_deserialize
-from tools.ModelDefinitions import AssetEnvironmentPropertiesModel, AssetSecurityAttribute, AssetModel
+from tools.ModelDefinitions import AssetEnvironmentPropertiesModel, SecurityAttribute, AssetModel
 from tools.SessionValidator import check_required_keys
 
 __author__ = 'Robin Quetin'
@@ -213,56 +213,56 @@ class AssetDAO(CairisDAO):
             cRationale = pRationale[armid.C_PROPERTY]
             if cProperty != armid.NONE_VALUE:
                 prop_name = 'Confidentiality'
-                attr = AssetSecurityAttribute(prop_name, self.prop_values[cProperty], cRationale)
+                attr = SecurityAttribute(prop_name, self.prop_values[cProperty], cRationale)
                 envPropertyDict.attributesDictionary[prop_name] = attr
 
             iProperty = syProperties[armid.I_PROPERTY]
             iRationale = pRationale[armid.I_PROPERTY]
             if iProperty != armid.NONE_VALUE:
                 prop_name = 'Integrity'
-                attr = AssetSecurityAttribute(prop_name, self.prop_values[iProperty], iRationale)
+                attr = SecurityAttribute(prop_name, self.prop_values[iProperty], iRationale)
                 envPropertyDict.attributesDictionary[prop_name] = attr
 
             avProperty = syProperties[armid.AV_PROPERTY]
             avRationale = pRationale[armid.AV_PROPERTY]
             if avProperty != armid.NONE_VALUE:
                 prop_name = 'Availability'
-                attr = AssetSecurityAttribute(prop_name, self.prop_values[avProperty], avRationale)
+                attr = SecurityAttribute(prop_name, self.prop_values[avProperty], avRationale)
                 envPropertyDict.attributesDictionary[prop_name] = attr
 
             acProperty = syProperties[armid.AC_PROPERTY]
             acRationale = pRationale[armid.AC_PROPERTY]
             if acProperty != armid.NONE_VALUE:
                 prop_name = 'Accountability'
-                attr = AssetSecurityAttribute(prop_name, self.prop_values[acProperty], acRationale)
+                attr = SecurityAttribute(prop_name, self.prop_values[acProperty], acRationale)
                 envPropertyDict.attributesDictionary[prop_name] = attr
 
             anProperty = syProperties[armid.AN_PROPERTY]
             anRationale = pRationale[armid.AN_PROPERTY]
             if anProperty != armid.NONE_VALUE:
                 prop_name = 'Anonymity'
-                attr = AssetSecurityAttribute(prop_name, self.prop_values[anProperty], anRationale)
+                attr = SecurityAttribute(prop_name, self.prop_values[anProperty], anRationale)
                 envPropertyDict.attributesDictionary[prop_name] = attr
 
             panProperty = syProperties[armid.PAN_PROPERTY]
             panRationale = pRationale[armid.PAN_PROPERTY]
             if panProperty != armid.NONE_VALUE:
                 prop_name = 'Pseudonymity'
-                attr = AssetSecurityAttribute(prop_name, self.prop_values[panProperty], panRationale)
+                attr = SecurityAttribute(prop_name, self.prop_values[panProperty], panRationale)
                 envPropertyDict.attributesDictionary[prop_name] = attr
 
             unlProperty = syProperties[armid.UNL_PROPERTY]
             unlRationale = pRationale[armid.UNL_PROPERTY]
             if unlProperty != armid.NONE_VALUE:
                 prop_name = 'Unlinkability'
-                attr = AssetSecurityAttribute(prop_name, self.prop_values[unlProperty], unlRationale)
+                attr = SecurityAttribute(prop_name, self.prop_values[unlProperty], unlRationale)
                 envPropertyDict.attributesDictionary[prop_name] = attr
 
             unoProperty = syProperties[armid.UNO_PROPERTY]
             unoRationale = pRationale[armid.UNO_PROPERTY]
             if unoProperty != armid.NONE_VALUE:
                 prop_name = 'Unobservability'
-                attr = AssetSecurityAttribute(prop_name, self.prop_values[unoProperty], unoRationale)
+                attr = SecurityAttribute(prop_name, self.prop_values[unoProperty], unoRationale)
                 envPropertyDict.attributesDictionary[prop_name] = attr
 
             if envProperty.theAssociations is not None:
@@ -290,10 +290,10 @@ class AssetDAO(CairisDAO):
                 associations.append(tuple(new_env_prop.associations[idx]))
 
             # Security attributes are represented by properties and rationales
-            properties = array((0, 0, 0, 0, 0, 0, 0, 0)).astype(numpy.int32)
+            properties = array([0]*8).astype(numpy.int32)
             rationales = 8 * ['None']
             for attribute in new_env_prop.attributes:
-                assert isinstance(attribute, AssetSecurityAttribute)
+                assert isinstance(attribute, SecurityAttribute)
                 prop_id = self.attr_dict.get(attribute.name)
                 if -1 > prop_id > 8:
                     msg = 'Invalid attribute index (index={0}). Attribute is being ignored.'.format(attribute.id)
@@ -335,8 +335,8 @@ class AssetDAO(CairisDAO):
                 new_json_asset_props[idx1]['__python_obj__'] = AssetEnvironmentPropertiesModel.__module__+'.'+AssetEnvironmentPropertiesModel.__name__
                 attrs = new_json_asset_props[idx1].get('attributes', [])
                 for idx2 in range(0, len(attrs)):
-                    check_required_keys(attrs[idx2], AssetSecurityAttribute.required)
-                    attrs[idx2]['__python_obj__'] = AssetSecurityAttribute.__module__+'.'+AssetSecurityAttribute.__name__
+                    check_required_keys(attrs[idx2], SecurityAttribute.required)
+                    attrs[idx2]['__python_obj__'] = SecurityAttribute.__module__+'.'+SecurityAttribute.__name__
                 new_json_asset_props[idx1]['attributes'] = attrs
 
             new_json_asset_props = json_serialize(new_json_asset_props)

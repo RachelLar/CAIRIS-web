@@ -9,9 +9,10 @@ from MisuseCaseEnvironmentProperties import MisuseCaseEnvironmentProperties
 from Requirement import Requirement
 from Risk import Risk
 from Role import Role
+from ThreatEnvironmentProperties import ThreatEnvironmentProperties
 from Vulnerability import Vulnerability
 from VulnerabilityEnvironmentProperties import VulnerabilityEnvironmentProperties
-from tools.PseudoClasses import EnvironmentTensionModel, AssetSecurityAttribute
+from tools.PseudoClasses import EnvironmentTensionModel, SecurityAttribute
 
 
 __author__ = 'Robin Quetin'
@@ -23,7 +24,7 @@ def gen_class_metadata(class_ref):
     }
 
 @swagger.model
-@swagger.nested(attributes=AssetSecurityAttribute.__name__)
+@swagger.nested(attributes=SecurityAttribute.__name__)
 class AssetEnvironmentPropertiesModel(object):
     def __init__(self, env_name='', associations=[], attributes=[]):
         self.environment = env_name
@@ -40,7 +41,7 @@ class AssetEnvironmentPropertiesModel(object):
     resource_fields = {
         "__python_obj__": fields.String,
         "associations": fields.List(fields.List(fields.String)),
-        "attributes": fields.List(fields.Nested(AssetSecurityAttribute.resource_fields)),
+        "attributes": fields.List(fields.Nested(SecurityAttribute.resource_fields)),
         "environment": fields.String
     }
     required = resource_fields.keys()
@@ -264,6 +265,53 @@ class RoleEnvironmentPropertiesModel(object):
         "theCountermeasures": fields.List(fields.String)
     }
     required = resource_fields.keys()
+
+@swagger.model
+@swagger.nested(
+    theProperties=SecurityAttribute.__name__
+)
+class ThreatEnvironmentPropertiesModel(object):
+    resource_fields = {
+        obj_id_field: fields.String,
+        'theAssets': fields.List(fields.String),
+        'theLikelihood': fields.String,
+        'theEnvironmentName': fields.String,
+        'theAttackers': fields.List(fields.String),
+        'theRationale': fields.List(fields.String),
+        'theProperties': fields.List(fields.Nested(SecurityAttribute.resource_fields)),
+    }
+    required = resource_fields.keys()
+    required.remove(obj_id_field)
+    required.remove('theRationale')
+    swagger_metadata = {
+        obj_id_field : gen_class_metadata(ThreatEnvironmentProperties),
+        'theLikelihood' : {
+            "enum": ['Incredible','Improbable','Remote','Occasional','Probable', 'Frequent']
+        }
+    }
+
+@swagger.model
+@swagger.nested(
+    theEnvironmentProperties=ThreatEnvironmentPropertiesModel.__name__
+)
+class ThreatModel(object):
+    resource_fields = {
+        obj_id_field: fields.String,
+        'theEnvironmentDictionary': fields.List(fields.String),
+        'theId': fields.Integer,
+        'theTags': fields.List(fields.String),
+        'theThreatPropertyDictionary': fields.List(fields.String),
+        'theThreatName': fields.String,
+        'theType': fields.String,
+        'theMethod': fields.String,
+        'theEnvironmentProperties': fields.List(fields.Nested(ThreatEnvironmentPropertiesModel.resource_fields)),
+        'likelihoodLookup': fields.List(fields.String),
+    }
+    required = resource_fields.keys()
+    required.remove(obj_id_field)
+    required.remove('theThreatPropertyDictionary')
+    required.remove('theEnvironmentDictionary')
+    required.remove('likelihoodLookup')
 
 @swagger.model
 class UserConfigModel(object):

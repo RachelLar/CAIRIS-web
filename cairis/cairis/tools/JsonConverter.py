@@ -12,7 +12,7 @@ from MisuseCase import MisuseCase
 from MisuseCaseEnvironmentProperties import MisuseCaseEnvironmentProperties
 from Requirement import Requirement
 from Risk import Risk
-from tools.ModelDefinitions import AssetEnvironmentPropertiesModel, AssetSecurityAttribute
+from tools.ModelDefinitions import AssetEnvironmentPropertiesModel, SecurityAttribute
 
 
 __author__ = 'Robin Quetin'

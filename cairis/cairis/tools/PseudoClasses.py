@@ -16,7 +16,7 @@ def gen_class_metadata(class_ref):
 
 
 @swagger.model
-class AssetSecurityAttribute(object):
+class SecurityAttribute(object):
     def __init__(self, name=None, value=None, rationale=None):
         """
         :type name: str
@@ -38,7 +38,7 @@ class AssetSecurityAttribute(object):
     required.remove(obj_id_field)
     swagger_metadata = {
         "__python_obj__": {
-            "enum": ["tools.PseudoClasses.AssetSecurityAttribute"]
+            "enum": ["tools.PseudoClasses.SecurityAttribute"]
         },
         "name": {
             "enum": [

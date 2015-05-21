@@ -6,7 +6,7 @@ import jsonpickle
 from Asset import Asset
 from tests.CairisTests import CairisTests
 from tools.JsonConverter import json_deserialize
-from tools.ModelDefinitions import AssetEnvironmentPropertiesModel, AssetSecurityAttribute
+from tools.ModelDefinitions import AssetEnvironmentPropertiesModel, SecurityAttribute
 
 
 __author__ = 'Robin Quetin'
@@ -30,12 +30,12 @@ class AssetTests(CairisTests):
         cProps=[]
     )
     new_asset_sec_attr = [
-        AssetSecurityAttribute(
+        SecurityAttribute(
             'Accountability',
             'Low',
             'None'
         ),
-        AssetSecurityAttribute(
+        SecurityAttribute(
             'Confidentiality',
             'Medium',
             'None'
