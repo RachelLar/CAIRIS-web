@@ -4,7 +4,6 @@ from flask import request, session, make_response
 from flask_restful_swagger import swagger
 from flask.ext.restful import Resource
 
-from Asset import Asset
 from AssetModel import AssetModel
 from Borg import Borg
 from CairisHTTPError import ObjectNotFoundHTTPError, MissingParameterHTTPError
@@ -135,21 +134,10 @@ class AssetByNameAPI(Resource):
     )
     # endregion
     def get(self, name):
-        session_id = request.args.get('session_id', None)
-        db_proxy = validate_proxy(session, session_id)
-        assets = db_proxy.getAssets()
-        found_asset = None
+        session_id = get_session_id(session, request)
 
-        if assets is not None:
-            found_asset = assets.get(name, None)
-
-        if found_asset is None:
-            raise ObjectNotFoundHTTPError(obj='The provided asset name')
-
-        assert isinstance(found_asset, Asset)
-        found_asset.theEnvironmentDictionary = {}
-        found_asset.theEnvironmentProperties = []
-        found_asset.theAssetPropertyDictionary = {}
+        dao = AssetDAO(session_id)
+        found_asset = dao.get_asset_by_name(name)
 
         resp = make_response(json_serialize(found_asset, session_id=session_id))
         resp.headers['Content-Type'] = "application/json"
