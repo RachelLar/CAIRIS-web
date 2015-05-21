@@ -136,6 +136,18 @@ class ObjectNotFoundHTTPError(CairisHTTPError):
             status='Object not found'
         )
 
+class OverwriteNotAllowedHTTPError(CairisHTTPError):
+    status_code=httplib.CONFLICT
+    status='Object already exists'
+
+    def __init__(self, obj_name):
+        CairisHTTPError.__init__(
+            self,
+            status_code=self.status_code,
+            message='{} could not be found in the database'.format(obj_name),
+            status=self.status
+        )
+
 class SilentHTTPError(BaseException):
     def __init__(self, message):
         BaseException.__init__(self)
