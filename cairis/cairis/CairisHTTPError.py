@@ -144,7 +144,7 @@ class OverwriteNotAllowedHTTPError(CairisHTTPError):
         CairisHTTPError.__init__(
             self,
             status_code=self.status_code,
-            message='{} could not be found in the database'.format(obj_name),
+            message='{} already exists and cannot be overwritten'.format(obj_name),
             status=self.status
         )
 
