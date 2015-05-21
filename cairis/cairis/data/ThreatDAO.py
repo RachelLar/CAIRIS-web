@@ -1,0 +1,164 @@
+import ARM
+from CairisHTTPError import ARMHTTPError, ObjectNotFoundHTTPError, MalformedJSONHTTPError, MissingParameterHTTPError
+from Vulnerability import Vulnerability
+from VulnerabilityEnvironmentProperties import VulnerabilityEnvironmentProperties
+from VulnerabilityParameters import VulnerabilityParameters
+from data.CairisDAO import CairisDAO
+from tools.JsonConverter import json_serialize, json_deserialize
+from tools.ModelDefinitions import VulnerabilityModel, VulnerabilityEnvironmentPropertiesModel
+from tools.SessionValidator import check_required_keys
+
+__author__ = 'Robin Quetin'
+
+
+class VulnerabilityDAO(CairisDAO):
+    def __init__(self, session_id):
+        CairisDAO.__init__(self, session_id)
+
+    def get_vulnerabilities(self, constraint_id=-1, simplify=True):
+        try:
+            vulnerabilities = self.db_proxy.getVulnerabilities(constraint_id)
+        except ARM.DatabaseProxyException as ex:
+            raise ARMHTTPError(ex)
+
+        if simplify:
+            for key, value in vulnerabilities.items():
+                vulnerabilities[key] = self.simplify(value)
+
+        return vulnerabilities
+
+    def get_vulnerability_by_id(self, vuln_id, simplify=True):
+        found_vulnerability = None
+        try:
+            vulnerabilities = self.db_proxy.getVulnerabilities()
+        except ARM.DatabaseProxyException as ex:
+            raise ARMHTTPError(ex)
+
+        idx = 0
+        while found_vulnerability is None and idx < len(vulnerabilities):
+            if vulnerabilities.values()[idx].theId == vuln_id:
+                found_vulnerability = vulnerabilities.values()[idx]
+            idx += 1
+
+        if found_vulnerability is None:
+            raise ObjectNotFoundHTTPError('The provided vulnerability ID')
+
+        if simplify:
+            found_vulnerability = self.simplify(found_vulnerability)
+
+        return found_vulnerability
+    
+    def get_vulnerability_by_name(self, name, simplify=True):
+        found_vulnerability = None
+        try:
+            vulnerabilities = self.db_proxy.getVulnerabilities()
+        except ARM.DatabaseProxyException as ex:
+            raise ARMHTTPError(ex)
+
+        if vulnerabilities is not None:
+            found_vulnerability = vulnerabilities.get(name)
+
+        if found_vulnerability is None:
+            raise ObjectNotFoundHTTPError('The provided vulnerability name')
+
+        if simplify:
+            found_vulnerability = self.simplify(found_vulnerability)
+
+        return found_vulnerability
+    
+    def add_vulnerability(self, vulnerability):
+        vuln_params = VulnerabilityParameters(
+            vulName=vulnerability.theVulnerabilityName,
+            vulDesc=vulnerability.theVulnerabilityDescription,
+            vulType=vulnerability.theVulnerabilityType,
+            tags=vulnerability.theTags,
+            cProperties=vulnerability.theEnvironmentProperties
+        )
+
+        try:
+            if not self.check_existing_vulnerability(vulnerability.theVulnerabilityName):
+                new_id = self.db_proxy.addVulnerability(vuln_params)
+                return new_id
+        except ARM.DatabaseProxyException as ex:
+            raise ARMHTTPError(ex)
+        except ARM.ARMException as ex:
+            raise ARMHTTPError(ex)
+
+    def update_vulnerability(self, vulnerability, name=None, vuln_id=None):
+        if name is not None:
+            found_vulnerability = self.get_vulnerability_by_name(name, simplify=False)
+        elif vuln_id is not None:
+            found_vulnerability = self.get_vulnerability_by_id(vuln_id, simplify=False)
+        else:
+            raise MissingParameterHTTPError(param_names=['name'])
+
+        vuln_params = VulnerabilityParameters(
+            vulName=vulnerability.theVulnerabilityName,
+            vulDesc=vulnerability.theVulnerabilityDescription,
+            vulType=vulnerability.theVulnerabilityType,
+            tags=vulnerability.theTags,
+            cProperties=vulnerability.theEnvironmentProperties
+        )
+        vuln_params.setId(found_vulnerability.theVulnerabilityId)
+
+        try:
+            if self.check_existing_vulnerability(name):
+                self.db_proxy.updateVulnerability(vuln_params)
+        except ARM.DatabaseProxyException as ex:
+            raise ARMHTTPError(ex)
+        except ARM.ARMException as ex:
+            raise ARMHTTPError(ex)
+
+    def delete_vulnerability(self, name=None, vuln_id=None):
+        if name is not None:
+            found_vulnerability = self.get_vulnerability_by_name(name, simplify=False)
+        elif vuln_id is not None:
+            found_vulnerability = self.get_vulnerability_by_id(vuln_id, simplify=False)
+        else:
+            raise MissingParameterHTTPError(param_names=['name'])
+
+        vuln_id = found_vulnerability.theVulnerabilityId
+
+        try:
+            self.db_proxy.deleteVulnerability(vuln_id)
+        except ARM.DatabaseProxyException as ex:
+            raise ARMHTTPError(ex)
+        except ARM.ARMException as ex:
+            raise ARMHTTPError(ex)
+
+    def check_existing_vulnerability(self, name):
+        try:
+            self.db_proxy.nameCheck(name, 'vulnerability')
+            return False
+        except ARM.ARMException as ex:
+            if str(ex.value).find('already exists') > -1:
+                return True
+            raise ARMHTTPError(ex)
+    
+    def from_json(self, request):
+        json = request.get_json(silent=True)
+        if json is False or json is None:
+            raise MalformedJSONHTTPError(data=request.get_data())
+
+        json_dict = json['object']
+        check_required_keys(json_dict, VulnerabilityModel.required)
+        json_dict['__python_obj__'] = Vulnerability.__module__+'.'+Vulnerability.__name__
+
+        for idx in range(0, len(json_dict['theEnvironmentProperties'])):
+            property = json_dict['theEnvironmentProperties'][idx]
+            check_required_keys(property, VulnerabilityEnvironmentPropertiesModel.required)
+            property['__python_obj__'] = VulnerabilityEnvironmentProperties.__module__+'.'+VulnerabilityEnvironmentProperties.__name__
+            json_dict['theEnvironmentProperties'][idx] = property
+
+        vulnerability = json_serialize(json_dict)
+        vulnerability = json_deserialize(vulnerability)
+        if not isinstance(vulnerability, Vulnerability):
+            raise MalformedJSONHTTPError(data=request.get_data())
+        else:
+            return vulnerability
+
+    def simplify(self, obj):
+        assert isinstance(obj, Vulnerability)
+        obj.theEnvironmentDictionary = {}
+        obj.severityLookup = {}
+        return obj

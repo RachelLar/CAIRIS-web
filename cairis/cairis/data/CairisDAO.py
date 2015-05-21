@@ -39,6 +39,7 @@ class CairisDAO(object):
                     message='The database connection could not be created.'
                 )
             elif isinstance(db_proxy, MySQLDatabaseProxy):
+                db_proxy.reconnect(session_id=session_id)
                 return db_proxy
             else:
                 raise CairisHTTPError(
