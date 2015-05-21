@@ -118,6 +118,16 @@ class ThreatMessage(DefaultMessage):
 # region Swagger Doc
 @swagger.model
 @swagger.nested(
+    object=ModelDefinitions.ValueTypeModel.__name__
+)
+# endregion
+class ValueTypeMessage(DefaultMessage):
+    resource_fields = gen_message_fields(ModelDefinitions.ValueTypeModel)
+    required = DefaultMessage.required
+
+# region Swagger Doc
+@swagger.model
+@swagger.nested(
     object=ModelDefinitions.VulnerabilityModel.__name__
 )
 # endregion

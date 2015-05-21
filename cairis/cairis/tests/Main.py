@@ -4,6 +4,7 @@ from tests.AssetTests import AssetTests
 from tests.EnvironmentTests import EnvironmentTests
 from tests.RequirementTests import RequirementTests
 from tests.RoleTests import RoleTests
+from tests.ThreatTests import ThreatTests
 from tests.UserTests import UserTests
 from tests.VulnerabilityTests import VulnerabilityTests
 
@@ -14,6 +15,7 @@ tests_dict = {
     'environment': [0, EnvironmentTests],
     'requirement': [0, RequirementTests],
     'role': [0, RoleTests],
+    'threat': [0, ThreatTests],
     'vulnerability': [0, VulnerabilityTests],
     'user': [0, UserTests]
 }

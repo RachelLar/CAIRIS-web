@@ -11,7 +11,7 @@ from Borg import Borg
 from CairisHTTPError import CairisHTTPError, ARMHTTPError
 from ARM import ARMException, DatabaseProxyException
 from controllers import AssetController, CImportController, DimensionController, EnvironmentController, GoalController, RequirementController, \
-    RoleController, UserController, VulnerabilityController
+    RoleController, ThreatController, UserController, VulnerabilityController
 
 
 __author__ = 'Robin Quetin'
@@ -135,6 +135,13 @@ def start():
     api.add_resource(RoleController.RolesByNameAPI, '/api/roles/name/<string:name>')
     api.add_resource(RoleController.RolesByIdAPI, '/api/roles/id/<int:id>')
     api.add_resource(RoleController.RoleEnvironmentPropertiesAPI, '/api/roles/name/<string:name>/properties')
+
+    # Threat routes
+    api.add_resource(ThreatController.ThreatAPI, '/api/threats')
+    api.add_resource(ThreatController.ThreatByIdAPI, '/api/threats/id/<int:id>')
+    api.add_resource(ThreatController.ThreatByNameAPI, '/api/threats/name/<string:name>')
+    api.add_resource(ThreatController.ThreatTypesAPI, '/api/threats/types')
+    api.add_resource(ThreatController.ThreatTypeByNameAPI, '/api/threats/types/name/<string:name>')
 
     # User routes
     api.add_resource(UserController.UserConfigAPI, '/api/user/config')

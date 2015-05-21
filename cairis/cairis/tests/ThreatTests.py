@@ -1,52 +1,57 @@
 import logging
 from urllib import quote
 import jsonpickle
-from Vulnerability import Vulnerability
-from VulnerabilityEnvironmentProperties import VulnerabilityEnvironmentProperties
+from Threat import Threat
+from ThreatEnvironmentProperties import ThreatEnvironmentProperties
+from ValueType import ValueType
 from tests.CairisTests import CairisTests
+from tools.PseudoClasses import SecurityAttribute
 
 __author__ = 'Robin Quetin'
 
 
-class VulnerabilityTests(CairisTests):
+class ThreatTests(CairisTests):
     # region Class fields
     logger = logging.getLogger(__name__)
-    existing_vulnerability_id = 145
-    existing_vulnerability_name = 'Replay vulnerability'
-    existing_environment_name = 'Stroke'
+    existing_threat_id = 154
+    existing_threat_name = 'Replay attack'
+    existing_threat_type = 'Electronic/Hacking'
+    existing_environment_name_1 = 'Stroke'
+    existing_environment_name_2 = 'Psychosis'
     existing_asset_names = ['Clinical data', 'Data node']
-    vulnerability_class = Vulnerability.__module__+'.'+Vulnerability.__name__
+    existing_attackers_names = ['Trudy', 'Yves']
+    threat_class = Threat.__module__+'.'+Threat.__name__
     # endregion
     
     def test_get_all(self):
         method = 'test_get_all'
-        rv = self.app.get('/api/vulnerabilities?session_id=test')
-        vulnerabilities = jsonpickle.decode(rv.data)
-        self.assertIsNotNone(vulnerabilities, 'No results after deserialization')
-        self.assertIsInstance(vulnerabilities, dict, 'The result is not a dictionary as expected')
-        self.assertGreater(len(vulnerabilities), 0, 'No vulnerabilities in the dictionary')
-        self.logger.info('[%s] Vulnerabilities found: %d', method, len(vulnerabilities))
-        vulnerability = vulnerabilities.values()[0]
-        self.logger.info('[%s] First vulnerability: %s [%d]\n', method, vulnerability['theVulnerabilityName'], vulnerability['theVulnerabilityId'])
+        rv = self.app.get('/api/threats?session_id=test')
+        threats = jsonpickle.decode(rv.data)
+        self.assertIsNotNone(threats, 'No results after deserialization')
+        self.assertIsInstance(threats, dict, 'The result is not a dictionary as expected')
+        self.assertGreater(len(threats), 0, 'No threats in the dictionary')
+        self.logger.info('[%s] Threats found: %d', method, len(threats))
+        threat = threats.values()[0]
+        self.logger.info('[%s] First threat: %s [%d]\n', method, threat['theThreatName'], threat['theId'])
 
     def test_get_by_name(self):
         method = 'test_get_by_name'
-        url = '/api/vulnerabilities/name/%s?session_id=test' % quote(self.existing_vulnerability_name)
+        url = '/api/threats/name/%s?session_id=test' % quote(self.existing_threat_name)
         rv = self.app.get(url)
         self.assertIsNotNone(rv.data, 'No response')
         self.logger.debug('[%s] Response data: %s', method, rv.data)
-        vulnerability = jsonpickle.decode(rv.data)
-        self.assertIsNotNone(vulnerability, 'No results after deserialization')
-        self.logger.info('[%s] Vulnerability: %s [%d]\n', method, vulnerability['theVulnerabilityName'], vulnerability['theVulnerabilityId'])
+        threat = jsonpickle.decode(rv.data)
+        self.assertIsNotNone(threat, 'No results after deserialization')
+        self.logger.info('[%s] Threat: %s [%d]\n', method, threat['theThreatName'], threat['theId'])
 
     def test_delete(self):
         method = 'test_delete'
-        url = '/api/vulnerabilities/name/%s?session_id=test' % quote(self.prepare_new_vulnerability().theVulnerabilityName)
-        new_vulnerability_body = self.prepare_json()
+        url = '/api/threats/name/%s?session_id=test' % quote(self.prepare_new_threat().theThreatName)
+        new_threat_body = self.prepare_json()
 
         self.app.delete(url)
-        self.logger.info('[%s] Object to delete: %s', method, new_vulnerability_body)
-        self.app.post('/api/vulnerabilities', content_type='application/json', data=new_vulnerability_body)
+        self.logger.info('[%s] Object to delete: %s', method, new_threat_body)
+        self.app.post('/api/threats', content_type='application/json', data=new_threat_body)
         self.logger.info('[%s] URL: %s', method, url)
         rv = self.app.delete(url)
         self.logger.info('[%s] Response data: %s', method, rv.data)
@@ -59,43 +64,43 @@ class VulnerabilityTests(CairisTests):
 
     def test_post(self):
         method = 'test_post'
-        url = '/api/vulnerabilities'
+        url = '/api/threats'
         self.logger.info('[%s] URL: %s', method, url)
-        new_vulnerability_body = self.prepare_json()
+        new_threat_body = self.prepare_json()
 
-        self.app.delete('/api/vulnerabilities/name/%s?session_id=test' % quote(self.prepare_new_vulnerability().theVulnerabilityName))
-        rv = self.app.post(url, content_type='application/json', data=new_vulnerability_body)
+        self.app.delete('/api/threats/name/%s?session_id=test' % quote(self.prepare_new_threat().theThreatName))
+        rv = self.app.post(url, content_type='application/json', data=new_threat_body)
         self.logger.debug('[%s] Response data: %s', method, rv.data)
         json_resp = jsonpickle.decode(rv.data)
         self.assertIsNotNone(json_resp, 'No results after deserialization')
-        env_id = json_resp.get('vulnerability_id', None)
-        self.assertIsNotNone(env_id, 'No vulnerability ID returned')
-        self.assertGreater(env_id, 0, 'Invalid vulnerability ID returned [%d]' % env_id)
-        self.logger.info('[%s] Vulnerability ID: %d\n', method, env_id)
+        env_id = json_resp.get('threat_id', None)
+        self.assertIsNotNone(env_id, 'No threat ID returned')
+        self.assertGreater(env_id, 0, 'Invalid threat ID returned [%d]' % env_id)
+        self.logger.info('[%s] Threat ID: %d\n', method, env_id)
 
-        rv = self.app.delete('/api/vulnerabilities/name/%s?session_id=test' % quote(self.prepare_new_vulnerability().theVulnerabilityName))
+        rv = self.app.delete('/api/threats/name/%s?session_id=test' % quote(self.prepare_new_threat().theThreatName))
 
     def test_put(self):
         method = 'test_put'
-        url = '/api/vulnerabilities'
+        url = '/api/threats'
         self.logger.info('[%s] URL: %s', method, url)
-        new_vulnerability_body = self.prepare_json()
+        new_threat_body = self.prepare_json()
 
-        rv = self.app.delete('/api/vulnerabilities/name/%s?session_id=test' % quote(self.prepare_new_vulnerability().theVulnerabilityName))
-        rv = self.app.post(url, content_type='application/json', data=new_vulnerability_body)
+        rv = self.app.delete('/api/threats/name/%s?session_id=test' % quote(self.prepare_new_threat().theThreatName))
+        rv = self.app.post(url, content_type='application/json', data=new_threat_body)
         self.logger.debug('[%s] Response data: %s', method, rv.data)
         json_resp = jsonpickle.decode(rv.data)
         self.assertIsNotNone(json_resp, 'No results after deserialization')
-        env_id = json_resp.get('vulnerability_id', None)
-        self.assertIsNotNone(env_id, 'No vulnerability ID returned')
-        self.assertGreater(env_id, 0, 'Invalid vulnerability ID returned [%d]' % env_id)
-        self.logger.info('[%s] Vulnerability ID: %d', method, env_id)
+        env_id = json_resp.get('threat_id', None)
+        self.assertIsNotNone(env_id, 'No threat ID returned')
+        self.assertGreater(env_id, 0, 'Invalid threat ID returned [%d]' % env_id)
+        self.logger.info('[%s] Threat ID: %d', method, env_id)
 
-        vulnerability_to_update = self.prepare_new_vulnerability()
-        vulnerability_to_update.theName = 'Edited test vulnerability'
-        vulnerability_to_update.theId = env_id
-        upd_env_body = self.prepare_json(vulnerability=vulnerability_to_update)
-        rv = self.app.put('/api/vulnerabilities/name/%s?session_id=test' % quote(self.prepare_new_vulnerability().theVulnerabilityName), data=upd_env_body, content_type='application/json')
+        threat_to_update = self.prepare_new_threat()
+        threat_to_update.theThreatName = 'Edited test threat'
+        threat_to_update.theId = env_id
+        upd_env_body = self.prepare_json(threat=threat_to_update)
+        rv = self.app.put('/api/threats/name/%s?session_id=test' % quote(self.prepare_new_threat().theThreatName), data=upd_env_body, content_type='application/json')
         self.assertIsNotNone(rv.data, 'No response')
         json_resp = jsonpickle.decode(rv.data)
         self.assertIsNotNone(json_resp)
@@ -103,52 +108,184 @@ class VulnerabilityTests(CairisTests):
         message = json_resp.get('message', None)
         self.assertIsNotNone(message, 'No message in response')
         self.logger.info('[%s] Message: %s', method, message)
-        self.assertGreater(message.find('successfully updated'), -1, 'The vulnerability was not successfully updated')
+        self.assertGreater(message.find('successfully updated'), -1, 'The threat was not successfully updated')
 
-        rv = self.app.get('/api/vulnerabilities/name/%s?session_id=test' % quote(vulnerability_to_update.theName))
-        upd_vulnerability = jsonpickle.decode(rv.data)
-        self.assertIsNotNone(upd_vulnerability, 'Unable to decode JSON data')
+        rv = self.app.get('/api/threats/name/%s?session_id=test' % quote(threat_to_update.theThreatName))
+        upd_threat = jsonpickle.decode(rv.data)
+        self.assertIsNotNone(upd_threat, 'Unable to decode JSON data')
         self.logger.debug('[%s] Response data: %s', method, rv.data)
-        self.logger.info('[%s] Vulnerability: %s [%d]\n', method, upd_vulnerability['theVulnerabilityName'], upd_vulnerability['theVulnerabilityId'])
+        self.logger.info('[%s] Threat: %s [%d]\n', method, upd_threat['theThreatName'], upd_threat['theId'])
 
-        rv = self.app.delete('/api/vulnerabilities/name/%s?session_id=test' % quote(vulnerability_to_update.theName))
+        rv = self.app.delete('/api/threats/name/%s?session_id=test' % quote(threat_to_update.theThreatName))
 
-    def prepare_new_vulnerability(self):
-        new_vulnerability_prop = VulnerabilityEnvironmentProperties(
-            environmentName=self.existing_environment_name,
-            severity='Critical',
-            assets=self.existing_asset_names
-        )
+    def test_types_get(self):
+        method = 'test_types_get'
+        rv = self.app.get('/api/threats/types?session_id=test')
+        threats = jsonpickle.decode(rv.data)
+        self.assertIsNotNone(threats, 'No results after deserialization')
+        self.assertIsInstance(threats, list, 'The result is not a dictionary as expected')
+        self.assertGreater(len(threats), 0, 'No threats in the dictionary')
+        self.logger.info('[%s] Threats found: %d', method, len(threats))
+        threat_type = threats[0]
+        self.logger.info('[%s] First threat: %s [%d]\n', method, threat_type['theName'], threat_type['theId'])
 
-        new_vulnerability = Vulnerability(
-            vulId=-1,
-            vulName='Test Vulnerability',
-            vulDesc='This is a test vulnerability',
-            vulType='Design',
+    def test_types_delete(self):
+        method = 'test_types_delete'
+        url = '/api/threats/types/name/%s?session_id=test' % quote(self.prepare_new_threat_type().theName)
+        new_threat_type_body = jsonpickle.encode(self.prepare_new_threat_type(), unpicklable=False)
+
+        self.app.delete(url)
+        self.logger.info('[%s] Object to delete: %s', method, new_threat_type_body)
+        self.app.post('/api/threats/types', content_type='application/json', data=new_threat_type_body)
+        self.logger.info('[%s] URL: %s', method, url)
+        rv = self.app.delete(url)
+        self.logger.info('[%s] Response data: %s', method, rv.data)
+        self.assertIsNotNone(rv.data, 'No response')
+        json_resp = jsonpickle.decode(rv.data)
+        self.assertIsInstance(json_resp, dict, 'The response cannot be converted to a dictionary')
+        message = json_resp.get('message', None)
+        self.assertIsNotNone(message, 'No message in response')
+        self.logger.info('[%s] Message: %s\n', method, message)
+
+    def test_types_post(self):
+        method = 'test_types_post'
+        url = '/api/threats/types'
+        self.logger.info('[%s] URL: %s', method, url)
+        json_dict = {'session_id': 'test', 'object': self.prepare_new_threat_type()}
+        new_threat_type_body = jsonpickle.encode(json_dict, unpicklable=False)
+        self.logger.info('JSON data: %s', new_threat_type_body)
+
+        self.app.delete('/api/threats/types/name/%s?session_id=test' % quote(self.prepare_new_threat_type().theName))
+        rv = self.app.post(url, content_type='application/json', data=new_threat_type_body)
+        self.logger.debug('[%s] Response data: %s', method, rv.data)
+        json_resp = jsonpickle.decode(rv.data)
+        self.assertIsNotNone(json_resp, 'No results after deserialization')
+        type_id = json_resp.get('threat_type_id', None)
+        self.assertIsNotNone(type_id, 'No threat type ID returned')
+        self.assertGreater(type_id, 0, 'Invalid threat type ID returned [%d]' % type_id)
+        self.logger.info('[%s] Threat type ID: %d\n', method, type_id)
+
+        rv = self.app.delete('/api/threats/types/name/%s?session_id=test' % quote(self.prepare_new_threat_type().theName))
+
+    def test_types_put(self):
+        method = 'test_types_put'
+        url = '/api/threats/types'
+        self.logger.info('[%s] URL: %s', method, url)
+        json_dict = {'session_id': 'test', 'object': self.prepare_new_threat_type()}
+        new_threat_type_body = jsonpickle.encode(json_dict)
+        self.logger.info('JSON data: %s', new_threat_type_body)
+
+        rv = self.app.delete('/api/threats/types/name/%s?session_id=test' % quote(self.prepare_new_threat_type().theName))
+        rv = self.app.post(url, content_type='application/json', data=new_threat_type_body)
+        self.logger.debug('[%s] Response data: %s', method, rv.data)
+        json_resp = jsonpickle.decode(rv.data)
+        self.assertIsNotNone(json_resp, 'No results after deserialization')
+        type_id = json_resp.get('threat_type_id', None)
+        self.assertIsNotNone(type_id, 'No threat type ID returned')
+        self.assertGreater(type_id, 0, 'Invalid threat type ID returned [%d]' % type_id)
+        self.logger.info('[%s] Threat type ID: %d', method, type_id)
+
+        type_to_update = self.prepare_new_threat_type()
+        type_to_update.theName = 'Edited test threat type'
+        type_to_update.theId = type_id
+        json_dict = {'session_id': 'test', 'object': type_to_update}
+        upd_type_body = jsonpickle.encode(json_dict)
+        rv = self.app.put('/api/threats/types/name/%s?session_id=test' % quote(self.prepare_new_threat_type().theName), data=upd_type_body, content_type='application/json')
+        self.assertIsNotNone(rv.data, 'No response')
+        json_resp = jsonpickle.decode(rv.data)
+        self.assertIsNotNone(json_resp)
+        self.assertIsInstance(json_resp, dict)
+        message = json_resp.get('message', None)
+        self.assertIsNotNone(message, 'No message in response')
+        self.logger.info('[%s] Message: %s', method, message)
+        self.assertGreater(message.find('successfully updated'), -1, 'The threat was not successfully updated')
+
+        rv = self.app.get('/api/threats/types/name/%s?session_id=test' % quote(type_to_update.theName))
+        upd_threat_type = jsonpickle.decode(rv.data)
+        self.assertIsNotNone(upd_threat_type, 'Unable to decode JSON data')
+        self.logger.debug('[%s] Response data: %s', method, rv.data)
+        self.logger.info('[%s] Threat type: %s [%d]\n', method, upd_threat_type['theName'], upd_threat_type['theId'])
+
+        rv = self.app.delete('/api/threats/types/name/%s?session_id=test' % quote(type_to_update.theName))
+
+    def prepare_new_threat(self):
+        new_security_attrs = [
+            SecurityAttribute(
+                name='Confidentiality',
+                value='High',
+                rationale='As a test'
+            ),
+            SecurityAttribute(
+                name='Availability',
+                value='Medium',
+                rationale='Another test'
+            )
+        ]
+
+        new_threat_props = [
+            ThreatEnvironmentProperties(
+                environmentName=self.existing_environment_name_1,
+                lhood='Incredible',
+                assets=self.existing_asset_names,
+                attackers=self.existing_attackers_names,
+                syProperties=new_security_attrs,
+                pRationale=[]
+            ),
+            ThreatEnvironmentProperties(
+                environmentName=self.existing_environment_name_2,
+                lhood='Improbable',
+                assets=self.existing_asset_names,
+                attackers=self.existing_attackers_names,
+                syProperties=new_security_attrs,
+                pRationale=[]
+            )
+        ]
+
+        new_threat = Threat(
+            threatId=-1,
+            threatName='Test threat',
+            threatType=self.existing_threat_type,
+            threatMethod='',
             tags=[],
-            cProps=[new_vulnerability_prop]
+            cProps=[]
         )
+        new_threat.theEnvironmentProperties = new_threat_props
 
-        new_vulnerability.theEnvironmentDictionary = {}
+        new_threat.theEnvironmentDictionary = {}
+        new_threat.likelihoodLookup = {}
+        new_threat.theThreatPropertyDictionary = {}
 
-        return new_vulnerability
+        delattr(new_threat, 'theEnvironmentDictionary')
+        delattr(new_threat, 'likelihoodLookup')
+        delattr(new_threat, 'theThreatPropertyDictionary')
 
-    def prepare_dict(self, vulnerability=None):
-        if vulnerability is None:
-            vulnerability = self.prepare_new_vulnerability()
+        return new_threat
+
+    def prepare_new_threat_type(self):
+        new_type = ValueType(
+            valueTypeId=-1,
+            valueTypeName='Test threat type',
+            valueTypeDescription='This is a test threat type',
+            vType='threat-type'
+        )
+        return new_type
+
+    def prepare_dict(self, threat=None):
+        if threat is None:
+            threat = self.prepare_new_threat()
         else:
-            assert isinstance(vulnerability, Vulnerability)
+            assert isinstance(threat, Threat)
 
         return {
             'session_id': 'test',
-            'object': vulnerability,
+            'object': threat,
         }
 
-    def prepare_json(self, data_dict=None, vulnerability=None):
+    def prepare_json(self, data_dict=None, threat=None):
         if data_dict is None:
-            data_dict = self.prepare_dict(vulnerability=vulnerability)
+            data_dict = self.prepare_dict(threat=threat)
         else:
             assert isinstance(data_dict, dict)
-        new_vulnerability_body = jsonpickle.encode(data_dict)
-        self.logger.info('JSON data: %s', new_vulnerability_body)
-        return new_vulnerability_body
+        new_threat_body = jsonpickle.encode(data_dict, unpicklable=False)
+        self.logger.info('JSON data: %s', new_threat_body)
+        return new_threat_body

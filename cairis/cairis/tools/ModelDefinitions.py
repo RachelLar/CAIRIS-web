@@ -10,6 +10,7 @@ from Requirement import Requirement
 from Risk import Risk
 from Role import Role
 from ThreatEnvironmentProperties import ThreatEnvironmentProperties
+from ValueType import ValueType
 from Vulnerability import Vulnerability
 from VulnerabilityEnvironmentProperties import VulnerabilityEnvironmentProperties
 from tools.PseudoClasses import EnvironmentTensionModel, SecurityAttribute
@@ -330,6 +331,26 @@ class UserConfigModel(object):
             {
                 'enum': ['on', 'off']
             }
+    }
+
+@swagger.model
+class ValueTypeModel(object):
+    resource_fields = {
+        obj_id_field: fields.String,
+        'theScore': fields.Integer,
+        'theId': fields.Integer,
+        'theRationale': fields.String,
+        'theType': fields.String,
+        'theName': fields.String,
+        'theDescription': fields.String,
+    }
+    required = resource_fields.keys()
+    required.remove(obj_id_field)
+    swagger_metadata = {
+        obj_id_field: gen_class_metadata(ValueType),
+        "theType": {
+            "enum": ['asset_value','threat_value','risk_class','countermeasure_value','capability','motivation','asset_type','threat_type','vulnerability_type','severity','likelihood','access_right','protocol','privilege','surface_type']
+        }
     }
 
 @swagger.model
