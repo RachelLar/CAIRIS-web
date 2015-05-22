@@ -100,12 +100,18 @@ def start():
     api.add_resource(AssetController.AssetNamesAPI, '/api/assets/all/names')
     api.add_resource(AssetController.AssetTypesAPI, '/api/assets/types')
     api.add_resource(AssetController.AssetTypeByNameAPI, '/api/assets/types/name/<string:name>')
+    api.add_resource(AssetController.AssetValuesAPI, '/api/environments/<string:environment_name>/asset-values')
+    api.add_resource(AssetController.AssetValueByNameAPI, '/api/environments/<string:environment_name>/asset-values/name/<string:name>')
     api.add_resource(AssetController.AssetModelAPI, '/api/assets/view')
     api.add_resource(AssetController.AssetEnvironmentPropertiesAPI, '/api/assets/name/<string:asset_name>/properties')
 
     # Attacker routes
     api.add_resource(AttackerController.AttackersAPI, '/api/attackers')
     api.add_resource(AttackerController.AttackerByNameAPI, '/api/attackers/name/<string:name>')
+    api.add_resource(AttackerController.AttackerCapabilitiesAPI, '/api/attackers/capabilities')
+    api.add_resource(AttackerController.AttackerCapabilityByNameAPI, '/api/attackers/capabilities/name/<string:name>')
+    api.add_resource(AttackerController.AttackerMotivationsAPI, '/api/attackers/motivations')
+    api.add_resource(AttackerController.AttackerMotivationByNameAPI, '/api/attackers/motivations/name/<string:name>')
 
     # CImport
     api.add_resource(CImportController.CImportAPI, '/api/cimport')

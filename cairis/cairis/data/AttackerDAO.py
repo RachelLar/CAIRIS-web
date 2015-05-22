@@ -4,6 +4,8 @@ from CairisHTTPError import ARMHTTPError, ObjectNotFoundHTTPError, MalformedJSON
     OverwriteNotAllowedHTTPError
 from Attacker import Attacker
 from AttackerParameters import AttackerParameters
+from ValueType import ValueType
+from ValueTypeParameters import ValueTypeParameters
 from data.CairisDAO import CairisDAO
 from tools.JsonConverter import json_serialize, json_deserialize
 from tools.ModelDefinitions import AttackerModel, AttackerEnvironmentPropertiesModel
@@ -104,6 +106,188 @@ class AttackerDAO(CairisDAO):
             if str(ex.value).find('already exists') > -1:
                 return True
             raise ARMHTTPError(ex)
+
+    # region Capabilities
+    def get_attacker_capabilities(self, environment_name=''):
+        try:
+            attacker_capabilities = self.db_proxy.getValueTypes('attacker_capability', environment_name)
+            return attacker_capabilities
+        except ARM.DatabaseProxyException as ex:
+            raise ARMHTTPError(ex)
+        except ARM.ARMException as ex:
+            raise ARMHTTPError(ex)
+
+    def get_attacker_capability_by_name(self, name, environment_name=''):
+        found_capability = None
+        attacker_capabilities = self.get_attacker_capabilities(environment_name=environment_name)
+
+        if attacker_capabilities is None or len(attacker_capabilities) < 1:
+            raise ObjectNotFoundHTTPError('Attacker capabilities')
+
+        idx = 0
+        while found_capability is None and idx < len(attacker_capabilities):
+            if attacker_capabilities[idx].theName == name:
+                found_capability = attacker_capabilities[idx]
+            idx += 1
+
+        if found_capability is None:
+            raise ObjectNotFoundHTTPError('The provided attacker capability name')
+
+        return found_capability
+
+    def add_attacker_capability(self, attacker_capability, environment_name=''):
+        assert isinstance(attacker_capability, ValueType)
+        type_exists = self.check_existing_attacker_capability(attacker_capability.theName, environment_name=environment_name)
+
+        if type_exists:
+            raise OverwriteNotAllowedHTTPError(obj_name='The attacker capability')
+
+        params = ValueTypeParameters(
+            vtName=attacker_capability.theName,
+            vtDesc=attacker_capability.theDescription,
+            vType='capability',
+            envName=environment_name,
+            vtScore=attacker_capability.theScore,
+            vtRat=attacker_capability.theRationale
+        )
+
+        try:
+            return self.db_proxy.addValueType(params)
+        except ARM.DatabaseProxyException as ex:
+            raise ARMHTTPError(ex)
+        except ARM.ARMException as ex:
+            raise ARMHTTPError(ex)
+
+    def update_attacker_capability(self, attacker_capability, name, environment_name=''):
+        assert isinstance(attacker_capability, ValueType)
+
+        found_capability = self.get_attacker_capability_by_name(name, environment_name)
+
+        params = ValueTypeParameters(
+            vtName=attacker_capability.theName,
+            vtDesc=attacker_capability.theDescription,
+            vType='capability',
+            envName=environment_name,
+            vtScore=attacker_capability.theScore,
+            vtRat=attacker_capability.theRationale
+        )
+        params.setId(found_capability.theId)
+
+        try:
+            self.db_proxy.updateValueType(params)
+        except ARM.DatabaseProxyException as ex:
+            raise ARMHTTPError(ex)
+        except ARM.ARMException as ex:
+            raise ARMHTTPError(ex)
+
+    def delete_attacker_capability(self, name, environment_name=''):
+        found_capability = self.get_attacker_capability_by_name(name, environment_name)
+
+        try:
+            self.db_proxy.deleteAssetType(found_capability.theId)
+        except ARM.DatabaseProxyException as ex:
+            raise ARMHTTPError(ex)
+        except ARM.ARMException as ex:
+            raise ARMHTTPError(ex)
+
+    def check_existing_attacker_capability(self, name, environment_name):
+        try:
+            self.get_attacker_capability_by_name(name, environment_name)
+            return True
+        except ObjectNotFoundHTTPError:
+            return False
+    # endregion
+
+    # region Motivations
+    def get_attacker_motivations(self, environment_name=''):
+        try:
+            attacker_motivations = self.db_proxy.getValueTypes('attacker_motivation', environment_name)
+            return attacker_motivations
+        except ARM.DatabaseProxyException as ex:
+            raise ARMHTTPError(ex)
+        except ARM.ARMException as ex:
+            raise ARMHTTPError(ex)
+
+    def get_attacker_motivation_by_name(self, name, environment_name=''):
+        found_motivation = None
+        attacker_motivations = self.get_attacker_motivations(environment_name=environment_name)
+
+        if attacker_motivations is None or len(attacker_motivations) < 1:
+            raise ObjectNotFoundHTTPError('Attacker motivations')
+
+        idx = 0
+        while found_motivation is None and idx < len(attacker_motivations):
+            if attacker_motivations[idx].theName == name:
+                found_motivation = attacker_motivations[idx]
+            idx += 1
+
+        if found_motivation is None:
+            raise ObjectNotFoundHTTPError('The provided attacker motivation name')
+
+        return found_motivation
+
+    def add_attacker_motivation(self, attacker_motivation, environment_name=''):
+        assert isinstance(attacker_motivation, ValueType)
+        type_exists = self.check_existing_attacker_motivation(attacker_motivation.theName, environment_name=environment_name)
+
+        if type_exists:
+            raise OverwriteNotAllowedHTTPError(obj_name='The attacker motivation')
+
+        params = ValueTypeParameters(
+            vtName=attacker_motivation.theName,
+            vtDesc=attacker_motivation.theDescription,
+            vType='motivation',
+            envName=environment_name,
+            vtScore=attacker_motivation.theScore,
+            vtRat=attacker_motivation.theRationale
+        )
+
+        try:
+            return self.db_proxy.addValueType(params)
+        except ARM.DatabaseProxyException as ex:
+            raise ARMHTTPError(ex)
+        except ARM.ARMException as ex:
+            raise ARMHTTPError(ex)
+
+    def update_attacker_motivation(self, attacker_motivation, name, environment_name=''):
+        assert isinstance(attacker_motivation, ValueType)
+
+        found_motivation = self.get_attacker_motivation_by_name(name, environment_name)
+
+        params = ValueTypeParameters(
+            vtName=attacker_motivation.theName,
+            vtDesc=attacker_motivation.theDescription,
+            vType='motivation',
+            envName=environment_name,
+            vtScore=attacker_motivation.theScore,
+            vtRat=attacker_motivation.theRationale
+        )
+        params.setId(found_motivation.theId)
+
+        try:
+            self.db_proxy.updateValueType(params)
+        except ARM.DatabaseProxyException as ex:
+            raise ARMHTTPError(ex)
+        except ARM.ARMException as ex:
+            raise ARMHTTPError(ex)
+
+    def delete_attacker_motivation(self, name, environment_name=''):
+        found_motivation = self.get_attacker_motivation_by_name(name, environment_name)
+
+        try:
+            self.db_proxy.deleteAssetType(found_motivation.theId)
+        except ARM.DatabaseProxyException as ex:
+            raise ARMHTTPError(ex)
+        except ARM.ARMException as ex:
+            raise ARMHTTPError(ex)
+
+    def check_existing_attacker_motivation(self, name, environment_name):
+        try:
+            self.get_attacker_motivation_by_name(name, environment_name)
+            return True
+        except ObjectNotFoundHTTPError:
+            return False
+    # endregion
 
     def from_json(self, request):
         json = request.get_json(silent=True)

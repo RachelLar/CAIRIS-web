@@ -4,8 +4,8 @@ from flask.ext.restful import Resource
 from flask_restful_swagger import swagger
 from data.AttackerDAO import AttackerDAO
 from tools.JsonConverter import json_serialize
-from tools.MessageDefinitions import AttackerMessage
-from tools.ModelDefinitions import AttackerModel
+from tools.MessageDefinitions import AttackerMessage, ValueTypeMessage
+from tools.ModelDefinitions import AttackerModel, ValueTypeModel
 from tools.SessionValidator import get_session_id
 
 __author__ = 'Robin Quetin'
@@ -109,7 +109,7 @@ class AttackersAPI(Resource):
 class AttackerByNameAPI(Resource):
     # region Swagger Doc
     @swagger.operation(
-        notes='Get a attacker by name',
+        notes='Get an attacker by name',
         nickname='attacker-by-name-get',
         responseClass=AttackerModel.__name__,
         parameters=[
@@ -142,7 +142,7 @@ class AttackerByNameAPI(Resource):
 
     # region Swagger Docs
     @swagger.operation(
-        notes='Updates a attacker',
+        notes='Updates an attacker',
         nickname='attacker-by-name-put',
         parameters=[
             {
@@ -227,6 +227,436 @@ class AttackerByNameAPI(Resource):
         dao.delete_attacker(name=name)
 
         resp_dict = {'message': 'Attacker successfully deleted'}
+        resp = make_response(json_serialize(resp_dict), httplib.OK)
+        resp.headers['Content-type'] = 'application/json'
+        return resp
+
+class AttackerCapabilitiesAPI(Resource):
+    #region Swagger Doc
+    @swagger.operation(
+        notes='Get all attacker capabilities',
+        nickname='attacker-capabilities-get',
+        responseClass=ValueTypeModel.__name__,
+        responseContainer='List',
+        parameters=[
+            {
+                "name": "session_id",
+                "description": "The ID of the user's session",
+                "required": False,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "paramType": "query"
+            }
+        ],
+        responseMessages=[
+            {
+                "code": httplib.BAD_REQUEST,
+                "message": "The database connection was not properly set up"
+            }
+        ]
+    )
+    #endregion
+    def get(self):
+        session_id = get_session_id(session, request)
+        environment_name = request.args.get('environment', '')
+
+        dao = AttackerDAO(session_id)
+        assets = dao.get_attacker_capabilities(environment_name=environment_name)
+
+        resp = make_response(json_serialize(assets, session_id=session_id), httplib.OK)
+        resp.contenttype = 'application/json'
+        return resp
+
+    # region Swagger Doc
+    @swagger.operation(
+        notes='Creates a new attacker capability',
+        nickname='attacker-capability-by-name-post',
+        parameters=[
+            {
+                "name": "body",
+                "description": "The serialized version of the new attacker capability to be added",
+                "required": True,
+                "allowMultiple": False,
+                "type": ValueTypeMessage.__name__,
+                "paramType": "body"
+            },
+            {
+                "name": "session_id",
+                "description": "The ID of the user's session",
+                "required": False,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "paramType": "query"
+            }
+        ],
+        responseMessages=[
+            {
+                'code': httplib.BAD_REQUEST,
+                'message': 'One or more attributes are missing'
+            },
+            {
+                'code': httplib.CONFLICT,
+                'message': 'Some problems were found during the name check'
+            },
+            {
+                'code': httplib.CONFLICT,
+                'message': 'A database error has occurred'
+            }
+        ]
+    )
+    # endregion
+    def post(self):
+        session_id = get_session_id(session, request)
+        environment_name = request.args.get('environment', '')
+
+        dao = AttackerDAO(session_id)
+        new_value_type = dao.type_from_json(request)
+        attacker_capability_id = dao.add_attacker_capability(new_value_type, environment_name=environment_name)
+
+        resp_dict = {'message': 'Attacker capability successfully added', 'attacker_capability_id': attacker_capability_id}
+        resp = make_response(json_serialize(resp_dict), httplib.OK)
+        resp.contenttype = 'application/json'
+        return resp
+
+class AttackerCapabilityByNameAPI(Resource):
+    # region Swagger Doc
+    @swagger.operation(
+        notes='Get an attacker capability by name',
+        nickname='attacker-capability-by-name-get',
+        responseClass=ValueTypeModel.__name__,
+        parameters=[
+            {
+                "name": "session_id",
+                "description": "The ID of the user's session",
+                "required": False,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "paramType": "query"
+            }
+        ],
+        responseMessages=[
+            {
+                "code": httplib.BAD_REQUEST,
+                "message": "The database connection was not properly set up"
+            }
+        ]
+    )
+    # endregion
+    def get(self, name):
+        session_id = get_session_id(session, request)
+        environment_name = request.args.get('environment', '')
+
+        dao = AttackerDAO(session_id)
+        attacker_capability = dao.get_attacker_capability_by_name(name=name, environment_name=environment_name)
+
+        resp = make_response(json_serialize(attacker_capability, session_id=session_id), httplib.OK)
+        resp.headers['Content-type'] = 'application/json'
+        return resp
+
+    # region Swagger Docs
+    @swagger.operation(
+        notes='Updates an attacker capability',
+        nickname='attacker-capability-by-name-put',
+        parameters=[
+            {
+                'name': 'body',
+                "description": "",
+                "required": True,
+                "allowMultiple": False,
+                'type': ValueTypeMessage.__name__,
+                'paramType': 'body'
+            },
+            {
+                "name": "session_id",
+                "description": "The ID of the user's session",
+                "required": False,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "paramType": "query"
+            }
+        ],
+        responseMessages=[
+            {
+                'code': httplib.BAD_REQUEST,
+                'message': 'The provided file is not a valid XML file'
+            },
+            {
+                'code': httplib.BAD_REQUEST,
+                'message': '''Some parameters are missing. Be sure 'asset' is defined.'''
+            }
+        ]
+    )
+    # endregion
+    def put(self, name):
+        session_id = get_session_id(session, request)
+        environment_name = request.args.get('environment', '')
+
+        dao = AttackerDAO(session_id)
+        attacker_capability = dao.type_from_json(request)
+        dao.update_attacker_capability(attacker_capability, name=name, environment_name=environment_name)
+
+        resp_dict = {'message': 'Attacker capability successfully updated'}
+        resp = make_response(json_serialize(resp_dict), httplib.OK)
+        resp.headers['Content-type'] = 'application/json'
+        return resp
+
+    # region Swagger Doc
+    @swagger.operation(
+        notes='Deletes an existing attacker capability',
+        nickname='attacker-capability-by-name-delete',
+        parameters=[
+            {
+                "name": "session_id",
+                "description": "The ID of the user's session",
+                "required": False,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "paramType": "query"
+            }
+        ],
+        responseMessages=[
+            {
+                'code': httplib.BAD_REQUEST,
+                'message': 'One or more attributes are missing'
+            },
+            {
+                'code': httplib.NOT_FOUND,
+                'message': 'The provided asset name could not be found in the database'
+            },
+            {
+                'code': httplib.CONFLICT,
+                'message': 'Some problems were found during the name check'
+            },
+            {
+                'code': httplib.CONFLICT,
+                'message': 'A database error has occurred'
+            }
+        ]
+    )
+    # endregion
+    def delete(self, name):
+        session_id = get_session_id(session, request)
+        environment_name = request.args.get('environment', '')
+
+        dao = AttackerDAO(session_id)
+        dao.delete_attacker_capability(name=name, environment_name=environment_name)
+
+        resp_dict = {'message': 'Attacker capability successfully deleted'}
+        resp = make_response(json_serialize(resp_dict), httplib.OK)
+        resp.headers['Content-type'] = 'application/json'
+        return resp
+
+class AttackerMotivationsAPI(Resource):
+    #region Swagger Doc
+    @swagger.operation(
+        notes='Get all attacker motivations',
+        nickname='attackers-motivations-get',
+        responseClass=ValueTypeModel.__name__,
+        responseContainer='List',
+        parameters=[
+            {
+                "name": "session_id",
+                "description": "The ID of the user's session",
+                "required": False,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "paramType": "query"
+            }
+        ],
+        responseMessages=[
+            {
+                "code": httplib.BAD_REQUEST,
+                "message": "The database connection was not properly set up"
+            }
+        ]
+    )
+    #endregion
+    def get(self):
+        session_id = get_session_id(session, request)
+        environment_name = request.args.get('environment', '')
+
+        dao = AttackerDAO(session_id)
+        assets = dao.get_attacker_motivations(environment_name=environment_name)
+
+        resp = make_response(json_serialize(assets, session_id=session_id), httplib.OK)
+        resp.contenttype = 'application/json'
+        return resp
+
+    # region Swagger Doc
+    @swagger.operation(
+        notes='Creates a new attacker motivation',
+        nickname='attacker-motivation-by-name-post',
+        parameters=[
+            {
+                "name": "body",
+                "description": "The serialized version of the new attacker motivation to be added",
+                "required": True,
+                "allowMultiple": False,
+                "type": ValueTypeMessage.__name__,
+                "paramType": "body"
+            },
+            {
+                "name": "session_id",
+                "description": "The ID of the user's session",
+                "required": False,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "paramType": "query"
+            }
+        ],
+        responseMessages=[
+            {
+                'code': httplib.BAD_REQUEST,
+                'message': 'One or more attributes are missing'
+            },
+            {
+                'code': httplib.CONFLICT,
+                'message': 'Some problems were found during the name check'
+            },
+            {
+                'code': httplib.CONFLICT,
+                'message': 'A database error has occurred'
+            }
+        ]
+    )
+    # endregion
+    def post(self):
+        session_id = get_session_id(session, request)
+        environment_name = request.args.get('environment', '')
+
+        dao = AttackerDAO(session_id)
+        new_value_type = dao.type_from_json(request)
+        attacker_motivation_id = dao.add_attacker_motivation(new_value_type, environment_name=environment_name)
+
+        resp_dict = {'message': 'Attacker motivation successfully added', 'attacker_motivation_id': attacker_motivation_id}
+        resp = make_response(json_serialize(resp_dict), httplib.OK)
+        resp.contenttype = 'application/json'
+        return resp
+
+class AttackerMotivationByNameAPI(Resource):
+    # region Swagger Doc
+    @swagger.operation(
+        notes='Get an attacker motivation by name',
+        nickname='attacker-motivation-by-name-get',
+        responseClass=ValueTypeModel.__name__,
+        parameters=[
+            {
+                "name": "session_id",
+                "description": "The ID of the user's session",
+                "required": False,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "paramType": "query"
+            }
+        ],
+        responseMessages=[
+            {
+                "code": httplib.BAD_REQUEST,
+                "message": "The database connection was not properly set up"
+            }
+        ]
+    )
+    # endregion
+    def get(self, name):
+        session_id = get_session_id(session, request)
+        environment_name = request.args.get('environment', '')
+
+        dao = AttackerDAO(session_id)
+        attacker_motivation = dao.get_attacker_motivation_by_name(name=name, environment_name=environment_name)
+
+        resp = make_response(json_serialize(attacker_motivation, session_id=session_id), httplib.OK)
+        resp.headers['Content-type'] = 'application/json'
+        return resp
+
+    # region Swagger Docs
+    @swagger.operation(
+        notes='Updates an attacker motivation',
+        nickname='attacker-motivation-by-name-put',
+        parameters=[
+            {
+                'name': 'body',
+                "description": "",
+                "required": True,
+                "allowMultiple": False,
+                'type': ValueTypeMessage.__name__,
+                'paramType': 'body'
+            },
+            {
+                "name": "session_id",
+                "description": "The ID of the user's session",
+                "required": False,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "paramType": "query"
+            }
+        ],
+        responseMessages=[
+            {
+                'code': httplib.BAD_REQUEST,
+                'message': 'The provided file is not a valid XML file'
+            },
+            {
+                'code': httplib.BAD_REQUEST,
+                'message': '''Some parameters are missing. Be sure 'asset' is defined.'''
+            }
+        ]
+    )
+    # endregion
+    def put(self, name):
+        session_id = get_session_id(session, request)
+        environment_name = request.args.get('environment', '')
+
+        dao = AttackerDAO(session_id)
+        attacker_motivation = dao.type_from_json(request)
+        dao.update_attacker_motivation(attacker_motivation, name=name, environment_name=environment_name)
+
+        resp_dict = {'message': 'Attacker motivation successfully updated'}
+        resp = make_response(json_serialize(resp_dict), httplib.OK)
+        resp.headers['Content-type'] = 'application/json'
+        return resp
+
+    # region Swagger Doc
+    @swagger.operation(
+        notes='Deletes an existing attacker motivation',
+        nickname='attacker-motivation-by-name-delete',
+        parameters=[
+            {
+                "name": "session_id",
+                "description": "The ID of the user's session",
+                "required": False,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "paramType": "query"
+            }
+        ],
+        responseMessages=[
+            {
+                'code': httplib.BAD_REQUEST,
+                'message': 'One or more attributes are missing'
+            },
+            {
+                'code': httplib.NOT_FOUND,
+                'message': 'The provided asset name could not be found in the database'
+            },
+            {
+                'code': httplib.CONFLICT,
+                'message': 'Some problems were found during the name check'
+            },
+            {
+                'code': httplib.CONFLICT,
+                'message': 'A database error has occurred'
+            }
+        ]
+    )
+    # endregion
+    def delete(self, name):
+        session_id = get_session_id(session, request)
+        environment_name = request.args.get('environment', '')
+
+        dao = AttackerDAO(session_id)
+        dao.delete_attacker_motivation(name=name, environment_name=environment_name)
+
+        resp_dict = {'message': 'Attacker motivation successfully deleted'}
         resp = make_response(json_serialize(resp_dict), httplib.OK)
         resp.headers['Content-type'] = 'application/json'
         return resp
