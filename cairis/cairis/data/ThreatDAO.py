@@ -252,7 +252,7 @@ class ThreatDAO(CairisDAO):
             raise ARMHTTPError(ex)
 
     def delete_threat_type(self, name, environment_name=''):
-git        found_type = self.get_threat_type_by_name(name, environment_name)
+        found_type = self.get_threat_type_by_name(name, environment_name)
 
         try:
             self.db_proxy.deleteThreatType(found_type.theId)
