@@ -46,6 +46,7 @@ class EnvironmentsAPI(Resource):
 
         dao = EnvironmentDAO(session_id)
         environments = dao.get_environments(constraintsId)
+        dao.close()
 
         resp = make_response(json_serialize(environments, session_id=session_id), httplib.OK)
         resp.headers['Content-type'] = 'application/json'
@@ -99,6 +100,7 @@ class EnvironmentsAPI(Resource):
         dao = EnvironmentDAO(session_id)
         new_environment = dao.from_json(request)
         new_environment_id = dao.add_environment(new_environment)
+        dao.close()
 
         resp_dict = {'message': 'Environment successfully added', 'environment_id': new_environment_id}
         resp = make_response(json_serialize(resp_dict), httplib.OK)
@@ -134,6 +136,7 @@ class EnvironmentByNameAPI(Resource):
 
         dao = EnvironmentDAO(session_id)
         found_environment = dao.get_environment_by_name(name)
+        dao.close()
 
         resp = make_response(json_serialize(found_environment, session_id=session_id), httplib.OK)
         resp.headers['Content-type'] = 'application/json'
@@ -187,6 +190,7 @@ class EnvironmentByNameAPI(Resource):
         dao = EnvironmentDAO(session_id)
         new_environment = dao.from_json(request)
         dao.update_environment(new_environment, name=name)
+        dao.close()
 
         resp_dict = {'message': 'Environment successfully updated'}
         resp = make_response(json_serialize(resp_dict), httplib.OK)
@@ -232,6 +236,7 @@ class EnvironmentByNameAPI(Resource):
 
         dao = EnvironmentDAO(session_id)
         dao.delete_environment(name=name)
+        dao.close()
 
         resp_dict = {'message': 'Environment successfully deleted'}
         resp = make_response(json_serialize(resp_dict), httplib.OK)
@@ -267,6 +272,7 @@ class EnvironmentNamesAPI(Resource):
 
         dao = EnvironmentDAO(session_id)
         environment_names = dao.get_environment_names()
+        dao.close()
 
         resp = make_response(json_serialize(environment_names, session_id=session_id), httplib.OK)
         resp.headers['Content-type'] = 'application/json'

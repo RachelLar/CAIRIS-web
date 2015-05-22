@@ -186,7 +186,11 @@ class AssetTests(CairisTests):
     def test_types_delete(self):
         method = 'test_types_delete'
         url = '/api/assets/types/name/%s?session_id=test' % quote(self.prepare_new_asset_type().theName)
-        new_asset_type_body = jsonpickle.encode(self.prepare_new_asset_type(), unpicklable=False)
+        json_dict = {
+            'session_id': 'test',
+            'object': self.prepare_new_asset_type()
+        }
+        new_asset_type_body = jsonpickle.encode(json_dict, unpicklable=False)
 
         self.app.delete(url)
         self.logger.info('[%s] Object to delete: %s', method, new_asset_type_body)

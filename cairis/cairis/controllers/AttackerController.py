@@ -51,6 +51,7 @@ class AttackersAPI(Resource):
 
         dao = AttackerDAO(session_id)
         attackers = dao.get_attackers(constraint_id=constraint_id)
+        dao.close()
 
         resp = make_response(json_serialize(attackers, session_id=session_id), httplib.OK)
         resp.contenttype = 'application/json'
@@ -100,6 +101,7 @@ class AttackersAPI(Resource):
         dao = AttackerDAO(session_id)
         new_attacker = dao.from_json(request)
         attacker_id = dao.add_attacker(new_attacker)
+        dao.close()
 
         resp_dict = {'message': 'Attacker successfully added', 'attacker_id': attacker_id}
         resp = make_response(json_serialize(resp_dict), httplib.OK)
@@ -135,6 +137,7 @@ class AttackerByNameAPI(Resource):
 
         dao = AttackerDAO(session_id)
         attacker = dao.get_attacker_by_name(name=name)
+        dao.close()
 
         resp = make_response(json_serialize(attacker, session_id=session_id), httplib.OK)
         resp.headers['Content-type'] = 'application/json'
@@ -180,6 +183,7 @@ class AttackerByNameAPI(Resource):
         dao = AttackerDAO(session_id)
         req = dao.from_json(request)
         dao.update_attacker(req, name=name)
+        dao.close()
 
         resp_dict = {'message': 'Attacker successfully updated'}
         resp = make_response(json_serialize(resp_dict), httplib.OK)
@@ -225,6 +229,7 @@ class AttackerByNameAPI(Resource):
 
         dao = AttackerDAO(session_id)
         dao.delete_attacker(name=name)
+        dao.close()
 
         resp_dict = {'message': 'Attacker successfully deleted'}
         resp = make_response(json_serialize(resp_dict), httplib.OK)
@@ -262,6 +267,7 @@ class AttackerCapabilitiesAPI(Resource):
 
         dao = AttackerDAO(session_id)
         assets = dao.get_attacker_capabilities(environment_name=environment_name)
+        dao.close()
 
         resp = make_response(json_serialize(assets, session_id=session_id), httplib.OK)
         resp.contenttype = 'application/json'
@@ -312,6 +318,7 @@ class AttackerCapabilitiesAPI(Resource):
         dao = AttackerDAO(session_id)
         new_value_type = dao.type_from_json(request)
         attacker_capability_id = dao.add_attacker_capability(new_value_type, environment_name=environment_name)
+        dao.close()
 
         resp_dict = {'message': 'Attacker capability successfully added', 'attacker_capability_id': attacker_capability_id}
         resp = make_response(json_serialize(resp_dict), httplib.OK)
@@ -348,6 +355,7 @@ class AttackerCapabilityByNameAPI(Resource):
 
         dao = AttackerDAO(session_id)
         attacker_capability = dao.get_attacker_capability_by_name(name=name, environment_name=environment_name)
+        dao.close()
 
         resp = make_response(json_serialize(attacker_capability, session_id=session_id), httplib.OK)
         resp.headers['Content-type'] = 'application/json'
@@ -394,6 +402,7 @@ class AttackerCapabilityByNameAPI(Resource):
         dao = AttackerDAO(session_id)
         attacker_capability = dao.type_from_json(request)
         dao.update_attacker_capability(attacker_capability, name=name, environment_name=environment_name)
+        dao.close()
 
         resp_dict = {'message': 'Attacker capability successfully updated'}
         resp = make_response(json_serialize(resp_dict), httplib.OK)
@@ -440,6 +449,7 @@ class AttackerCapabilityByNameAPI(Resource):
 
         dao = AttackerDAO(session_id)
         dao.delete_attacker_capability(name=name, environment_name=environment_name)
+        dao.close()
 
         resp_dict = {'message': 'Attacker capability successfully deleted'}
         resp = make_response(json_serialize(resp_dict), httplib.OK)
@@ -477,6 +487,7 @@ class AttackerMotivationsAPI(Resource):
 
         dao = AttackerDAO(session_id)
         assets = dao.get_attacker_motivations(environment_name=environment_name)
+        dao.close()
 
         resp = make_response(json_serialize(assets, session_id=session_id), httplib.OK)
         resp.contenttype = 'application/json'
@@ -527,6 +538,7 @@ class AttackerMotivationsAPI(Resource):
         dao = AttackerDAO(session_id)
         new_value_type = dao.type_from_json(request)
         attacker_motivation_id = dao.add_attacker_motivation(new_value_type, environment_name=environment_name)
+        dao.close()
 
         resp_dict = {'message': 'Attacker motivation successfully added', 'attacker_motivation_id': attacker_motivation_id}
         resp = make_response(json_serialize(resp_dict), httplib.OK)
@@ -563,6 +575,7 @@ class AttackerMotivationByNameAPI(Resource):
 
         dao = AttackerDAO(session_id)
         attacker_motivation = dao.get_attacker_motivation_by_name(name=name, environment_name=environment_name)
+        dao.close()
 
         resp = make_response(json_serialize(attacker_motivation, session_id=session_id), httplib.OK)
         resp.headers['Content-type'] = 'application/json'
@@ -609,6 +622,7 @@ class AttackerMotivationByNameAPI(Resource):
         dao = AttackerDAO(session_id)
         attacker_motivation = dao.type_from_json(request)
         dao.update_attacker_motivation(attacker_motivation, name=name, environment_name=environment_name)
+        dao.close()
 
         resp_dict = {'message': 'Attacker motivation successfully updated'}
         resp = make_response(json_serialize(resp_dict), httplib.OK)
@@ -655,6 +669,7 @@ class AttackerMotivationByNameAPI(Resource):
 
         dao = AttackerDAO(session_id)
         dao.delete_attacker_motivation(name=name, environment_name=environment_name)
+        dao.close()
 
         resp_dict = {'message': 'Attacker motivation successfully deleted'}
         resp = make_response(json_serialize(resp_dict), httplib.OK)

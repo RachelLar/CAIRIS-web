@@ -55,6 +55,7 @@ class RequirementsAPI(Resource):
 
         dao = RequirementDAO(session_id)
         reqs = dao.get_requirements(constraint_id=constraint_id, ordered=(ordered=='1'))
+        dao.close()
 
         resp = make_response(json_serialize(reqs, session_id=session_id), httplib.OK)
         resp.headers['Content-type'] = 'application/json'
@@ -123,6 +124,7 @@ class RequirementsAPI(Resource):
         dao = RequirementDAO(session_id)
         new_req = dao.from_json(request)
         req_id = dao.add_requirement(new_req, asset_name=asset_name, environment_name=environment_name)
+        dao.close()
 
         resp_dict = {'message': 'Requirement successfully added', 'requirement_id': req_id}
         resp = make_response(json_serialize(resp_dict), httplib.OK)
@@ -169,6 +171,7 @@ class RequirementsAPI(Resource):
         dao = RequirementDAO(session_id)
         req = dao.from_json(request)
         dao.update_requirement(req, req_id=req.theId)
+        dao.close()
 
         resp_dict = {'message': 'Requirement successfully updated'}
         resp = make_response(json_serialize(resp_dict), httplib.OK)
@@ -216,6 +219,7 @@ class RequirementsByAssetAPI(Resource):
 
         dao = RequirementDAO(session_id)
         reqs = dao.get_requirements(constraint_id=name, is_asset=True, ordered=(ordered=='1'))
+        dao.close()
 
         resp = make_response(json_serialize(reqs, session_id=session_id), httplib.OK)
         resp.headers['Content-type'] = 'application/json'
@@ -262,6 +266,7 @@ class RequirementsByEnvironmentAPI(Resource):
 
         dao = RequirementDAO(session_id)
         reqs = dao.get_requirements(constraint_id=name, is_asset=False, ordered=(ordered=='1'))
+        dao.close()
 
         resp = make_response(json_serialize(reqs, session_id=session_id), httplib.OK)
         resp.headers['Content-type'] = 'application/json'
@@ -297,6 +302,7 @@ class RequirementByIdAPI(Resource):
 
         dao = RequirementDAO(session_id)
         req = dao.get_requirement_by_id(id)
+        dao.close()
 
         resp = make_response(json_serialize(req, session_id=session_id), httplib.OK)
         resp.headers['Content-type'] = 'application/json'
@@ -341,6 +347,7 @@ class RequirementByIdAPI(Resource):
 
         dao = RequirementDAO(session_id)
         dao.delete_requirement(req_id=id)
+        dao.close()
 
         resp_dict = {'message': 'Requirement successfully deleted'}
         resp = make_response(json_serialize(resp_dict), httplib.OK)
@@ -376,6 +383,7 @@ class RequirementByNameAPI(Resource):
 
         dao = RequirementDAO(session_id)
         req = dao.get_requirement_by_name(name)
+        dao.close()
 
         resp = make_response(json_serialize(req, session_id=session_id), httplib.OK)
         resp.headers['Content-type'] = 'application/json'
@@ -420,6 +428,7 @@ class RequirementByNameAPI(Resource):
 
         dao = RequirementDAO(session_id)
         dao.delete_requirement(name=name)
+        dao.close()
 
         resp_dict = {'message': 'Requirement successfully deleted'}
         resp = make_response(json_serialize(resp_dict), httplib.OK)

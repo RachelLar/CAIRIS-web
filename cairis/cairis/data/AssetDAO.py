@@ -35,6 +35,7 @@ class AssetDAO(CairisDAO):
         try:
             assets = self.db_proxy.getAssets(constraint_id)
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
         if simplify:
@@ -43,11 +44,23 @@ class AssetDAO(CairisDAO):
 
         return assets
 
+    def get_asset_names(self):
+        try:
+            asset_names = self.db_proxy.getDimensionNames('asset')
+            return asset_names
+        except ARM.DatabaseProxyException as ex:
+            self.close()
+            raise ARMHTTPError(ex)
+        except ARM.ARMException as ex:
+            self.close()
+            raise ARMHTTPError(ex)
+
     def get_asset_by_id(self, id, simplify=True):
         found_asset = None
         try:
             assets = self.db_proxy.getAssets()
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
         idx = 0
@@ -57,6 +70,7 @@ class AssetDAO(CairisDAO):
             idx += 1
 
         if found_asset is None:
+            self.close()
             raise ObjectNotFoundHTTPError('The provided asset ID')
 
         if simplify:
@@ -69,12 +83,14 @@ class AssetDAO(CairisDAO):
         try:
             assets = self.db_proxy.getAssets()
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
         if assets is not None:
             found_asset = assets.get(name)
 
         if found_asset is None:
+            self.close()
             raise ObjectNotFoundHTTPError('The provided asset name')
 
         if simplify:
@@ -95,6 +111,7 @@ class AssetDAO(CairisDAO):
         try:
             self.db_proxy.nameCheck(asset.theName, 'asset')
         except ARM.ARMException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
         assetParams = AssetParameters(
@@ -122,6 +139,7 @@ class AssetDAO(CairisDAO):
         if name is not None:
             old_asset = self.get_asset_by_name(name, simplify=False)
             if asset is None:
+                self.close()
                 raise ObjectNotFoundHTTPError('The asset')
             id = old_asset.theId
 
@@ -147,8 +165,10 @@ class AssetDAO(CairisDAO):
             try:
                 self.db_proxy.updateAsset(params)
             except ARM.DatabaseProxyException as ex:
+                self.close()
                 raise ARMHTTPError(ex)
         else:
+            self.close()
             raise MissingParameterHTTPError(param_names=['id'])
 
     def update_asset_properties(self, props, id=-1, name=None, existing_params=None):
@@ -158,9 +178,11 @@ class AssetDAO(CairisDAO):
             elif name is not None:
                 asset = self.get_asset_by_name(name, simplify=False)
             else:
+                self.close()
                 raise MissingParameterHTTPError(param_names=['name'])
 
             if asset is None:
+                self.close()
                 raise ObjectNotFoundHTTPError('The asset')
 
             existing_params = AssetParameters(
@@ -183,6 +205,7 @@ class AssetDAO(CairisDAO):
         try:
             self.db_proxy.updateAsset(existing_params)
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
     def delete_asset(self, name=None, asset_id=-1):
@@ -191,16 +214,20 @@ class AssetDAO(CairisDAO):
         elif asset_id > -1:
             found_asset = self.get_asset_by_id(asset_id)
         else:
+            self.close()
             raise MissingParameterHTTPError(param_names=['name'])
 
         if found_asset is None or not isinstance(found_asset, Asset):
+            self.close()
             raise ObjectNotFoundHTTPError('The provided asset name')
 
         try:
             self.db_proxy.deleteAsset(found_asset.theId)
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
         except ARM.ARMException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
     # region Asset Types
@@ -209,8 +236,10 @@ class AssetDAO(CairisDAO):
             asset_types = self.db_proxy.getValueTypes('asset_type', environment_name)
             return asset_types
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
         except ARM.ARMException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
     def get_asset_type_by_name(self, name, environment_name=''):
@@ -218,6 +247,7 @@ class AssetDAO(CairisDAO):
         asset_types = self.get_asset_types(environment_name=environment_name)
 
         if asset_types is None or len(asset_types) < 1:
+            self.close()
             raise ObjectNotFoundHTTPError('Asset types')
 
         idx = 0
@@ -227,6 +257,7 @@ class AssetDAO(CairisDAO):
             idx += 1
 
         if found_type is None:
+            self.close()
             raise ObjectNotFoundHTTPError('The provided asset type name')
 
         return found_type
@@ -236,6 +267,7 @@ class AssetDAO(CairisDAO):
         type_exists = self.check_existing_asset_type(asset_type.theName, environment_name=environment_name)
 
         if type_exists:
+            self.close()
             raise OverwriteNotAllowedHTTPError(obj_name='The asset type')
 
         params = ValueTypeParameters(
@@ -250,8 +282,10 @@ class AssetDAO(CairisDAO):
         try:
             return self.db_proxy.addValueType(params)
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
         except ARM.ARMException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
     def update_asset_type(self, asset_type, name, environment_name=''):
@@ -272,8 +306,10 @@ class AssetDAO(CairisDAO):
         try:
             self.db_proxy.updateValueType(params)
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
         except ARM.ARMException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
     def delete_asset_type(self, name, environment_name=''):
@@ -282,8 +318,10 @@ class AssetDAO(CairisDAO):
         try:
             self.db_proxy.deleteAssetType(found_type.theId)
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
         except ARM.ARMException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
     def check_existing_asset_type(self, name, environment_name):
@@ -291,6 +329,8 @@ class AssetDAO(CairisDAO):
             self.get_asset_type_by_name(name, environment_name)
             return True
         except ObjectNotFoundHTTPError:
+            # Needs to reconnect after Error was raised
+            self.db_proxy.reconnect(session_id=self.session_id)
             return False
     # endregion
 
@@ -300,14 +340,17 @@ class AssetDAO(CairisDAO):
             asset_values = self.db_proxy.getValueTypes('asset_value', environment_name)
             return asset_values
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
         except ARM.ARMException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
     def get_asset_value_by_name(self, name, environment_name=''):
         found_value = None
         asset_values = self.get_asset_values(environment_name=environment_name)
         if asset_values is None or len(asset_values) < 1:
+            self.close()
             raise ObjectNotFoundHTTPError('Asset values')
         idx = 0
         while found_value is None and idx < len(asset_values):
@@ -315,6 +358,7 @@ class AssetDAO(CairisDAO):
                 found_value = asset_values[idx]
             idx += 1
         if found_value is None:
+            self.close()
             raise ObjectNotFoundHTTPError('The provided asset value name')
         return found_value
 
@@ -333,8 +377,10 @@ class AssetDAO(CairisDAO):
         try:
             self.db_proxy.updateValueType(params)
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
         except ARM.ARMException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
     def check_existing_asset_value(self, name, environment_name):
@@ -425,6 +471,7 @@ class AssetDAO(CairisDAO):
         for new_env_prop in new_env_props:
             obj_def = new_env_prop.__class__.__module__ + '.' + new_env_prop.__class__.__name__
             if class_def != obj_def:
+                self.close()
                 raise MalformedJSONHTTPError()
             env_name = new_env_prop.environment
 
@@ -441,7 +488,7 @@ class AssetDAO(CairisDAO):
                 prop_id = self.attr_dict.get(attribute.name)
                 if -1 > prop_id > 8:
                     msg = 'Invalid attribute index (index={0}). Attribute is being ignored.'.format(attribute.id)
-                    raise SilentHTTPError(message=msg)
+                    SilentHTTPError(message=msg)
                 value = attribute.get_attr_value(values)
                 properties[prop_id] = value
                 rationales[prop_id] = attribute.rationale
@@ -455,11 +502,13 @@ class AssetDAO(CairisDAO):
         self.logger.debug('Request data: %s', request.data)
         json = request.get_json(silent=True)
         if json is False or json is None:
+            self.close()
             raise MalformedJSONHTTPError(data=request.get_data())
 
         json_dict = json['object']
         if to_props:
             if not isinstance(json['object'], list):
+                self.close()
                 raise MalformedJSONHTTPError(data=request.get_data())
             else:
                 for idx in range(0, len(json_dict)):
@@ -488,6 +537,7 @@ class AssetDAO(CairisDAO):
 
         asset = json_deserialize(new_json_asset)
         if not isinstance(asset, Asset) and not to_props:
+            self.close()
             raise MalformedJSONHTTPError(data=request.get_data())
         else:
             return asset, new_json_asset_props

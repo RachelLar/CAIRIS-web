@@ -7,6 +7,7 @@ from flask import make_response, request, session
 from flask.ext.restful import Resource
 from flask_restful_swagger import swagger
 from ARM import DatabaseProxyException, ARMException
+from Borg import Borg
 from CairisHTTPError import MalformedJSONHTTPError, CairisHTTPError, ARMHTTPError
 
 import cimport
@@ -66,6 +67,9 @@ class CImportAPI(Resource):
         type = json_dict['type']
         overwrite = json_dict.get('overwrite', None)
 
+        b = Borg()
+        db_proxy = b.get_dbproxy(session_id)
+
         if file_contents.startswith('<?xml'):
             fd, abs_path = mkstemp(suffix='xml')
             fs_temp = open(abs_path, 'w')
@@ -76,10 +80,13 @@ class CImportAPI(Resource):
             try:
                 result = cimport.file_import(abs_path, type, overwrite, session_id=session_id)
             except DatabaseProxyException as ex:
+                db_proxy.close()
                 raise ARMHTTPError(ex)
             except ARMException as ex:
+                db_proxy.close()
                 raise ARMHTTPError(ex)
             except Exception as ex:
+                db_proxy.close()
                 raise CairisHTTPError(
                     status_code=500,
                     message=str(ex.message),
@@ -92,6 +99,7 @@ class CImportAPI(Resource):
             resp.headers['Content-Type'] = 'text/plain'
             return resp
         else:
+            db_proxy.close()
             raise CairisHTTPError(
                 status_code=httplib.BAD_REQUEST,
                 message='The provided file is not a valid XML file',

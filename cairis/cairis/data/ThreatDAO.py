@@ -48,6 +48,7 @@ class ThreatDAO(CairisDAO):
         try:
             threats = self.db_proxy.getThreats(constraint_id)
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
         if simplify:
@@ -61,6 +62,7 @@ class ThreatDAO(CairisDAO):
         try:
             threats = self.db_proxy.getThreats()
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
         idx = 0
@@ -70,6 +72,7 @@ class ThreatDAO(CairisDAO):
             idx += 1
 
         if found_threat is None:
+            self.close()
             raise ObjectNotFoundHTTPError('The provided threat ID')
 
         if simplify:
@@ -82,12 +85,14 @@ class ThreatDAO(CairisDAO):
         try:
             threats = self.db_proxy.getThreats()
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
         if threats is not None:
             found_threat = threats.get(name)
 
         if found_threat is None:
+            self.close()
             raise ObjectNotFoundHTTPError('The provided threat name')
 
         if simplify:
@@ -111,8 +116,10 @@ class ThreatDAO(CairisDAO):
             else:
                 raise OverwriteNotAllowedHTTPError(obj_name=threat.theThreatName)
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
         except ARM.ARMException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
     def update_threat(self, threat, name=None, threat_id=None):
@@ -121,6 +128,7 @@ class ThreatDAO(CairisDAO):
         elif threat_id is not None:
             found_threat = self.get_threat_by_id(threat_id, simplify=False)
         else:
+            self.close()
             raise MissingParameterHTTPError(param_names=['name'])
 
         threat_params = ThreatParameters(
@@ -136,8 +144,10 @@ class ThreatDAO(CairisDAO):
             if self.check_existing_threat(name):
                 self.db_proxy.updateThreat(threat_params)
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
         except ARM.ARMException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
     def delete_threat(self, name=None, threat_id=None):
@@ -146,6 +156,7 @@ class ThreatDAO(CairisDAO):
         elif threat_id is not None:
             found_threat = self.get_threat_by_id(threat_id, simplify=False)
         else:
+            self.close()
             raise MissingParameterHTTPError(param_names=['name'])
 
         threat_id = found_threat.theId
@@ -153,8 +164,10 @@ class ThreatDAO(CairisDAO):
         try:
             self.db_proxy.deleteThreat(threat_id)
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
         except ARM.ARMException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
     def get_threat_types(self, environment_name=''):
@@ -162,8 +175,10 @@ class ThreatDAO(CairisDAO):
             threat_types = self.db_proxy.getValueTypes('threat_type', environment_name)
             return threat_types
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
         except ARM.ARMException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
     def get_threat_type_by_name(self, name, environment_name=''):
@@ -171,6 +186,7 @@ class ThreatDAO(CairisDAO):
         threat_types = self.get_threat_types(environment_name=environment_name)
 
         if threat_types is None or len(threat_types) < 1:
+            self.close()
             raise ObjectNotFoundHTTPError('Threat types')
 
         idx = 0
@@ -180,6 +196,7 @@ class ThreatDAO(CairisDAO):
             idx += 1
 
         if found_type is None:
+            self.close()
             raise ObjectNotFoundHTTPError('The provided threat type name')
 
         return found_type
@@ -189,6 +206,7 @@ class ThreatDAO(CairisDAO):
         type_exists = self.check_existing_threat_type(threat_type.theName, environment_name=environment_name)
 
         if type_exists:
+            self.close()
             raise OverwriteNotAllowedHTTPError(obj_name='The threat type')
 
         params = ValueTypeParameters(
@@ -203,8 +221,10 @@ class ThreatDAO(CairisDAO):
         try:
             return self.db_proxy.addValueType(params)
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
         except ARM.ARMException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
     def update_threat_type(self, threat_type, name, environment_name=''):
@@ -225,18 +245,22 @@ class ThreatDAO(CairisDAO):
         try:
             self.db_proxy.updateValueType(params)
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
         except ARM.ARMException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
     def delete_threat_type(self, name, environment_name=''):
-        found_type = self.get_threat_type_by_name(name, environment_name)
+git        found_type = self.get_threat_type_by_name(name, environment_name)
 
         try:
             self.db_proxy.deleteThreatType(found_type.theId)
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
         except ARM.ARMException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
     def check_existing_threat(self, name):
@@ -246,6 +270,7 @@ class ThreatDAO(CairisDAO):
         except ARM.ARMException as ex:
             if str(ex.value).find('already exists') > -1:
                 return True
+            self.close()
             raise ARMHTTPError(ex)
 
     def check_existing_threat_type(self, name, environment_name):
@@ -253,11 +278,13 @@ class ThreatDAO(CairisDAO):
             self.get_threat_type_by_name(name, environment_name)
             return True
         except ObjectNotFoundHTTPError:
+            self.db_proxy.reconnect(session_id=self.session_id)
             return False
     
     def from_json(self, request):
         json = request.get_json(silent=True)
         if json is False or json is None:
+            self.close()
             raise MalformedJSONHTTPError(data=request.get_data())
 
         json_dict = json['object']
@@ -271,6 +298,7 @@ class ThreatDAO(CairisDAO):
         threat = json_deserialize(threat)
         threat.theEnvironmentProperties = threat_props
         if not isinstance(threat, Threat):
+            self.close()
             raise MalformedJSONHTTPError(data=request.get_data())
         else:
             return threat
@@ -338,4 +366,5 @@ class ThreatDAO(CairisDAO):
 
             return new_props
         else:
+            self.close()
             raise MissingParameterHTTPError(param_names=['real_props', 'fake_props'])

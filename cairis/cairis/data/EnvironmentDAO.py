@@ -25,6 +25,7 @@ class EnvironmentDAO(CairisDAO):
         try:
             environments = self.db_proxy.getEnvironments(constraint_id)
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
         if simplify:
@@ -41,8 +42,10 @@ class EnvironmentDAO(CairisDAO):
         try:
             environment_names = self.db_proxy.getEnvironmentNames()
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
         except ARM.ARMException as ex:
+            self.close()
             raise ARMHTTPError(ex)
         return environment_names
     
@@ -55,12 +58,14 @@ class EnvironmentDAO(CairisDAO):
         try:
             environments = self.db_proxy.getEnvironments()
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
         if environments is not None:
             found_environment = environments.get(name)
 
         if found_environment is None:
+            self.close()
             raise ObjectNotFoundHTTPError('The provided environment name')
 
         if simplify:
@@ -77,6 +82,7 @@ class EnvironmentDAO(CairisDAO):
         try:
             environments = self.db_proxy.getEnvironments()
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
         if environments is not None:
@@ -88,6 +94,7 @@ class EnvironmentDAO(CairisDAO):
                 idx += 1
 
         if found_environment is None:
+            self.close()
             raise ObjectNotFoundHTTPError('The provided environment name')
 
         if simplify:
@@ -105,10 +112,13 @@ class EnvironmentDAO(CairisDAO):
             if not self.check_existing_environment(environment.theName):
                 self.db_proxy.addEnvironment(env_params)
             else:
+                self.close()
                 raise ARM.DatabaseProxyException('Environment name already exists within the database.')
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
         except ARM.ARMException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
         try:
@@ -135,8 +145,10 @@ class EnvironmentDAO(CairisDAO):
             if self.check_existing_environment(name):
                 self.db_proxy.updateEnvironment(env_params)
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
         except ARM.ARMException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
     def delete_environment(self, name=None, env_id=None):
@@ -150,10 +162,13 @@ class EnvironmentDAO(CairisDAO):
             try:
                 self.db_proxy.deleteEnvironment(env_id)
             except ARM.DatabaseProxyException as ex:
+                self.close()
                 raise ARMHTTPError(ex)
             except ARM.ARMException as ex:
+                self.close()
                 raise ARMHTTPError(ex)
         else:
+            self.close()
             raise MissingParameterHTTPError(param_names=['id'])
 
     def check_existing_environment(self, environment_name):
@@ -167,11 +182,13 @@ class EnvironmentDAO(CairisDAO):
             if str(ex.value).find(' already exists') > -1:
                 return True
             else:
+                self.close()
                 raise ARMHTTPError(ex)
         except ARM.ARMException as ex:
             if str(ex.value).find(' already exists') > -1:
                 return True
             else:
+                self.close()
                 raise ARMHTTPError(ex)
 
     def to_environment_parameters(self, environment):
@@ -190,6 +207,7 @@ class EnvironmentDAO(CairisDAO):
     def from_json(self, request):
         json = request.get_json(silent=True)
         if json is False or json is None:
+            self.close()
             raise MalformedJSONHTTPError(data=request.get_data())
 
         json_dict = json['object']
@@ -210,6 +228,7 @@ class EnvironmentDAO(CairisDAO):
         new_json_environment = json_serialize(json_dict)
         environment = json_deserialize(new_json_environment)
         if not isinstance(environment, Environment):
+            self.close()
             raise MalformedJSONHTTPError(data=request.get_data())
         else:
             return environment

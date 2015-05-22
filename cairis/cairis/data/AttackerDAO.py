@@ -22,6 +22,7 @@ class AttackerDAO(CairisDAO):
         try:
             attackers = self.db_proxy.getAttackers(constraint_id)
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
         if simplify:
@@ -35,12 +36,14 @@ class AttackerDAO(CairisDAO):
         try:
             attackers = self.db_proxy.getAttackers(constraint_id)
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
         if attackers is not None:
             found_attacker = attackers.get(name, None)
 
         if found_attacker is None:
+            self.close()
             raise ObjectNotFoundHTTPError('The provided attacker name')
 
         if simplify:
@@ -62,10 +65,13 @@ class AttackerDAO(CairisDAO):
                 new_id = self.db_proxy.addAttacker(attacker_params)
                 return new_id
             else:
+                self.close()
                 raise OverwriteNotAllowedHTTPError(obj_name=attacker.theName)
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
         except ARM.ARMException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
     def update_attacker(self, attacker, name):
@@ -83,8 +89,10 @@ class AttackerDAO(CairisDAO):
         try:
             self.db_proxy.updateAttacker(attacker_params)
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
         except ARM.ARMException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
     def delete_attacker(self, name):
@@ -94,8 +102,10 @@ class AttackerDAO(CairisDAO):
         try:
             self.db_proxy.deleteAttacker(attacker_id)
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
         except ARM.ARMException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
     def check_existing_attacker(self, name):
@@ -105,6 +115,7 @@ class AttackerDAO(CairisDAO):
         except ARM.ARMException as ex:
             if str(ex.value).find('already exists') > -1:
                 return True
+            self.close()
             raise ARMHTTPError(ex)
 
     # region Capabilities
@@ -113,8 +124,10 @@ class AttackerDAO(CairisDAO):
             attacker_capabilities = self.db_proxy.getValueTypes('attacker_capability', environment_name)
             return attacker_capabilities
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
         except ARM.ARMException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
     def get_attacker_capability_by_name(self, name, environment_name=''):
@@ -122,6 +135,7 @@ class AttackerDAO(CairisDAO):
         attacker_capabilities = self.get_attacker_capabilities(environment_name=environment_name)
 
         if attacker_capabilities is None or len(attacker_capabilities) < 1:
+            self.close()
             raise ObjectNotFoundHTTPError('Attacker capabilities')
 
         idx = 0
@@ -131,6 +145,7 @@ class AttackerDAO(CairisDAO):
             idx += 1
 
         if found_capability is None:
+            self.close()
             raise ObjectNotFoundHTTPError('The provided attacker capability name')
 
         return found_capability
@@ -140,6 +155,7 @@ class AttackerDAO(CairisDAO):
         type_exists = self.check_existing_attacker_capability(attacker_capability.theName, environment_name=environment_name)
 
         if type_exists:
+            self.close()
             raise OverwriteNotAllowedHTTPError(obj_name='The attacker capability')
 
         params = ValueTypeParameters(
@@ -154,8 +170,10 @@ class AttackerDAO(CairisDAO):
         try:
             return self.db_proxy.addValueType(params)
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
         except ARM.ARMException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
     def update_attacker_capability(self, attacker_capability, name, environment_name=''):
@@ -176,8 +194,10 @@ class AttackerDAO(CairisDAO):
         try:
             self.db_proxy.updateValueType(params)
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
         except ARM.ARMException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
     def delete_attacker_capability(self, name, environment_name=''):
@@ -186,8 +206,10 @@ class AttackerDAO(CairisDAO):
         try:
             self.db_proxy.deleteAssetType(found_capability.theId)
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
         except ARM.ARMException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
     def check_existing_attacker_capability(self, name, environment_name):
@@ -195,6 +217,7 @@ class AttackerDAO(CairisDAO):
             self.get_attacker_capability_by_name(name, environment_name)
             return True
         except ObjectNotFoundHTTPError:
+            self.db_proxy.reconnect(session_id=self.session_id)
             return False
     # endregion
 
@@ -204,8 +227,10 @@ class AttackerDAO(CairisDAO):
             attacker_motivations = self.db_proxy.getValueTypes('attacker_motivation', environment_name)
             return attacker_motivations
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
         except ARM.ARMException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
     def get_attacker_motivation_by_name(self, name, environment_name=''):
@@ -213,6 +238,7 @@ class AttackerDAO(CairisDAO):
         attacker_motivations = self.get_attacker_motivations(environment_name=environment_name)
 
         if attacker_motivations is None or len(attacker_motivations) < 1:
+            self.close()
             raise ObjectNotFoundHTTPError('Attacker motivations')
 
         idx = 0
@@ -222,6 +248,7 @@ class AttackerDAO(CairisDAO):
             idx += 1
 
         if found_motivation is None:
+            self.close()
             raise ObjectNotFoundHTTPError('The provided attacker motivation name')
 
         return found_motivation
@@ -231,6 +258,7 @@ class AttackerDAO(CairisDAO):
         type_exists = self.check_existing_attacker_motivation(attacker_motivation.theName, environment_name=environment_name)
 
         if type_exists:
+            self.close()
             raise OverwriteNotAllowedHTTPError(obj_name='The attacker motivation')
 
         params = ValueTypeParameters(
@@ -245,8 +273,10 @@ class AttackerDAO(CairisDAO):
         try:
             return self.db_proxy.addValueType(params)
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
         except ARM.ARMException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
     def update_attacker_motivation(self, attacker_motivation, name, environment_name=''):
@@ -267,8 +297,10 @@ class AttackerDAO(CairisDAO):
         try:
             self.db_proxy.updateValueType(params)
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
         except ARM.ARMException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
     def delete_attacker_motivation(self, name, environment_name=''):
@@ -277,8 +309,10 @@ class AttackerDAO(CairisDAO):
         try:
             self.db_proxy.deleteAssetType(found_motivation.theId)
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
         except ARM.ARMException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
     def check_existing_attacker_motivation(self, name, environment_name):
@@ -286,12 +320,14 @@ class AttackerDAO(CairisDAO):
             self.get_attacker_motivation_by_name(name, environment_name)
             return True
         except ObjectNotFoundHTTPError:
+            self.db_proxy.reconnect(session_id=self.session_id)
             return False
     # endregion
 
     def from_json(self, request):
         json = request.get_json(silent=True)
         if json is False or json is None:
+            self.close()
             raise MalformedJSONHTTPError(data=request.get_data())
 
         json_dict = json['object']
@@ -305,6 +341,7 @@ class AttackerDAO(CairisDAO):
         attacker = json_deserialize(attacker)
         attacker.theEnvironmentProperties = attacker_props
         if not isinstance(attacker, Attacker):
+            self.close()
             raise MalformedJSONHTTPError(data=request.get_data())
         else:
             return attacker
@@ -354,6 +391,7 @@ class AttackerDAO(CairisDAO):
                     )
                     new_props.append(new_prop)
         else:
+            self.close()
             raise MissingParameterHTTPError(param_names=['real_props', 'fake_props'])
 
         return new_props

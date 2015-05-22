@@ -54,6 +54,8 @@ class DimensionsAPI(Resource):
             dimensions = db_proxy.getDimensions(table, id)
         except DatabaseProxyException as ex:
             raise ARMHTTPError(ex)
+        finally:
+            db_proxy.close()
 
         resp = make_response(json_serialize(dimensions, session_id=session_id), httplib.OK)
         resp.headers['Content-type'] = 'application/json'
@@ -86,7 +88,13 @@ class DimensionNamesAPI(Resource):
         session_id = request.args.get('session_id', None)
 
         db_proxy = validate_proxy(session, session_id)
-        dimension_names = db_proxy.getDimensionNames(table, environment)
+        try:
+            dimension_names = db_proxy.getDimensionNames(table, environment)
+        except DatabaseProxyException as ex:
+            raise ARMHTTPError(ex)
+        finally:
+            db_proxy.close()
+
         resp = make_response(json_serialize(dimension_names, session_id=session_id), httplib.OK)
         resp.headers['Content-type'] = 'application/json'
         return resp

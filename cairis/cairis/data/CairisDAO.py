@@ -15,8 +15,14 @@ class CairisDAO(object):
     def __init__(self, session_id):
         b = Borg()
         self.db_proxy = self.get_dbproxy(session_id)
+        self.session_id = session_id
         self.logger = logging.getLogger('cairisd')
         self.logger.setLevel(b.logLevel)
+
+    def close(self):
+        if self.db_proxy.conn.open:
+            self.db_proxy.close()
+        self.logger.debug('Connection closed')
 
     def from_json(self, request):
         raise NotImplementedError('from_json is not yet implemented by subclass')
@@ -24,6 +30,7 @@ class CairisDAO(object):
     def type_from_json(self, request):
         json = request.get_json(silent=True)
         if json is False or json is None:
+            self.close()
             raise MalformedJSONHTTPError(data=request.get_data())
 
         json_dict = json['object']
@@ -33,6 +40,7 @@ class CairisDAO(object):
         value_type = json_serialize(json_dict)
         value_type = json_deserialize(value_type)
         if not isinstance(value_type, ValueType):
+            self.close()
             raise MalformedJSONHTTPError(data=request.get_data())
         else:
             return value_type

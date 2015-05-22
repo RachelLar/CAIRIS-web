@@ -21,6 +21,7 @@ class RequirementDAO(CairisDAO):
             else:
                 requirements = self.db_proxy.getRequirements(constraint_id, is_asset)
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
         return requirements
@@ -30,6 +31,7 @@ class RequirementDAO(CairisDAO):
         try:
             requirements = self.db_proxy.getRequirements()
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
         idx = 0
@@ -39,6 +41,7 @@ class RequirementDAO(CairisDAO):
             idx += 1
 
         if found_requirement is None:
+            self.close()
             raise ObjectNotFoundHTTPError('The provided requirement ID')
 
         return found_requirement
@@ -48,6 +51,7 @@ class RequirementDAO(CairisDAO):
         try:
             requirements = self.db_proxy.getRequirements()
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
         if requirements is not None:
@@ -59,6 +63,7 @@ class RequirementDAO(CairisDAO):
                 idx += 1
 
         if found_requirement is None:
+            self.close()
             raise ObjectNotFoundHTTPError('The provided requirement name')
 
         return found_requirement
@@ -67,6 +72,7 @@ class RequirementDAO(CairisDAO):
         try:
             self.db_proxy.nameCheck(requirement.theName, 'requirement')
         except ARM.ARMException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
         new_id = self.db_proxy.newId()
@@ -76,13 +82,16 @@ class RequirementDAO(CairisDAO):
             try:
                 self.db_proxy.addRequirement(requirement, assetName=asset_name, isAsset=True)
             except Exception as ex:
+                self.close()
                 handle_exception(ex)
         elif environment_name is not None:
             try:
                 self.db_proxy.addRequirement(requirement, assetName=environment_name, isAsset=False)
             except Exception as ex:
+                self.close()
                 handle_exception(ex)
         else:
+            self.close()
             raise MissingParameterHTTPError(param_names=['requirement', 'environment'])
 
         return new_id
@@ -93,9 +102,11 @@ class RequirementDAO(CairisDAO):
         elif req_id is not None:
             req = self.get_requirement_by_id(req_id)
         else:
+            self.close()
             raise MissingParameterHTTPError(param_names=['id'])
 
         if req is None:
+            self.close()
             raise ObjectNotFoundHTTPError('The provided requirement')
 
         self.db_proxy.deleteRequirement(req.theId)
@@ -107,6 +118,7 @@ class RequirementDAO(CairisDAO):
         elif req_id > -1:
             old_requirement = self.get_requirement_by_id(req_id=req_id)
         else:
+            self.close()
             raise MissingParameterHTTPError(param_names=['theId'])
 
         if old_requirement is not None:
@@ -115,8 +127,10 @@ class RequirementDAO(CairisDAO):
                 requirement.incrementVersion()
                 self.db_proxy.updateRequirement(requirement)
             except ARM.DatabaseProxyException as ex:
+                self.close()
                 raise ARMHTTPError(ex)
         else:
+            self.close()
             raise MissingParameterHTTPError(param_names=['id'])
 
     def from_json(self, request):
@@ -125,6 +139,7 @@ class RequirementDAO(CairisDAO):
         """
         json = request.get_json(silent=True)
         if json is False or json is None:
+            self.close()
             raise MalformedJSONHTTPError(data=request.get_data())
 
         json_dict = json['object']
@@ -133,6 +148,7 @@ class RequirementDAO(CairisDAO):
         requirement = json_serialize(json_dict)
         requirement = json_deserialize(requirement)
         if not isinstance(requirement, Requirement):
+            self.close()
             raise MalformedJSONHTTPError(data=request.get_data())
         else:
             return requirement

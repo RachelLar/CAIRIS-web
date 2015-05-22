@@ -314,7 +314,7 @@ class MySQLDatabaseProxy(DatabaseProxy.DatabaseProxy):
 
   def reconnect(self,closeConn = True, session_id=None):
     try:
-      if (closeConn):
+      if (closeConn) and self.conn.open:
         self.conn.close()
       b = Borg()
       if b.runmode == 'desktop':

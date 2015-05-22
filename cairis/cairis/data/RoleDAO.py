@@ -32,6 +32,7 @@ class RoleDAO(CairisDAO):
             found_role = roles.get(name)
 
         if found_role is None:
+            self.close()
             raise ObjectNotFoundHTTPError('The provided role name')
 
         if simplify:
@@ -50,6 +51,7 @@ class RoleDAO(CairisDAO):
             idx += 1
 
         if found_role is None:
+            self.close()
             raise ObjectNotFoundHTTPError('The provided role name')
 
         if simplify:
@@ -68,6 +70,7 @@ class RoleDAO(CairisDAO):
         try:
             self.db_proxy.nameCheck(role.theName, 'role')
         except ARM.ARMException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
         role_params = RoleParameters(
@@ -86,6 +89,7 @@ class RoleDAO(CairisDAO):
         if name is not None:
             old_role = self.get_role_by_name(name, simplify=False)
             if role is None:
+                self.close()
                 raise ObjectNotFoundHTTPError('The asset')
             role_id = old_role.theId
 
@@ -102,8 +106,10 @@ class RoleDAO(CairisDAO):
             try:
                 self.db_proxy.updateRole(params)
             except ARM.DatabaseProxyException as ex:
+                self.close()
                 raise ARMHTTPError(ex)
         else:
+            self.close()
             raise MissingParameterHTTPError(param_names=['id'])
 
     def get_role_props(self, name):
@@ -117,16 +123,20 @@ class RoleDAO(CairisDAO):
         elif role_id > -1:
             found_role = self.get_role_by_id(role_id)
         else:
+            self.close()
             raise MissingParameterHTTPError(param_names=['name'])
 
         if found_role is None or not isinstance(found_role, Role):
+            self.close()
             raise ObjectNotFoundHTTPError('The provided role name')
 
         try:
             self.db_proxy.deleteRole(found_role.theId)
         except ARM.DatabaseProxyException as ex:
+            self.close()
             raise ARMHTTPError(ex)
         except ARM.ARMException as ex:
+            self.close()
             raise ARMHTTPError(ex)
 
     def from_json(self, request):
@@ -135,6 +145,7 @@ class RoleDAO(CairisDAO):
         """
         json = request.get_json(silent=True)
         if json is False or json is None:
+            self.close()
             raise MalformedJSONHTTPError(data=request.get_data())
 
         json_dict = json['object']
@@ -143,6 +154,7 @@ class RoleDAO(CairisDAO):
         role = json_serialize(json_dict)
         role = json_deserialize(role)
         if not isinstance(role, Role):
+            self.close()
             raise MalformedJSONHTTPError(data=request.get_data())
         else:
             return role

@@ -51,8 +51,10 @@ class AssetsAPI(Resource):
     def get(self):
         constraint_id = request.args.get('constraint_id', -1)
         session_id = get_session_id(session, request)
+
         dao = AssetDAO(session_id)
         assets = dao.get_assets(constraint_id=constraint_id)
+        dao.close()
 
         resp = make_response(json_serialize(assets, session_id=session_id))
         resp.headers['Content-Type'] = "application/json"
@@ -102,6 +104,7 @@ class AssetsAPI(Resource):
         dao = AssetDAO(session_id)
         asset, props = dao.from_json(request)
         new_id = dao.add_asset(asset, props)
+        dao.close()
 
         resp_dict = {'asset_id': new_id}
         resp = make_response(json_serialize(resp_dict), httplib.OK)
@@ -138,6 +141,7 @@ class AssetByNameAPI(Resource):
 
         dao = AssetDAO(session_id)
         found_asset = dao.get_asset_by_name(name)
+        dao.close()
 
         resp = make_response(json_serialize(found_asset, session_id=session_id))
         resp.headers['Content-Type'] = "application/json"
@@ -191,6 +195,7 @@ class AssetByNameAPI(Resource):
         dao = AssetDAO(session_id)
         asset, props = dao.from_json(request)
         dao.update_asset(asset, name=name, asset_props=props)
+        dao.close()
 
         resp_dict = {'message': 'Update successful'}
         resp = make_response(json_serialize(resp_dict), httplib.OK)
@@ -236,6 +241,7 @@ class AssetByNameAPI(Resource):
         dao = AssetDAO(session_id)
 
         dao.delete_asset(name=name)
+        dao.close()
 
         resp_dict = {'message': 'Asset successfully deleted'}
         resp = make_response(json_serialize(resp_dict), httplib.OK)
@@ -271,6 +277,7 @@ class AssetByIdAPI(Resource):
 
         dao = AssetDAO(session_id)
         asset = dao.get_asset_by_id(id)
+        dao.close()
         if asset is None:
             raise ObjectNotFoundHTTPError('The asset')
 
@@ -306,10 +313,12 @@ class AssetNamesAPI(Resource):
     # endregion
     def get(self):
         session_id = request.args.get('session_id', None)
-        db_proxy = validate_proxy(session, session_id)
-        assets = db_proxy.getDimensionNames('asset')
 
-        resp = make_response(json_serialize(assets, session_id=session_id))
+        dao = AssetDAO(session_id)
+        assets_names = dao.get_asset_names()
+        dao.close()
+
+        resp = make_response(json_serialize(assets_names, session_id=session_id))
         resp.headers['Content-Type'] = "application/json"
         return resp
 
@@ -401,6 +410,7 @@ class AssetEnvironmentPropertiesAPI(Resource):
 
         dao = AssetDAO(session_id)
         asset_props = dao.get_asset_props(name=asset_name)
+        dao.close()
 
         resp = make_response(json_serialize(asset_props, session_id=session_id))
         resp.contenttype = 'application/json'
@@ -441,6 +451,7 @@ class AssetEnvironmentPropertiesAPI(Resource):
         dao = AssetDAO(session_id)
         asset, asset_prop = dao.from_json(request, to_props=True)
         dao.update_asset_properties(asset_prop, name=asset_name)
+        dao.close()
 
         resp_dict = {'message': 'The asset properties were successfully updated.'}
         resp = make_response(json_serialize(resp_dict), httplib.OK)
@@ -479,6 +490,7 @@ class AssetTypesAPI(Resource):
 
         dao = AssetDAO(session_id)
         assets = dao.get_asset_types(environment_name=environment_name)
+        dao.close()
 
         resp = make_response(json_serialize(assets, session_id=session_id), httplib.OK)
         resp.contenttype = 'application/json'
@@ -529,6 +541,7 @@ class AssetTypesAPI(Resource):
         dao = AssetDAO(session_id)
         new_value_type = dao.type_from_json(request)
         asset_type_id = dao.add_asset_type(new_value_type, environment_name=environment_name)
+        dao.close()
 
         resp_dict = {'message': 'Asset type successfully added', 'asset_type_id': asset_type_id}
         resp = make_response(json_serialize(resp_dict), httplib.OK)
@@ -566,6 +579,7 @@ class AssetTypeByNameAPI(Resource):
 
         dao = AssetDAO(session_id)
         asset_type = dao.get_asset_type_by_name(name=name, environment_name=environment_name)
+        dao.close()
 
         resp = make_response(json_serialize(asset_type, session_id=session_id), httplib.OK)
         resp.headers['Content-type'] = 'application/json'
@@ -612,6 +626,7 @@ class AssetTypeByNameAPI(Resource):
         dao = AssetDAO(session_id)
         asset_type = dao.type_from_json(request)
         dao.update_asset_type(asset_type, name=name, environment_name=environment_name)
+        dao.close()
 
         resp_dict = {'message': 'Asset type successfully updated'}
         resp = make_response(json_serialize(resp_dict), httplib.OK)
@@ -658,6 +673,7 @@ class AssetTypeByNameAPI(Resource):
 
         dao = AssetDAO(session_id)
         dao.delete_asset_type(name=name, environment_name=environment_name)
+        dao.close()
 
         resp_dict = {'message': 'Asset type successfully deleted'}
         resp = make_response(json_serialize(resp_dict), httplib.OK)
@@ -692,8 +708,11 @@ class AssetValuesAPI(Resource):
     # endregion
     def get(self, environment_name):
         session_id = get_session_id(session, request)
+
         dao = AssetDAO(session_id)
         assets = dao.get_asset_values(environment_name=environment_name)
+        dao.close()
+
         resp = make_response(json_serialize(assets, session_id=session_id), httplib.OK)
         resp.contenttype = 'application/json'
         return resp
@@ -725,8 +744,11 @@ class AssetValueByNameAPI(Resource):
     # endregion
     def get(self, name, environment_name):
         session_id = get_session_id(session, request)
+
         dao = AssetDAO(session_id)
         asset_value = dao.get_asset_value_by_name(name=name, environment_name=environment_name)
+        dao.close()
+
         resp = make_response(json_serialize(asset_value, session_id=session_id), httplib.OK)
         resp.headers['Content-type'] = 'application/json'
         return resp
@@ -767,9 +789,12 @@ class AssetValueByNameAPI(Resource):
     # endregion
     def put(self, name, environment_name):
         session_id = get_session_id(session, request)
+
         dao = AssetDAO(session_id)
         asset_value = dao.type_from_json(request)
         dao.update_asset_value(asset_value, name=name, environment_name=environment_name)
+        dao.close()
+
         resp_dict = {'message': 'Asset type successfully updated'}
         resp = make_response(json_serialize(resp_dict), httplib.OK)
         resp.headers['Content-type'] = 'application/json'

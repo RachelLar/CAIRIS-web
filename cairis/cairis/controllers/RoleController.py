@@ -52,6 +52,7 @@ class RolesAPI(Resource):
 
         dao = RoleDAO(session_id)
         roles = dao.get_roles(constraint_id)
+        dao.close()
 
         resp = make_response(json_serialize(roles, session_id=session_id))
         resp.contenttype = "application/json"
@@ -101,6 +102,7 @@ class RolesAPI(Resource):
         dao = RoleDAO(session_id)
         new_role = dao.from_json(request)
         role_id = dao.add_role(new_role)
+        dao.close()
 
         resp_dict = {'role_id': role_id}
         resp = make_response(json_serialize(resp_dict, session_id=session_id), httplib.OK)
@@ -133,9 +135,10 @@ class RolesByIdAPI(Resource):
     # endregion
     def get(self, id):
         session_id = get_session_id(session, request)
-        dao = RoleDAO(session_id)
 
+        dao = RoleDAO(session_id)
         found_role = dao.get_role_by_id(id)
+        dao.close()
 
         resp = make_response(json_serialize(found_role, session_id=session_id))
         resp.headers['Content-Type'] = "application/json"
@@ -185,10 +188,11 @@ class RolesByIdAPI(Resource):
     # endregion
     def put(self, id):
         session_id = get_session_id(session, request)
-        dao = RoleDAO(session_id)
 
+        dao = RoleDAO(session_id)
         upd_role = dao.from_json(request)
         dao.update_role(upd_role, role_id=id)
+        dao.close()
 
         resp_dict = {'message': 'Update successful'}
         resp = make_response(json_serialize(resp_dict, session_id=session_id), httplib.OK)
@@ -231,9 +235,10 @@ class RolesByIdAPI(Resource):
     # endregion
     def delete(self, id):
         session_id = get_session_id(session, request)
-        dao = RoleDAO(session_id)
 
+        dao = RoleDAO(session_id)
         dao.delete_role(role_id=id)
+        dao.close()
 
         resp_dict = {'message': 'Role successfully deleted'}
         resp = make_response(json_serialize(resp_dict, session_id=session_id), httplib.OK)
@@ -266,9 +271,10 @@ class RolesByNameAPI(Resource):
     # endregion
     def get(self, name):
         session_id = get_session_id(session, request)
-        dao = RoleDAO(session_id)
 
+        dao = RoleDAO(session_id)
         found_role = dao.get_role_by_name(name)
+        dao.close()
 
         resp = make_response(json_serialize(found_role, session_id=session_id))
         resp.headers['Content-Type'] = "application/json"
@@ -322,6 +328,7 @@ class RolesByNameAPI(Resource):
 
         upd_role = dao.from_json(request)
         dao.update_role(upd_role, name=name)
+        dao.close()
 
         resp_dict = {'message': 'Update successful'}
         resp = make_response(json_serialize(resp_dict, session_id=session_id), httplib.OK)
@@ -364,9 +371,10 @@ class RolesByNameAPI(Resource):
     # endregion
     def delete(self, name):
         session_id = get_session_id(session, request)
-        dao = RoleDAO(session_id)
 
+        dao = RoleDAO(session_id)
         dao.delete_role(name=name)
+        dao.close()
 
         resp_dict = {'message': 'Role successfully deleted'}
         resp = make_response(json_serialize(resp_dict, session_id=session_id), httplib.OK)
@@ -399,9 +407,10 @@ class RoleEnvironmentPropertiesAPI(Resource):
     # endregion
     def get(self, name):
         session_id = get_session_id(session, request)
-        dao = RoleDAO(session_id)
 
+        dao = RoleDAO(session_id)
         props = dao.get_role_props(name)
+        dao.close()
 
         resp = make_response(json_serialize(props, session_id=session_id), httplib.OK)
         resp.contenttype = 'application/json'

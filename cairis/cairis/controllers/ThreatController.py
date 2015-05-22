@@ -54,6 +54,7 @@ class ThreatAPI(Resource):
 
         dao = ThreatDAO(session_id)
         threats = dao.get_threats(constraint_id=constraint_id)
+        dao.close()
 
         resp = make_response(json_serialize(threats, session_id=session_id), httplib.OK)
         resp.contenttype = 'application/json'
@@ -103,6 +104,7 @@ class ThreatAPI(Resource):
         dao = ThreatDAO(session_id)
         new_threat = dao.from_json(request)
         threat_id = dao.add_threat(new_threat)
+        dao.close()
 
         resp_dict = {'message': 'Threat successfully added', 'threat_id': threat_id}
         resp = make_response(json_serialize(resp_dict), httplib.OK)
@@ -138,6 +140,7 @@ class ThreatByIdAPI(Resource):
 
         dao = ThreatDAO(session_id)
         threat = dao.get_threat_by_id(threat_id=id)
+        dao.close()
 
         resp = make_response(json_serialize(threat, session_id=session_id), httplib.OK)
         resp.headers['Content-type'] = 'application/json'
@@ -172,6 +175,7 @@ class ThreatByNameAPI(Resource):
 
         dao = ThreatDAO(session_id)
         threat = dao.get_threat_by_name(name=name)
+        dao.close()
 
         resp = make_response(json_serialize(threat, session_id=session_id), httplib.OK)
         resp.headers['Content-type'] = 'application/json'
@@ -217,6 +221,7 @@ class ThreatByNameAPI(Resource):
         dao = ThreatDAO(session_id)
         req = dao.from_json(request)
         dao.update_threat(req, name=name)
+        dao.close()
 
         resp_dict = {'message': 'Threat successfully updated'}
         resp = make_response(json_serialize(resp_dict), httplib.OK)
@@ -262,6 +267,7 @@ class ThreatByNameAPI(Resource):
 
         dao = ThreatDAO(session_id)
         dao.delete_threat(name=name)
+        dao.close()
 
         resp_dict = {'message': 'Threat successfully deleted'}
         resp = make_response(json_serialize(resp_dict), httplib.OK)
@@ -299,6 +305,7 @@ class ThreatTypesAPI(Resource):
 
         dao = ThreatDAO(session_id)
         threats = dao.get_threat_types(environment_name=environment_name)
+        dao.close()
 
         resp = make_response(json_serialize(threats, session_id=session_id), httplib.OK)
         resp.contenttype = 'application/json'
@@ -349,6 +356,7 @@ class ThreatTypesAPI(Resource):
         dao = ThreatDAO(session_id)
         new_value_type = dao.type_from_json(request)
         threat_type_id = dao.add_threat_type(new_value_type, environment_name=environment_name)
+        dao.close()
 
         resp_dict = {'message': 'Threat type successfully added', 'threat_type_id': threat_type_id}
         resp = make_response(json_serialize(resp_dict), httplib.OK)
@@ -385,6 +393,7 @@ class ThreatTypeByNameAPI(Resource):
 
         dao = ThreatDAO(session_id)
         threat_type = dao.get_threat_type_by_name(name=name, environment_name=environment_name)
+        dao.close()
 
         resp = make_response(json_serialize(threat_type, session_id=session_id), httplib.OK)
         resp.headers['Content-type'] = 'application/json'
@@ -431,6 +440,7 @@ class ThreatTypeByNameAPI(Resource):
         dao = ThreatDAO(session_id)
         threat_type = dao.type_from_json(request)
         dao.update_threat_type(threat_type, name=name, environment_name=environment_name)
+        dao.close()
 
         resp_dict = {'message': 'Threat type successfully updated'}
         resp = make_response(json_serialize(resp_dict), httplib.OK)
@@ -477,6 +487,7 @@ class ThreatTypeByNameAPI(Resource):
 
         dao = ThreatDAO(session_id)
         dao.delete_threat_type(name=name, environment_name=environment_name)
+        dao.close()
 
         resp_dict = {'message': 'Threat type successfully deleted'}
         resp = make_response(json_serialize(resp_dict), httplib.OK)

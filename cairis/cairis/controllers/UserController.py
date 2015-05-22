@@ -20,6 +20,7 @@ def set_dbproxy(conf):
     pSettings = db_proxy.getProjectSettings()
 
     id = b.init_settings()
+    db_proxy.close()
     session['session_id'] = id
     b.settings[id]['dbProxy'] = db_proxy
     b.settings[id]['dbUser'] = conf['user']
