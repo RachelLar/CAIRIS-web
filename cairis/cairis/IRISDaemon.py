@@ -162,6 +162,8 @@ def start():
     api.add_resource(VulnerabilityController.VulnerabilityAPI, '/api/vulnerabilities')
     api.add_resource(VulnerabilityController.VulnerabilityByIdAPI, '/api/vulnerabilities/id/<int:id>')
     api.add_resource(VulnerabilityController.VulnerabilityByNameAPI, '/api/vulnerabilities/name/<string:name>')
+    api.add_resource(VulnerabilityController.VulnerabilityTypesAPI, '/api/vulnerabilities/types')
+    api.add_resource(VulnerabilityController.VulnerabilityTypeByNameAPI, '/api/vulnerabilities/types/name/<string:name>')
 
     # Set server specific settings
     b.logger.setLevel(b.logLevel)
