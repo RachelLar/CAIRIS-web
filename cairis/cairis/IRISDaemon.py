@@ -10,7 +10,7 @@ from flask.ext.restful_swagger import swagger
 from Borg import Borg
 from CairisHTTPError import CairisHTTPError, ARMHTTPError
 from ARM import ARMException, DatabaseProxyException
-from controllers import AssetController, CImportController, DimensionController, EnvironmentController, GoalController, RequirementController, \
+from controllers import AssetController, AttackerController, CImportController, DimensionController, EnvironmentController, GoalController, RequirementController, \
     RoleController, ThreatController, UserController, VulnerabilityController
 
 
@@ -102,6 +102,10 @@ def start():
     api.add_resource(AssetController.AssetTypeByNameAPI, '/api/assets/types/name/<string:name>')
     api.add_resource(AssetController.AssetModelAPI, '/api/assets/view')
     api.add_resource(AssetController.AssetEnvironmentPropertiesAPI, '/api/assets/name/<string:asset_name>/properties')
+
+    # Attacker routes
+    api.add_resource(AttackerController.AttackersAPI, '/api/attackers')
+    api.add_resource(AttackerController.AttackerByNameAPI, '/api/attackers/name/<string:name>')
 
     # CImport
     api.add_resource(CImportController.CImportAPI, '/api/cimport')

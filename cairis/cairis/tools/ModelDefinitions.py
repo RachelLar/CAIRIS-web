@@ -2,6 +2,8 @@ from flask.ext.restful import fields
 from flask.ext.restful_swagger import swagger
 
 from Asset import Asset
+from Attacker import Attacker
+from AttackerEnvironmentProperties import AttackerEnvironmentProperties
 from Goal import Goal
 from GoalEnvironmentProperties import GoalEnvironmentProperties
 from MisuseCase import MisuseCase
@@ -76,6 +78,56 @@ class AssetModel(object):
     required.remove(obj_id_field)
     swagger_metadata = {
         obj_id_field : gen_class_metadata(Asset)
+    }
+
+
+@swagger.model
+class CapabilityModel(object):
+    resource_fields = {
+        "name": fields.String,
+        "value": fields.String
+    }
+    required = resource_fields.keys()
+
+@swagger.model
+@swagger.nested(
+    theCapabilities=CapabilityModel.__name__
+)
+class AttackerEnvironmentPropertiesModel(object):
+    resource_fields = {
+        obj_id_field: fields.String,
+        'theMotives': fields.List(fields.String),
+        'theRoles': fields.List(fields.String),
+        'theCapabilities': fields.List(fields.Nested(CapabilityModel.resource_fields)),
+        'theEnvironmentName': fields.String,
+    }
+    required = resource_fields.keys()
+    required.remove(obj_id_field)
+    swagger_metadata = {
+        obj_id_field: gen_class_metadata(AttackerEnvironmentProperties)
+    }
+
+@swagger.model
+@swagger.nested(
+    theEnvironmentProperties=AttackerEnvironmentPropertiesModel.__name__
+)
+class AttackerModel(object):
+    resource_fields = {
+        obj_id_field: fields.String,
+        'theEnvironmentDictionary': fields.List(fields.Nested(AttackerEnvironmentPropertiesModel.resource_fields)),
+        'theDescription': fields.String,
+        'theId': fields.Integer,
+        'theTags': fields.List(fields.String),
+        'isPersona': fields.Integer,
+        'theName': fields.String,
+        'theImage': fields.String,
+        'theEnvironmentProperties': fields.List(fields.Nested(AttackerEnvironmentPropertiesModel.resource_fields)),
+    }
+    required = resource_fields.keys()
+    required.remove(obj_id_field)
+    required.remove('theEnvironmentDictionary')
+    swagger_metadata = {
+        obj_id_field: gen_class_metadata(Attacker)
     }
 
 @swagger.model
