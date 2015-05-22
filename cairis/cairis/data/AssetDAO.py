@@ -203,6 +203,7 @@ class AssetDAO(CairisDAO):
         except ARM.ARMException as ex:
             raise ARMHTTPError(ex)
 
+    # region Asset Types
     def get_asset_types(self, environment_name=''):
         try:
             asset_types = self.db_proxy.getValueTypes('asset_type', environment_name)
@@ -291,6 +292,58 @@ class AssetDAO(CairisDAO):
             return True
         except ObjectNotFoundHTTPError:
             return False
+    # endregion
+
+    # region Asset values
+    def get_asset_values(self, environment_name=''):
+        try:
+            asset_values = self.db_proxy.getValueTypes('asset_value', environment_name)
+            return asset_values
+        except ARM.DatabaseProxyException as ex:
+            raise ARMHTTPError(ex)
+        except ARM.ARMException as ex:
+            raise ARMHTTPError(ex)
+
+    def get_asset_value_by_name(self, name, environment_name=''):
+        found_value = None
+        asset_values = self.get_asset_values(environment_name=environment_name)
+        if asset_values is None or len(asset_values) < 1:
+            raise ObjectNotFoundHTTPError('Asset values')
+        idx = 0
+        while found_value is None and idx < len(asset_values):
+            if asset_values[idx].theName == name:
+                found_value = asset_values[idx]
+            idx += 1
+        if found_value is None:
+            raise ObjectNotFoundHTTPError('The provided asset value name')
+        return found_value
+
+    def update_asset_value(self, asset_value, name, environment_name=''):
+        assert isinstance(asset_value, ValueType)
+        found_value = self.get_asset_value_by_name(name, environment_name)
+        params = ValueTypeParameters(
+            vtName=asset_value.theName,
+            vtDesc=asset_value.theDescription,
+            vType='asset_value',
+            envName=environment_name,
+            vtScore=asset_value.theScore,
+            vtRat=asset_value.theRationale
+        )
+        params.setId(found_value.theId)
+        try:
+            self.db_proxy.updateValueType(params)
+        except ARM.DatabaseProxyException as ex:
+            raise ARMHTTPError(ex)
+        except ARM.ARMException as ex:
+            raise ARMHTTPError(ex)
+
+    def check_existing_asset_value(self, name, environment_name):
+        try:
+            self.get_asset_value_by_name(name, environment_name)
+            return True
+        except ObjectNotFoundHTTPError:
+            return False
+    # endregion
 
     def simplify_props(self, props):
         envPropertiesDict = dict()
