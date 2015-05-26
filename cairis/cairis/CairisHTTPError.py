@@ -2,6 +2,7 @@ import httplib
 import logging
 
 from flask import request, make_response
+from jsonpickle import encode
 from werkzeug.exceptions import HTTPException
 
 from ARM import ARMException, DatabaseProxyException
@@ -43,13 +44,17 @@ class CairisHTTPError(HTTPException):
         self.status_code = status_code
         self.status = status
         self.valid_methods = ['GET', 'POST', 'PUT', 'DELETE']
+        resp_dict = {'code': status_code, 'status': status, 'message': message}
         self.__setattr__('code', status_code)
+        self.__setattr__('data', resp_dict)
 
         logger.error('[{0}] {1}: {2}'.format(status_code, status, message))
 
         accept_header = request.headers.get('Accept', 'application/json')
         if accept_header.find('text/html') > -1:
+
             self.response = make_response(self.handle_exception_html(), self.status_code)
+            self.__setattr__('data', resp_dict)
         else:
             self.response = make_response(self.handle_exception_json(), self.status_code)
 
@@ -72,9 +77,12 @@ class ARMHTTPError(CairisHTTPError):
 
         :type exception: ARMException
         """
+        real_exception = exception.value
+        if isinstance(real_exception, DatabaseProxyException):
+            real_exception = real_exception.value
         CairisHTTPError.__init__(self,
             status_code=httplib.CONFLICT,
-            message=exception.value,
+            message=str(real_exception.value),
             status='Database conflict'
         )
 
