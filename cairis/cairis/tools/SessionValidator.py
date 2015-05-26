@@ -5,6 +5,8 @@ from ARM import DatabaseProxyException
 from Borg import Borg
 from MySQLDatabaseProxy import MySQLDatabaseProxy
 from CairisHTTPError import MissingParameterHTTPError, CairisHTTPError, ObjectNotFoundHTTPError
+from TemplateGenerator import TemplateGenerator
+from tools.GraphicsGenerator import GraphicsGenerator
 
 __author__ = 'Robin Quetin'
 
@@ -111,7 +113,7 @@ def validate_proxy(session, id, request=None, conf=None):
             message='The session is neither started or no session ID is provided with the request.'
         )
 
-def validate_fonts(session, id):
+def get_fonts(session=None, request=None, session_id=None):
     """
     Validates that the fonts to output the SVG models are properly set up
     :param session: The session object of the request
@@ -120,18 +122,12 @@ def validate_fonts(session, id):
     :rtype : str,str,str
     :raise CairisHTTPError: Raises a CairisHTTPError when the database could not be properly set up
     """
+    if session is not None or request is not None:
+        session_id = get_session_id(session, request)
 
-    if session is not None:
-        session_id = session.get('session_id', -1)
-    else:
-        session_id = -1
-
-    if not (session_id == -1 and id is None):
-        if id is None:
-            id = session_id
-
+    if session_id is not None:
         b = Borg()
-        settings = b.get_settings(id)
+        settings = b.get_settings(session_id)
         fontName = settings.get('fontName', None)
         fontSize = settings.get('fontSize', None)
         apFontName = settings.get('apFontSize', None)
@@ -152,6 +148,32 @@ def validate_fonts(session, id):
         raise CairisHTTPError(
             status_code=httplib.BAD_REQUEST,
             message='The method is not callable without setting up the project settings.'
+        )
+
+def get_template_generator():
+    b = Borg()
+    if hasattr(b, 'template_generator'):
+        template_generator = b.template_generator
+        assert isinstance(template_generator, TemplateGenerator)
+        return template_generator
+    else:
+        raise CairisHTTPError(
+            status_code=httplib.CONFLICT,
+            message='The template generator is not properly initialized. Please check if all dependencies are installed correctly.',
+            status='Object not found'
+        )
+
+def get_model_generator():
+    b = Borg()
+    if hasattr(b, 'model_generator'):
+        model_generator = b.model_generator
+        assert isinstance(model_generator, GraphicsGenerator)
+        return model_generator
+    else:
+        raise CairisHTTPError(
+            status_code=httplib.CONFLICT,
+            message='The model generator is not properly initialized. Please check if all dependencies are installed correctly.',
+            status='Object not found'
         )
 
 def check_environment(environment_name, session, session_id):
