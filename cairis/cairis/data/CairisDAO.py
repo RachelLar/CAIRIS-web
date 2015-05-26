@@ -15,6 +15,7 @@ class CairisDAO(object):
     def __init__(self, session_id):
         b = Borg()
         self.db_proxy = self.get_dbproxy(session_id)
+        self.db_proxy.prepareDatabase()
         self.session_id = session_id
         self.logger = logging.getLogger('cairisd')
         self.logger.setLevel(b.logLevel)
