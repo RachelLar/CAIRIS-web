@@ -296,7 +296,7 @@ class GoalModelAPI(Resource):
         dot_code = dao.get_goal_model(environment)
         dao.close()
 
-        resp = make_response(model_generator.generate(dot_code), httplib.OK)
+        resp = make_response(model_generator.generate(dot_code, model_type='goal'), httplib.OK)
         accept_header = request.headers.get('Accept', 'image/svg+xml')
         if accept_header.find('text/plain') > -1:
             resp.headers['Content-type'] = 'text/plain'

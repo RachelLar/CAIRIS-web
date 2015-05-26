@@ -11,7 +11,7 @@ class SVGGenerator(object):
     def __init__(self):
         self.extension = 'svg'
 
-    def generate(self, dot_code):
+    def generate(self, dot_code, model_type):
         fd, temp_abspath = make_tempfile(suffix=self.extension)
         temp_file = open(temp_abspath, 'wb')
         temp_file.write(dot_code)
@@ -19,11 +19,11 @@ class SVGGenerator(object):
         os.close(fd)
         output = cmd(['dot', '-Tsvg', temp_abspath])
         os.remove(temp_abspath)
-        output = self.process_output(str(output))
+        output = self.process_output(str(output), model_type)
         return output
 
-    def generate_file(self, dot_code, output_file):
-        output = self.generate(dot_code)
+    def generate_file(self, dot_code, output_file, model_type):
+        output = self.generate(dot_code, model_type)
 
         try:
             fs_output = open(output_file, 'rb')
@@ -33,7 +33,7 @@ class SVGGenerator(object):
             fs_output.close()
             raise ex
 
-    def process_output(self, output):
+    def process_output(self, output, model_type):
         lines = output.split('\n')
         svg_start = -1
         is_node = False
@@ -52,7 +52,7 @@ class SVGGenerator(object):
                 line = line.replace('fill="none"', 'fill="white"')
                 is_node = False
 
-            line = correctHref(line)
+            line = correctHref(line, model_type)
 
             lines[i] = line
 
@@ -64,7 +64,7 @@ class SVGGenerator(object):
 
         return svg_output
 
-def correctHref(line):
+def correctHref(line, model_type):
     href_exists = -1
     href_exists = line.find('<a xlink:href="', href_exists+1)
     while href_exists > -1:
@@ -78,7 +78,10 @@ def correctHref(line):
             parts = old_link.split('#')
             type = parts[0]
             object = ''.join(parts[1:])
-            new_link = '/api/{0}s/name/{1}'.format(type, object)
+            if model_type == 'goal' and type == 'requirement':
+                new_link = '/api/{0}s/shortcode/{1}'.format(type, object)
+            else:
+                new_link = '/api/{0}s/name/{1}'.format(type, object)
             line = line.replace(old_link, new_link)
 
         href_exists = line.find('<a xlink:href="', href_exists+1)

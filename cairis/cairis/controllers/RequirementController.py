@@ -434,3 +434,38 @@ class RequirementByNameAPI(Resource):
         resp = make_response(json_serialize(resp_dict), httplib.OK)
         resp.headers['Content-type'] = 'application/json'
         return resp
+
+class RequirementByShortcodeAPI(Resource):
+    # region Swagger Doc
+    @swagger.operation(
+        notes='Get a requirement by ID',
+        nickname='requirement-by-id-get',
+        responseClass=RequirementModel.__name__,
+        parameters=[
+            {
+                "name": "session_id",
+                "description": "The ID of the user's session",
+                "required": False,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "paramType": "query"
+            }
+        ],
+        responseMessages=[
+            {
+                "code": httplib.BAD_REQUEST,
+                "message": "The database connection was not properly set up"
+            }
+        ]
+    )
+    # endregion
+    def get(self, shortcode):
+        session_id = get_session_id(session, request)
+
+        dao = RequirementDAO(session_id)
+        req = dao.get_requirement_by_shortcode(shortcode)
+        dao.close()
+
+        resp = make_response(json_serialize(req, session_id=session_id), httplib.OK)
+        resp.headers['Content-type'] = 'application/json'
+        return resp

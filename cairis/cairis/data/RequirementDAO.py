@@ -14,7 +14,7 @@ class RequirementDAO(CairisDAO):
     def __init__(self, session_id):
         CairisDAO.__init__(self, session_id)
 
-    def get_requirements(self, constraint_id=-1, is_asset=True, ordered=False):
+    def get_requirements(self, constraint_id='', is_asset=True, ordered=False):
         try:
             if ordered:
                 requirements = self.db_proxy.getOrderedRequirements(constraint_id, is_asset)
@@ -65,6 +65,23 @@ class RequirementDAO(CairisDAO):
         if found_requirement is None:
             self.close()
             raise ObjectNotFoundHTTPError('The provided requirement name')
+
+        return found_requirement
+
+    def get_requirement_by_shortcode(self, shortcode):
+        found_requirement = None
+        requirements = self.get_requirements().values()
+        idx = 0
+
+        while found_requirement is None and idx < len(requirements):
+            requirement = requirements[idx]
+            if requirement.theLabel == shortcode:
+                found_requirement = requirement
+            idx +=1
+
+        if found_requirement is None:
+            self.close()
+            raise ObjectNotFoundHTTPError(obj='The provided requirement shortcode')
 
         return found_requirement
 

@@ -10,8 +10,8 @@ class GraphicsGenerator(object):
         else:
             raise RuntimeError('There is no generator registered for the provided output format.')
 
-    def generate(self, dot_code, output_path=None):
+    def generate(self, dot_code, output_path=None, model_type=None):
         if output_path is None:
-            return self.ded_generator.generate(dot_code)
+            return self.ded_generator.generate(dot_code, model_type)
         else:
-            self.ded_generator.generate_file(dot_code, output_path)
+            self.ded_generator.generate_file(dot_code, output_path, model_type)
