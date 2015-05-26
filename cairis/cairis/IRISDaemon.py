@@ -102,7 +102,7 @@ def start():
     api.add_resource(AssetController.AssetTypeByNameAPI, '/api/assets/types/name/<string:name>')
     api.add_resource(AssetController.AssetValuesAPI, '/api/environments/<string:environment_name>/asset-values')
     api.add_resource(AssetController.AssetValueByNameAPI, '/api/environments/<string:environment_name>/asset-values/name/<string:name>')
-    api.add_resource(AssetController.AssetModelAPI, '/api/assets/view')
+    api.add_resource(AssetController.AssetModelAPI, '/api/assets/model/environment/<string:environment>')
     api.add_resource(AssetController.AssetEnvironmentPropertiesAPI, '/api/assets/name/<string:asset_name>/properties')
 
     # Attacker routes
@@ -127,10 +127,8 @@ def start():
 
     # Goal routes
     api.add_resource(GoalController.GoalsAPI, '/api/goals')
-    api.add_resource(GoalController.ColouredGoalsAPI, '/api/goals/coloured')
-    api.add_resource(GoalController.GoalByIdAPI, '/api/goals/id/<int:id>')
     api.add_resource(GoalController.GoalByNameAPI, '/api/goals/name/<string:name>')
-    api.add_resource(GoalController.GoalModelAPI, '/api/goals/view')
+    api.add_resource(GoalController.GoalModelAPI, '/api/goals/model/environment/<string:environment>')
 
     # Requirement routes
     api.add_resource(RequirementController.RequirementsAPI, '/api/requirements')
