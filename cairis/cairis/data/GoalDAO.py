@@ -57,7 +57,7 @@ class GoalDAO(CairisDAO):
             properties=goal.theEnvironmentProperties
         )
 
-        if self.check_existing_goal(goal.theName):
+        if not self.check_existing_goal(goal.theName):
             goal_id = self.db_proxy.addGoal(goalParams)
         else:
             self.close()

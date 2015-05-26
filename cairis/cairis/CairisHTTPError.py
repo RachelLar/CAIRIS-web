@@ -77,8 +77,8 @@ class ARMHTTPError(CairisHTTPError):
 
         :type exception: ARMException
         """
-        real_exception = exception.value
-        if isinstance(real_exception, DatabaseProxyException):
+        real_exception = exception
+        if isinstance(real_exception.value, DatabaseProxyException):
             real_exception = real_exception.value
         CairisHTTPError.__init__(self,
             status_code=httplib.CONFLICT,

@@ -2,6 +2,7 @@ import unittest
 import sys
 from tests.AssetTests import AssetTests
 from tests.EnvironmentTests import EnvironmentTests
+from tests.GoalTests import GoalTests
 from tests.RequirementTests import RequirementTests
 from tests.RoleTests import RoleTests
 from tests.ThreatTests import ThreatTests

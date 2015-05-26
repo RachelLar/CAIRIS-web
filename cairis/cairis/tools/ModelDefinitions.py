@@ -177,6 +177,7 @@ class GoalEnvironmentPropertiesModel(object):
         "theSubGoalRefinements": fields.List(fields.String)
     }
     required = resource_fields.keys()
+    required.remove(obj_id_field)
     swagger_metadata = {
         obj_id_field : gen_class_metadata(GoalEnvironmentProperties)
     }
@@ -196,7 +197,9 @@ class GoalModel(object):
         "theOriginator": fields.String,
         "theTags": fields.List(fields.String)
     }
-    required = [obj_id_field, "theColour","theEnvironmentProperties","theId","theName","theOriginator","theTags"]
+    required = resource_fields.keys()
+    required.remove(obj_id_field)
+    required.remove("theEnvironmentDictionary")
     swagger_metadata = {
         obj_id_field : gen_class_metadata(Goal)
     }

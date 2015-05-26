@@ -4,7 +4,6 @@ from flask import session, request, make_response
 from flask.ext.restful_swagger import swagger
 from flask_restful import Resource
 
-from CairisHTTPError import MissingParameterHTTPError
 from data.GoalDAO import GoalDAO
 from tools.JsonConverter import json_serialize
 from tools.MessageDefinitions import GoalMessage
@@ -105,7 +104,7 @@ class GoalsAPI(Resource):
         new_goal_id = dao.add_goal(new_goal)
         dao.close()
 
-        resp_dict = {'message': 'Goal successfully added', 'new_goal_id': new_goal_id}
+        resp_dict = {'message': 'Goal successfully added', 'goal_id': new_goal_id}
         resp = make_response(json_serialize(resp_dict, session_id=session_id), httplib.OK)
         resp.contenttype = 'application/json'
         return resp
