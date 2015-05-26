@@ -4,14 +4,12 @@ from flask import request, session, make_response
 from flask_restful_swagger import swagger
 from flask.ext.restful import Resource
 
-from AssetModel import AssetModel
-from Borg import Borg
 from CairisHTTPError import ObjectNotFoundHTTPError, MissingParameterHTTPError
 from data.AssetDAO import AssetDAO
 from tools.JsonConverter import json_serialize
 from tools.MessageDefinitions import AssetMessage, AssetEnvironmentPropertiesMessage, ValueTypeMessage
 from tools.ModelDefinitions import AssetModel as SwaggerAssetModel, AssetEnvironmentPropertiesModel, ValueTypeModel
-from tools.SessionValidator import validate_proxy, validate_fonts, get_session_id
+from tools.SessionValidator import get_session_id, get_model_generator
 
 
 class AssetsAPI(Resource):
@@ -102,8 +100,8 @@ class AssetsAPI(Resource):
         session_id = get_session_id(session, request)
 
         dao = AssetDAO(session_id)
-        asset, props = dao.from_json(request)
-        new_id = dao.add_asset(asset, props)
+        asset = dao.from_json(request)
+        new_id = dao.add_asset(asset)
         dao.close()
 
         resp_dict = {'asset_id': new_id}
@@ -193,8 +191,8 @@ class AssetByNameAPI(Resource):
         session_id = get_session_id(session, request)
 
         dao = AssetDAO(session_id)
-        asset, props = dao.from_json(request)
-        dao.update_asset(asset, name=name, asset_props=props)
+        asset = dao.from_json(request)
+        dao.update_asset(asset, name=name)
         dao.close()
 
         resp_dict = {'message': 'Update successful'}
@@ -354,22 +352,13 @@ class AssetModelAPI(Resource):
         ]
     )
     # endregion
-    def get(self):
-        b = Borg()
-        model_generator = b.model_generator
+    def get(self, environment):
+        session_id = get_session_id(session, request)
+        model_generator = get_model_generator()
 
-        session_id = request.args.get('session_id', None)
-        environment = request.args.get('environment', None)
-
-        if environment is None:
-            raise MissingParameterHTTPError(param_names=['environment'])
-
-        db_proxy = validate_proxy(session, session_id)
-        fontName, fontSize, apFontName = validate_fonts(session, session_id)
-        associationDictionary = db_proxy.classModel(environment)
-        associations = AssetModel(associationDictionary.values(), environment, db_proxy=db_proxy, fontName=fontName,
-            fontSize=fontSize)
-        dot_code = associations.graph()
+        dao = AssetDAO(session_id)
+        dot_code = dao.get_asset_model(environment)
+        dao.close()
 
         resp = make_response(model_generator.generate(dot_code), httplib.OK)
         accept_header = request.headers.get('Accept', 'image/svg+xml')
@@ -449,7 +438,7 @@ class AssetEnvironmentPropertiesAPI(Resource):
         session_id = get_session_id(session, request)
 
         dao = AssetDAO(session_id)
-        asset, asset_prop = dao.from_json(request, to_props=True)
+        asset_prop = dao.from_json(request, to_props=True)
         dao.update_asset_properties(asset_prop, name=asset_name)
         dao.close()
 

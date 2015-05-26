@@ -1,11 +1,7 @@
 from collections import OrderedDict
+
 from flask.ext.restful import fields
 from flask.ext.restful_swagger import swagger
-from Countermeasure import Countermeasure
-
-from EnvironmentParameters import EnvironmentParameters
-from RoleEnvironmentProperties import RoleEnvironmentProperties
-
 
 __author__ = 'Robin Quetin'
 obj_id_field = '__python_obj__'

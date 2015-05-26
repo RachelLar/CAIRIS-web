@@ -1,25 +1,32 @@
 import numpy
 from numpy.core.multiarray import array
+
 import ARM
 from Asset import Asset
 from AssetEnvironmentProperties import AssetEnvironmentProperties
 from AssetParameters import AssetParameters
-from CairisHTTPError import ObjectNotFoundHTTPError, MalformedJSONHTTPError, ARMHTTPError, SilentHTTPError, \
-    MissingParameterHTTPError, OverwriteNotAllowedHTTPError
+from CairisHTTPError import ObjectNotFoundHTTPError, MalformedJSONHTTPError, ARMHTTPError, MissingParameterHTTPError, OverwriteNotAllowedHTTPError
 from ValueType import ValueType
 from ValueTypeParameters import ValueTypeParameters
 import armid
 from data.CairisDAO import CairisDAO
 from tools.JsonConverter import json_serialize, json_deserialize
 from tools.ModelDefinitions import AssetEnvironmentPropertiesModel, SecurityAttribute, AssetModel
-from tools.SessionValidator import check_required_keys
+from tools.SessionValidator import check_required_keys, get_fonts
+from AssetModel import AssetModel as GraphicalAssetModel
 
 __author__ = 'Robin Quetin'
+
 
 class AssetDAO(CairisDAO):
     def __init__(self, session_id):
         CairisDAO.__init__(self, session_id)
-        self.prop_values = ['None', 'Low', 'Medium', 'High']
+        self.prop_dict = {
+            0: 'None',
+            1: 'Low',
+            2: 'Medium',
+            3: 'High'
+        }
         self.attr_dict = {
             'Confidentiality': armid.C_PROPERTY,
             'Integrity': armid.I_PROPERTY,
@@ -30,6 +37,12 @@ class AssetDAO(CairisDAO):
             'Unlinkability': armid.UNL_PROPERTY,
             'Unobservability': armid.UNO_PROPERTY
         }
+        self.rev_attr_dict = {}
+        self.rev_prop_dict = {}
+        for key, value in self.attr_dict.items():
+            self.rev_attr_dict[value] = key
+        for key, value in self.prop_dict.items():
+            self.rev_prop_dict[value] = key
 
     def get_assets(self, constraint_id=-1, simplify=True):
         try:
@@ -103,7 +116,7 @@ class AssetDAO(CairisDAO):
         props = asset.theEnvironmentProperties
 
         if simplify:
-            props = self.simplify_props(props)
+            props = self.convert_props(real_props=props)
 
         return props
 
@@ -124,66 +137,42 @@ class AssetDAO(CairisDAO):
             cRationale=asset.theCriticalRationale,
             tags=asset.theTags,
             ifs=asset.theInterfaces,
-            cProperties=[]
+            cProperties=asset.theEnvironmentProperties
         )
 
         asset_id = self.db_proxy.addAsset(assetParams)
-
-        if asset_props is not None and isinstance(asset_props, list):
-            assetParams.setId(asset_id)
-            self.update_asset_properties(asset_props, existing_params=assetParams)
-
         return asset_id
 
-    def update_asset(self, asset, name=None, id=-1, asset_props=None):
-        if name is not None:
-            old_asset = self.get_asset_by_name(name, simplify=False)
-            if asset is None:
-                self.close()
-                raise ObjectNotFoundHTTPError('The asset')
-            id = old_asset.theId
+    def update_asset(self, asset, name):
+        old_asset = self.get_asset_by_name(name, simplify=False)
+        id = old_asset.theId
 
-        if id > -1:
-            params = AssetParameters(
-                assetName=asset.theName,
-                shortCode=asset.theShortCode,
-                assetDesc=asset.theDescription,
-                assetSig=asset.theSignificance,
-                assetType=asset.theType,
-                cFlag=asset.isCritical,
-                cRationale=asset.theCriticalRationale,
-                tags=asset.theTags,
-                ifs=asset.theInterfaces,
-                cProperties=[]
-            )
-            params.setId(id)
+        params = AssetParameters(
+            assetName=asset.theName,
+            shortCode=asset.theShortCode,
+            assetDesc=asset.theDescription,
+            assetSig=asset.theSignificance,
+            assetType=asset.theType,
+            cFlag=asset.isCritical,
+            cRationale=asset.theCriticalRationale,
+            tags=asset.theTags,
+            ifs=asset.theInterfaces,
+            cProperties=asset.theEnvironmentProperties
+        )
+        params.setId(id)
 
-            if asset_props is not None:
-                asset_props = self.expand_props(asset_props)
-                params.theEnvironmentProperties = asset_props
-
-            try:
-                self.db_proxy.updateAsset(params)
-            except ARM.DatabaseProxyException as ex:
-                self.close()
-                raise ARMHTTPError(ex)
-        else:
+        try:
+            self.db_proxy.updateAsset(params)
+        except ARM.DatabaseProxyException as ex:
             self.close()
-            raise MissingParameterHTTPError(param_names=['id'])
+            raise ARMHTTPError(ex)
+        except ARM.ARMException as ex:
+            self.close()
+            raise ARMHTTPError(ex)
 
-    def update_asset_properties(self, props, id=-1, name=None, existing_params=None):
+    def update_asset_properties(self, props, name, existing_params=None):
         if existing_params is None:
-            if id > -1:
-                asset = self.get_asset_by_id(id, simplify=False)
-            elif name is not None:
-                asset = self.get_asset_by_name(name, simplify=False)
-            else:
-                self.close()
-                raise MissingParameterHTTPError(param_names=['name'])
-
-            if asset is None:
-                self.close()
-                raise ObjectNotFoundHTTPError('The asset')
+            asset = self.get_asset_by_name(name, simplify=False)
 
             existing_params = AssetParameters(
                 assetName=asset.theName,
@@ -199,12 +188,14 @@ class AssetDAO(CairisDAO):
             )
             existing_params.setId(asset.theId)
 
-        props = self.expand_props(props)
         existing_params.theEnvironmentProperties = props
 
         try:
             self.db_proxy.updateAsset(existing_params)
         except ARM.DatabaseProxyException as ex:
+            self.close()
+            raise ARMHTTPError(ex)
+        except ARM.ARMException as ex:
             self.close()
             raise ARMHTTPError(ex)
 
@@ -223,6 +214,22 @@ class AssetDAO(CairisDAO):
 
         try:
             self.db_proxy.deleteAsset(found_asset.theId)
+        except ARM.DatabaseProxyException as ex:
+            self.close()
+            raise ARMHTTPError(ex)
+        except ARM.ARMException as ex:
+            self.close()
+            raise ARMHTTPError(ex)
+
+    def get_asset_model(self, environment_name):
+        fontName, fontSize, apFontName = get_fonts(session_id=self.session_id)
+        try:
+            associationDictionary = self.db_proxy.classModel(environment_name)
+            associations = GraphicalAssetModel(associationDictionary.values(), environment_name, db_proxy=self.db_proxy,
+                                               fontName=fontName,
+                                               fontSize=fontSize)
+            dot_code = associations.graph()
+            return dot_code
         except ARM.DatabaseProxyException as ex:
             self.close()
             raise ARMHTTPError(ex)
@@ -332,6 +339,7 @@ class AssetDAO(CairisDAO):
             # Needs to reconnect after Error was raised
             self.db_proxy.reconnect(session_id=self.session_id)
             return False
+
     # endregion
 
     # region Asset values
@@ -389,169 +397,103 @@ class AssetDAO(CairisDAO):
             return True
         except ObjectNotFoundHTTPError:
             return False
+
     # endregion
 
-    def simplify_props(self, props):
-        envPropertiesDict = dict()
-        for envProperty in props:
-            assert isinstance(envProperty, AssetEnvironmentProperties)
-            envPropertyDict = envPropertiesDict.get(envProperty.theEnvironmentName,
-                                                    AssetEnvironmentPropertiesModel(envProperty.theEnvironmentName))
-            syProperties = envProperty.properties()
-            pRationale = envProperty.rationale()
-            cProperty = syProperties[armid.C_PROPERTY]
-            cRationale = pRationale[armid.C_PROPERTY]
-            if cProperty != armid.NONE_VALUE:
-                prop_name = 'Confidentiality'
-                attr = SecurityAttribute(prop_name, self.prop_values[cProperty], cRationale)
-                envPropertyDict.attributesDictionary[prop_name] = attr
+    def convert_props(self, real_props=None, fake_props=None):
+        new_props = []
+        if real_props is not None:
+            if len(real_props) > 0:
+                for real_prop in real_props:
+                    assert isinstance(real_prop, AssetEnvironmentProperties)
+                    for idx in range(0, len(real_prop.theAssociations)):
+                        real_prop.theAssociations[idx] = list(real_prop.theAssociations[idx])
+                    sec_props = real_prop.theProperties
+                    rationales = real_prop.theRationale
 
-            iProperty = syProperties[armid.I_PROPERTY]
-            iRationale = pRationale[armid.I_PROPERTY]
-            if iProperty != armid.NONE_VALUE:
-                prop_name = 'Integrity'
-                attr = SecurityAttribute(prop_name, self.prop_values[iProperty], iRationale)
-                envPropertyDict.attributesDictionary[prop_name] = attr
+                    if len(sec_props) == len(rationales):
+                        new_sec_attrs = []
+                        for idx in range(0, len(sec_props)):
+                            try:
+                                attr_name = self.rev_attr_dict[idx]
+                                attr_value = self.prop_dict[sec_props[idx]]
+                                new_sec_attr = SecurityAttribute(attr_name, attr_value, rationales[idx])
+                                new_sec_attrs.append(new_sec_attr)
+                            except LookupError:
+                                self.logger.warning('Unable to find key in dictionary. Attribute is being skipped.')
+                        real_prop.theProperties = new_sec_attrs
+                        delattr(real_prop, 'theRationale')
 
-            avProperty = syProperties[armid.AV_PROPERTY]
-            avRationale = pRationale[armid.AV_PROPERTY]
-            if avProperty != armid.NONE_VALUE:
-                prop_name = 'Availability'
-                attr = SecurityAttribute(prop_name, self.prop_values[avProperty], avRationale)
-                envPropertyDict.attributesDictionary[prop_name] = attr
+                    new_props.append(real_prop)
+        elif fake_props is not None:
+            if len(fake_props) > 0:
+                for fake_prop in fake_props:
+                    check_required_keys(fake_prop, AssetEnvironmentPropertiesModel.required)
+                    assert isinstance(fake_prop['theAssociations'], list)
+                    for idx in range(0, len(fake_prop['theAssociations'])):
+                        fake_prop['theAssociations'][idx] = tuple(fake_prop['theAssociations'][idx])
+                    sec_attrs = fake_prop['theProperties']
+                    new_syProps = array(8 * [0]).astype(numpy.int32)
+                    new_rationale = ['None'] * 8
 
-            acProperty = syProperties[armid.AC_PROPERTY]
-            acRationale = pRationale[armid.AC_PROPERTY]
-            if acProperty != armid.NONE_VALUE:
-                prop_name = 'Accountability'
-                attr = SecurityAttribute(prop_name, self.prop_values[acProperty], acRationale)
-                envPropertyDict.attributesDictionary[prop_name] = attr
+                    for sec_attr in sec_attrs:
+                        attr_id = self.attr_dict[sec_attr['name']]
+                        attr_value = self.rev_prop_dict[sec_attr['value']]
+                        attr_rationale = sec_attr['rationale']
+                        new_syProps[attr_id] = attr_value
+                        new_rationale[attr_id] = attr_rationale
 
-            anProperty = syProperties[armid.AN_PROPERTY]
-            anRationale = pRationale[armid.AN_PROPERTY]
-            if anProperty != armid.NONE_VALUE:
-                prop_name = 'Anonymity'
-                attr = SecurityAttribute(prop_name, self.prop_values[anProperty], anRationale)
-                envPropertyDict.attributesDictionary[prop_name] = attr
+                    new_prop = AssetEnvironmentProperties(
+                        environmentName=fake_prop['theEnvironmentName'],
+                        syProperties=new_syProps,
+                        pRationale=new_rationale,
+                        associations=fake_prop['theAssociations']
+                    )
+                    new_props.append(new_prop)
+        else:
+            self.close()
+            raise MissingParameterHTTPError(param_names=['real_props', 'fake_props'])
 
-            panProperty = syProperties[armid.PAN_PROPERTY]
-            panRationale = pRationale[armid.PAN_PROPERTY]
-            if panProperty != armid.NONE_VALUE:
-                prop_name = 'Pseudonymity'
-                attr = SecurityAttribute(prop_name, self.prop_values[panProperty], panRationale)
-                envPropertyDict.attributesDictionary[prop_name] = attr
-
-            unlProperty = syProperties[armid.UNL_PROPERTY]
-            unlRationale = pRationale[armid.UNL_PROPERTY]
-            if unlProperty != armid.NONE_VALUE:
-                prop_name = 'Unlinkability'
-                attr = SecurityAttribute(prop_name, self.prop_values[unlProperty], unlRationale)
-                envPropertyDict.attributesDictionary[prop_name] = attr
-
-            unoProperty = syProperties[armid.UNO_PROPERTY]
-            unoRationale = pRationale[armid.UNO_PROPERTY]
-            if unoProperty != armid.NONE_VALUE:
-                prop_name = 'Unobservability'
-                attr = SecurityAttribute(prop_name, self.prop_values[unoProperty], unoRationale)
-                envPropertyDict.attributesDictionary[prop_name] = attr
-
-            if envProperty.theAssociations is not None:
-                envPropertyDict.associations = envProperty.theAssociations
-
-            envPropertyDict.json_prepare()
-            envPropertiesDict[envProperty.theEnvironmentName] = envPropertyDict
-
-        return envPropertiesDict.values()
-
-    def expand_props(self, new_env_props):
-        values = ['None', 'Low', 'Medium', 'High']
-        envProperties = []
-        class_def = AssetEnvironmentPropertiesModel.__module__ + '.' + AssetEnvironmentPropertiesModel.__name__
-
-        for new_env_prop in new_env_props:
-            obj_def = new_env_prop.__class__.__module__ + '.' + new_env_prop.__class__.__name__
-            if class_def != obj_def:
-                self.close()
-                raise MalformedJSONHTTPError()
-            env_name = new_env_prop.environment
-
-            # Associations should be a list of tuples
-            associations = list()
-            for idx in range(0, len(new_env_prop.associations)):
-                associations.append(tuple(new_env_prop.associations[idx]))
-
-            # Security attributes are represented by properties and rationales
-            properties = array([0]*8).astype(numpy.int32)
-            rationales = 8 * ['None']
-            for attribute in new_env_prop.attributes:
-                assert isinstance(attribute, SecurityAttribute)
-                prop_id = self.attr_dict.get(attribute.name)
-                if -1 > prop_id > 8:
-                    msg = 'Invalid attribute index (index={0}). Attribute is being ignored.'.format(attribute.id)
-                    SilentHTTPError(message=msg)
-                value = attribute.get_attr_value(values)
-                properties[prop_id] = value
-                rationales[prop_id] = attribute.rationale
-
-            env_prop = AssetEnvironmentProperties(env_name, properties, rationales, associations)
-            envProperties.append(env_prop)
-
-        return envProperties
+        return new_props
 
     def from_json(self, request, to_props=False):
-        self.logger.debug('Request data: %s', request.data)
         json = request.get_json(silent=True)
         if json is False or json is None:
             self.close()
             raise MalformedJSONHTTPError(data=request.get_data())
 
         json_dict = json['object']
-        if to_props:
-            if not isinstance(json['object'], list):
-                self.close()
-                raise MalformedJSONHTTPError(data=request.get_data())
-            else:
-                for idx in range(0, len(json_dict)):
-                    check_required_keys(json_dict[idx], AssetEnvironmentPropertiesModel.required)
-                    json_dict[idx]['__python_obj__'] = AssetEnvironmentPropertiesModel.__module__+'.'+AssetEnvironmentPropertiesModel.__name__
-
-            json['property_0'] = json_dict
+        if to_props and isinstance(json_dict, list):
+            props = self.convert_props(fake_props=json_dict)
+            return props
         else:
+            assert isinstance(json_dict, dict)
             check_required_keys(json_dict, AssetModel.required)
             json_dict['__python_obj__'] = Asset.__module__+'.'+Asset.__name__
-        new_json_asset = json_serialize(json_dict)
-        new_json_asset_props = json.get('property_0', None)
+            env_props = json_dict.pop('theEnvironmentProperties', [])
+            env_props = self.convert_props(fake_props=env_props)
+            json_dict.pop('theEnvironmentDictionary', None)
+            json_dict.pop('theAssetPropertyDictionary', None)
+            asset = json_serialize(json_dict)
+            asset = json_deserialize(asset)
 
-        if new_json_asset_props is not None:
-            for idx1 in range(0, len(new_json_asset_props)):
-                check_required_keys(new_json_asset_props[idx1], AssetEnvironmentPropertiesModel.required)
-                new_json_asset_props[idx1]['__python_obj__'] = AssetEnvironmentPropertiesModel.__module__+'.'+AssetEnvironmentPropertiesModel.__name__
-                attrs = new_json_asset_props[idx1].get('attributes', [])
-                for idx2 in range(0, len(attrs)):
-                    check_required_keys(attrs[idx2], SecurityAttribute.required)
-                    attrs[idx2]['__python_obj__'] = SecurityAttribute.__module__+'.'+SecurityAttribute.__name__
-                new_json_asset_props[idx1]['attributes'] = attrs
-
-            new_json_asset_props = json_serialize(new_json_asset_props)
-            new_json_asset_props = json_deserialize(new_json_asset_props)
-
-        asset = json_deserialize(new_json_asset)
-        if not isinstance(asset, Asset) and not to_props:
-            self.close()
-            raise MalformedJSONHTTPError(data=request.get_data())
-        else:
-            return asset, new_json_asset_props
+            if isinstance(asset, Asset):
+                asset.theEnvironmentProperties = env_props
+                return asset
+            else:
+                self.close()
+                raise MalformedJSONHTTPError()
 
     def simplify(self, asset):
         """
         Simplifies the Asset object by removing the environment properties
         :param asset: The Asset to simplify
         :type asset: Asset
-        :return: The simpliefied Asset
+        :return: The simplified Asset
         :rtype: Asset
         """
         assert isinstance(asset, Asset)
+        asset.theEnvironmentProperties = self.convert_props(real_props=asset.theEnvironmentProperties)
         asset.theEnvironmentDictionary = {}
         asset.theAssetPropertyDictionary = {}
-        asset.theEnvironmentProperties = []
         return asset

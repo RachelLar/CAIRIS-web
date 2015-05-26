@@ -2,6 +2,7 @@ from flask.ext.restful import fields
 from flask.ext.restful_swagger import swagger
 
 from Asset import Asset
+from AssetEnvironmentProperties import AssetEnvironmentProperties
 from Attacker import Attacker
 from AttackerEnvironmentProperties import AttackerEnvironmentProperties
 from Goal import Goal
@@ -43,16 +44,16 @@ class AssetEnvironmentPropertiesModel(object):
 
     resource_fields = {
         "__python_obj__": fields.String,
-        "associations": fields.List(fields.List(fields.String)),
-        "attributes": fields.List(fields.Nested(SecurityAttribute.resource_fields)),
-        "environment": fields.String
+        "theAssociations": fields.List(fields.List(fields.String)),
+        "theProperties": fields.List(fields.Nested(SecurityAttribute.resource_fields)),
+        "theEnvironmentName": fields.String,
+        "theRationale": fields.List(fields.String)
     }
     required = resource_fields.keys()
     required.remove(obj_id_field)
+    required.remove("theRationale")
     swagger_metadata = {
-        "__python_obj__": {
-            "enum": ["tools.ModelDefinitions.AssetEnvironmentPropertiesModel"]
-        }
+        obj_id_field: gen_class_metadata(AssetEnvironmentProperties)
     }
 
 @swagger.model

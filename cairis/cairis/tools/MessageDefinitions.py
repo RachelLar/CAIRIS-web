@@ -8,18 +8,11 @@ __author__ = 'Robin Quetin'
 
 import ModelDefinitions
 
-def gen_message_fields(class_ref, *prop_class_refs):
+def gen_message_fields(class_ref):
     resource_fields = {
         "session_id": fields.String,
         "object": fields.Nested(class_ref.resource_fields),
     }
-
-    for count, prop_class_ref in enumerate(prop_class_refs):
-        try:
-            resource_fields['property_%d'%count] = fields.List(fields.Nested(prop_class_ref.resource_fields))
-        except AttributeError:
-            get_logger().warning('Unable to load property class reference for %s' % class_ref.__name__)
-
     return resource_fields
 
 def gen_message_multival_fields(class_ref):
@@ -46,12 +39,11 @@ class AssetEnvironmentPropertiesMessage(DefaultMessage):
 # region Swagger Doc
 @swagger.model
 @swagger.nested(
-    object=ModelDefinitions.AssetModel.__name__,
-    property_0=ModelDefinitions.AssetEnvironmentPropertiesModel.__name__
+    object=ModelDefinitions.AssetModel.__name__
 )
 # endregion
 class AssetMessage(DefaultMessage):
-    resource_fields = gen_message_fields(ModelDefinitions.AssetModel, ModelDefinitions.AssetEnvironmentPropertiesModel)
+    resource_fields = gen_message_fields(ModelDefinitions.AssetModel)
     required = DefaultMessage.required
 
 # region Swagger Doc

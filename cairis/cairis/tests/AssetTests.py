@@ -4,11 +4,12 @@ from urllib import quote
 import jsonpickle
 
 from Asset import Asset
+from AssetEnvironmentProperties import AssetEnvironmentProperties
 from ValueType import ValueType
 from tests.CairisTests import CairisTests
 from tools.JsonConverter import json_deserialize
 from tools.ModelDefinitions import AssetEnvironmentPropertiesModel, SecurityAttribute
-
+from tools.SessionValidator import check_required_keys
 
 __author__ = 'Robin Quetin'
 
@@ -43,15 +44,16 @@ class AssetTests(CairisTests):
         )
     ]
     new_asset_props = [
-        AssetEnvironmentPropertiesModel(
-            env_name='Stroke',
-            attributes=new_asset_sec_attr
+        AssetEnvironmentProperties(
+            environmentName='Stroke',
+            associations=[[0,"Association","1..*","","","1","Association",0,"Grid meta-data"]],
+            syProperties=new_asset_sec_attr,
+            pRationale=[]
         )
     ]
     new_asset_dict = {
         'session_id': 'test',
-        'object': new_asset,
-        'property_0': new_asset_props
+        'object': new_asset
     }
     new_asset_body = jsonpickle.encode(new_asset_dict)
     # endregion
@@ -136,24 +138,22 @@ class AssetTests(CairisTests):
     def test_get_props_name_get(self):
         method = 'test_get_props_name_get'
         url = '/api/assets/name/%s/properties?session_id=test' % quote(self.existing_asset_name)
-        cls_asset_prop = AssetEnvironmentPropertiesModel.__module__+'.'+AssetEnvironmentPropertiesModel.__name__
 
         rv = self.app.get(url)
-        asset_props = json_deserialize(rv.data)
+        asset_props = jsonpickle.decode(rv.data)
         self.assertIsNotNone(asset_props, 'No results after deserialization')
+        self.assertIsInstance(asset_props, list, 'Result is not a list')
         self.assertGreater(len(asset_props), 0, 'List does not contain any elements')
         asset_prop = asset_props[0]
-        asset_prop_class_name = asset_prop.__class__.__module__ +'.'+ asset_prop.__class__.__name__
-        self.assertEqual(cls_asset_prop, asset_prop_class_name, 'The result is not an asset as expected')
-        self.logger.info('[%s] Asset property: %s\n', method, asset_props[0].environment)
+        self.logger.info('[%s] Asset property: %s\n', method, asset_prop['theEnvironmentName'])
 
     def test_update_props_name_put(self):
         method = 'test_update_props_name_put'
         url = '/api/assets/name/%s/properties' % quote(self.new_asset.theName)
-        self.logger.info('[%s] Old asset property environment name: %s', method, self.new_asset_props[0].environment)
+        self.logger.info('[%s] Old asset property environment name: %s', method, self.new_asset_props[0].theEnvironmentName)
 
         upd_asset_props = self.new_asset_props
-        upd_asset_props[0].environment = 'Psychosis'
+        upd_asset_props[0].theEnvironmentName = 'Psychosis'
         upd_asset_props_dict = {
             'session_id': 'test',
             'object': upd_asset_props
@@ -169,8 +169,9 @@ class AssetTests(CairisTests):
         self.assertIsNotNone(message, 'No message returned')
 
         rv = self.app.get('/api/assets/name/Test2/properties?session_id=test')
-        asset_props = json_deserialize(rv.data)
-        self.logger.info('[%s] Asset property environment: %s\n', method, asset_props[0].environment)
+        self.logger.debug('[%s] Response data: %s', method, rv.data)
+        asset_props = jsonpickle.decode(rv.data)
+        self.logger.info('[%s] Asset property environment: %s\n', method, asset_props[0]['theEnvironmentName'])
 
     def test_types_get(self):
         method = 'test_types_get'
