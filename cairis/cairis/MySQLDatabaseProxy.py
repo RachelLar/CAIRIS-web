@@ -11471,6 +11471,8 @@ class MySQLDatabaseProxy(DatabaseProxy.DatabaseProxy):
 
   def prepareDatabase(self):
     try:
+      import logging
+      logger = logging.getLogger(__name__)
       self.conn.query('select @@max_sp_recursion_depth;')
       result = self.conn.store_result()
       real_result = result.fetch_row()
@@ -11484,7 +11486,7 @@ class MySQLDatabaseProxy(DatabaseProxy.DatabaseProxy):
           rec_value = -1
 
       if rec_value == -1:
-          print('Unable to get max_sp_recursion_depth. Be sure max_sp_recursion_depth is set to 255 or more.')
+          logger.warning('Unable to get max_sp_recursion_depth. Be sure max_sp_recursion_depth is set to 255 or more.')
       elif rec_value < 255:
           self.conn.query('set max_sp_recursion_depth = 255')
           self.conn.store_result()
@@ -11495,11 +11497,11 @@ class MySQLDatabaseProxy(DatabaseProxy.DatabaseProxy):
 
           try:
               rec_value = real_result[0][0]
-              print('max_sp_recursion_depth is %d.' % rec_value)
+              logger.debug('max_sp_recursion_depth is %d.' % rec_value)
               if rec_value < 255:
-                  print('WARNING: some features may not work because the maximum recursion depth for stored procedures is too low')
+                logger.warning('WARNING: some features may not work because the maximum recursion depth for stored procedures is too low')
           except LookupError:
-              print('Unable to get max_sp_recursion_depth. Be sure max_sp_recursion_depth is set to 255 or more.')
+              logger.warning('Unable to get max_sp_recursion_depth. Be sure max_sp_recursion_depth is set to 255 or more.')
 
     except _mysql_exceptions.DatabaseError, e:
       id,msg = e
