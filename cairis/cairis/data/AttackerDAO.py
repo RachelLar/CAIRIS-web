@@ -121,7 +121,7 @@ class AttackerDAO(CairisDAO):
     # region Capabilities
     def get_attacker_capabilities(self, environment_name=''):
         try:
-            attacker_capabilities = self.db_proxy.getValueTypes('attacker_capability', environment_name)
+            attacker_capabilities = self.db_proxy.getValueTypes('capability', environment_name)
             return attacker_capabilities
         except ARM.DatabaseProxyException as ex:
             self.close()
