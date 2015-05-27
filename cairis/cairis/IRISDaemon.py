@@ -2,7 +2,7 @@ import logging
 import os
 import httplib
 
-from flask import Flask, session, make_response, request
+from flask import Flask, session, make_response, request, send_from_directory
 from flask.ext.cors import CORS
 from flask.ext.restful import Api
 from flask.ext.restful_swagger import swagger
@@ -11,8 +11,7 @@ from Borg import Borg
 from CairisHTTPError import CairisHTTPError, ARMHTTPError
 from ARM import ARMException, DatabaseProxyException
 from controllers import AssetController, AttackerController, CImportController, DimensionController, EnvironmentController, GoalController, RequirementController, \
-    RoleController, ThreatController, UserController, VulnerabilityController
-
+    RoleController, ThreatController, UploadController, UserController, VulnerabilityController
 
 __author__ = 'Robin Quetin'
 ''' This module uses CherryPy (tested using 3.6.0) & Routes (tested using 1.13) '''
@@ -32,6 +31,16 @@ def index():
         resp = make_response('Moved temporarily', httplib.TEMPORARY_REDIRECT)
         resp.headers['Location'] = '/user/config.html'
         return resp
+
+
+@app.route('/images/<path:path>')
+def get_image(path):
+    b = Borg()
+    fixed_img_path = os.path.join(b.imageDir, path)
+    if os.path.exists(fixed_img_path):
+        return send_from_directory('images', path)
+    else:
+        return send_from_directory('static/images', path)
 
 
 @app.route('/user/config.html', methods=['GET','POST'])
@@ -154,6 +163,9 @@ def start():
     api.add_resource(ThreatController.ThreatTypesAPI, '/api/threats/types')
     api.add_resource(ThreatController.ThreatTypeByNameAPI, '/api/threats/types/name/<string:name>')
 
+    # Upload controller
+    api.add_resource(UploadController.UploadImageAPI, '/api/upload/image')
+
     # User routes
     api.add_resource(UserController.UserConfigAPI, '/api/user/config')
 
@@ -169,7 +181,7 @@ def start():
     b.logger.debug('Error handlers: {0}'.format(app.error_handler_spec))
     app.secret_key = os.urandom(24)
     app.static_folder = b.staticDir
-    app.static_url_path = '/static'
+    app.static_url_path = 'static'
 
     logger = logging.getLogger('werkzeug')
     logger.setLevel(b.logLevel)
