@@ -224,7 +224,7 @@ class AttackerDAO(CairisDAO):
     # region Motivations
     def get_attacker_motivations(self, environment_name=''):
         try:
-            attacker_motivations = self.db_proxy.getValueTypes('attacker_motivation', environment_name)
+            attacker_motivations = self.db_proxy.getValueTypes('motivation', environment_name)
             return attacker_motivations
         except ARM.DatabaseProxyException as ex:
             self.close()
