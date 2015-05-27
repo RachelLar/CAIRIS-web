@@ -2,18 +2,18 @@ import httplib
 from os import close as fd_close
 from os import remove as remove_file
 from tempfile import mkstemp
+from urllib import unquote
 
 from flask import make_response, request, session
 from flask.ext.restful import Resource
 from flask_restful_swagger import swagger
+
 from ARM import DatabaseProxyException, ARMException
 from Borg import Borg
 from CairisHTTPError import MalformedJSONHTTPError, CairisHTTPError, ARMHTTPError
-
 import cimport
 from tools.ModelDefinitions import CImportParams
 from tools.SessionValidator import validate_proxy, check_required_keys
-
 
 __author__ = 'Robin Quetin'
 
@@ -61,9 +61,10 @@ class CImportAPI(Resource):
             raise MalformedJSONHTTPError(data=request.get_data())
 
         session_id = json_dict.get('session_id', session_id)
-        check_required_keys(json_dict, ('file_contents','type'))
+        check_required_keys(json_dict, ('urlenc_file_contents','type'))
         validate_proxy(session, session_id)
-        file_contents = json_dict['file_contents']
+        file_contents = json_dict['urlenc_file_contents']
+        file_contents = unquote(file_contents)
         type = json_dict['type']
         overwrite = json_dict.get('overwrite', None)
 
