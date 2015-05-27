@@ -6,6 +6,7 @@ from tests.GoalTests import GoalTests
 from tests.RequirementTests import RequirementTests
 from tests.RoleTests import RoleTests
 from tests.ThreatTests import ThreatTests
+from tests.UploadTests import UploadTests
 from tests.UserTests import UserTests
 from tests.VulnerabilityTests import VulnerabilityTests
 
