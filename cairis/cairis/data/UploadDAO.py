@@ -2,17 +2,18 @@ import httplib
 import imghdr
 import os
 import uuid
+
+from werkzeug.datastructures import FileStorage
+
 from Borg import Borg
 from CairisHTTPError import CairisHTTPError
 from data.CairisDAO import CairisDAO
-from tools.JsonConverter import json_serialize
-from werkzeug.datastructures import FileStorage
 
 __author__ = 'Robin Quetin'
 
 
-accepted_image_types = ['.jpg', '.jpeg', '.png', '.bmp', '.gif']
 class UploadDAO(CairisDAO):
+    accepted_image_types = ['jpg', 'jpeg', 'png', 'bmp', 'gif']
     def __init__(self, session_id):
         CairisDAO.__init__(self, session_id)
         b = Borg()
@@ -26,16 +27,26 @@ class UploadDAO(CairisDAO):
         extension = os.path.splitext(file.filename)[1]
         f_name = str(uuid.uuid4()) + extension
         f_path = os.path.join(self.image_dir, f_name)
-        file.save(f_path)
+
+        try:
+            file.save(f_path)
+        except IOError:
+            raise CairisHTTPError(
+                status_code=httplib.CONFLICT,
+                status='Unable to save image',
+                message='Please check if the static web directory exists ' +
+                        'and if the application has permission to write in the directory',
+            )
 
         if not os.path.exists(f_path):
             raise CairisHTTPError(
                 status_code=httplib.CONFLICT,
                 status='Image not found',
-                message='The image could not be saved on the server. Please check the server configuration to fix this problem.'
+                message='The image could not be saved on the server. \
+Please check the server configuration to fix this problem.'
             )
         img_format = imghdr.what(f_path)
-        if not img_format:
+        if not img_format or img_format not in self.accepted_image_types:
             os.remove(f_name)
             raise CairisHTTPError(
                 status_code=httplib.CONFLICT,

@@ -18,11 +18,10 @@ class UploadImageAPI(Resource):
     @swagger.operation(
         notes='Sets up the user session',
         nickname='user-config-post',
-        responseClass=str.__name__,
         parameters=[
             {
                 'name': 'file',
-                "description": "The image file to upload",
+                "description": "The image file to upload (formats: "+str(UploadDAO.accepted_image_types)+")",
                 "required": True,
                 "allowMultiple": False,
                 'type': 'file',
