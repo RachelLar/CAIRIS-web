@@ -41,11 +41,15 @@ def get_session_id(session, request):
     :type session: flask.session
     :type request: flask.request
     """
+    session_id = None
+
     # Look if HTTP session is being used
     if session is not None:
-        session_id = session.get('session_id', -1)
-    else:
-        session_id = -1
+        session_id = session.get('session_id', session_id)
+
+    # Look if form data is being used
+    if request.form:
+        session_id = request.form.get('session_id', session_id)
 
     # Look if body contains session ID
     json = request.get_json(silent=True)
@@ -54,6 +58,10 @@ def get_session_id(session, request):
 
     # Check if the session ID is provided by query parameters
     session_id = request.args.get('session_id', session_id)
+
+    if session_id is None:
+        raise MissingParameterHTTPError(param_names=['session_id'])
+
     return session_id
 
 def validate_proxy(session, id, request=None, conf=None):
@@ -70,7 +78,7 @@ def validate_proxy(session, id, request=None, conf=None):
     if session is not None:
         session_id = session.get('session_id', -1)
     else:
-        session_id = -1
+        session_id = None
 
     if conf is not None:
         if isinstance(conf, dict):
@@ -89,7 +97,7 @@ def validate_proxy(session, id, request=None, conf=None):
                     message='The provided settings are invalid and cannot be used to create a database connection'
                 )
 
-    if not (session_id == -1 and id is None):
+    if not (session_id is None and id is None):
         if id is None:
             id = session_id
         b = Borg()

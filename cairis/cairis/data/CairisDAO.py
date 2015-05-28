@@ -57,7 +57,7 @@ class CairisDAO(object):
         :return The MySQLDatabaseProxy instance associated with the session ID
         :rtype MySQLDatabaseProxy
         """
-        if session_id != -1:
+        if session_id:
             b = Borg()
             db_proxy = b.get_dbproxy(session_id)
 
