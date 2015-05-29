@@ -23,6 +23,7 @@ class UploadTests(CairisTests):
 
     def test_big_image_upload(self):
         method = 'test_big_image_upload'
+        self.logger.info('[%s] Downloading a big image. This could take a while...', method)
         name, request = urllib.urlretrieve('http://upload.wikimedia.org/wikipedia/commons/d/d4/Nature_landscape_ukraine_poltava_(8093169218).jpg')
         if name and os.path.exists(name):
             fs_image = open(name, 'rb')
