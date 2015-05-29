@@ -10,7 +10,7 @@ from flask.ext.restful_swagger import swagger
 from Borg import Borg
 from CairisHTTPError import CairisHTTPError, ARMHTTPError
 from ARM import ARMException, DatabaseProxyException
-from controllers import AssetController, AttackerController, CImportController, DimensionController, EnvironmentController, GoalController, \
+from controllers import AssetController, AttackerController, CImportController, DimensionController, EnvironmentController, GoalController, ProjectController, \
     RequirementController, RoleController, ThreatController, UploadController, UserController, VulnerabilityController
 
 __author__ = 'Robin Quetin'
@@ -141,8 +141,8 @@ def start():
     api.add_resource(GoalController.GoalModelAPI, '/api/goals/model/environment/<string:environment>')
 
     # Project routes
-    # api.add_resource(ProjectController.ProjectSettingsAPI, '/api/settings')
-    # api.add_resource(ProjectController.ProjectCreateAPI, '/api/settings/create')
+    api.add_resource(ProjectController.ProjectSettingsAPI, '/api/settings')
+    api.add_resource(ProjectController.ProjectCreateAPI, '/api/settings/create')
 
     # Requirement routes
     api.add_resource(RequirementController.RequirementsAPI, '/api/requirements')

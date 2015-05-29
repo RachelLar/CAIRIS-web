@@ -4,7 +4,7 @@ from tests.AssetTests import AssetTests
 from tests.CImportTests import CImportTests
 from tests.EnvironmentTests import EnvironmentTests
 from tests.GoalTests import GoalTests
-# from tests.ProjectTests import ProjectTests
+from tests.ProjectTests import ProjectTests
 from tests.RequirementTests import RequirementTests
 from tests.RoleTests import RoleTests
 from tests.ThreatTests import ThreatTests
@@ -19,7 +19,7 @@ tests_dict = {
     'environment': [0, EnvironmentTests],
     'goal': [0, GoalTests],
     'import': [0, CImportTests],
-    #'project': [0, ProjectTests],
+    'project': [0, ProjectTests],
     'requirement': [0, RequirementTests],
     'role': [0, RoleTests],
     'threat': [0, ThreatTests],
