@@ -306,10 +306,10 @@ class GoalDAO(CairisDAO):
                     priority=fake_prop['thePriority'],
                     fitCriterion=fake_prop['theFitCriterion'],
                     issue=fake_prop['theIssue'],
-                    goalRefinements=fake_prop['theGoalRefinements'],
-                    subGoalRefinements=fake_prop['theSubGoalRefinements'],
+                    goalRefinements=new_goal_refinements,
+                    subGoalRefinements=new_subgoal_refinements,
                     concs=fake_prop['theConcerns'],
-                    cas=fake_prop['theConcernAssociations'],
+                    cas=new_concern_assocs,
                 )
                 new_props.append(new_prop)
         else:
