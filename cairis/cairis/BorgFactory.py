@@ -195,10 +195,15 @@ def dInitialise(configFile):
     'dbName': 'cairis'
   }
 
-  b.settings['test']['dbProxy'] = MySQLDatabaseProxy(
+  db_proxy = MySQLDatabaseProxy(
     host=b.settings['test']['dbHost'],
     port=b.settings['test']['dbPort'],
     user=b.settings['test']['dbUser'],
     passwd=b.settings['test']['dbPasswd'],
     db=b.settings['test']['dbName']
   )
+
+  if db_proxy.conn.open:
+      db_proxy.close()
+
+  b.settings['test']['dbProxy'] = db_proxy

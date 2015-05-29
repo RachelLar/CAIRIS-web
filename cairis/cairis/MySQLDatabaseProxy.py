@@ -310,7 +310,12 @@ class MySQLDatabaseProxy(DatabaseProxy.DatabaseProxy):
       id,msg = e
       exceptionText = 'MySQL error connecting to the IRIS database on host ' + host + ' at port ' + str(port) + ' with user ' + user + ' (id:' + str(id) + ',message:' + msg
       raise DatabaseProxyException(exceptionText)
-    self.theDimIdLookup, self.theDimNameLookup = self.buildDimensionLookup()
+
+    try:
+        self.theDimIdLookup, self.theDimNameLookup = self.buildDimensionLookup()
+    except TypeError:
+        print('Database is corrupt. Please re-import procs.sql and init.sql.')
+        exit(1)
 
   def reconnect(self,closeConn = True, session_id=None):
     try:
@@ -363,7 +368,8 @@ class MySQLDatabaseProxy(DatabaseProxy.DatabaseProxy):
       exceptionText = 'MySQL error building dimension lookup tables (id:' + str(id) + ',message:' + msg
     
   def close(self):
-    self.conn.close()
+    if self.conn.open:
+        self.conn.close()
 
   def getRequirements(self,constraintId = '',isAsset = 1):
     try:
