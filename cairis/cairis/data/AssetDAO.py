@@ -10,6 +10,7 @@ from ValueType import ValueType
 from ValueTypeParameters import ValueTypeParameters
 import armid
 from data.CairisDAO import CairisDAO
+from kaosxdot import KaosXDotParser
 from tools.JsonConverter import json_serialize, json_deserialize
 from tools.ModelDefinitions import AssetEnvironmentPropertiesModel, SecurityAttribute, AssetModel
 from tools.SessionValidator import check_required_keys, get_fonts
@@ -221,13 +222,11 @@ class AssetDAO(CairisDAO):
             self.close()
             raise ARMHTTPError(ex)
 
-    def get_asset_model(self, environment_name):
+    def get_asset_model(self, environment_name, with_concerns=True):
         fontName, fontSize, apFontName = get_fonts(session_id=self.session_id)
         try:
-            associationDictionary = self.db_proxy.classModel(environment_name)
-            associations = GraphicalAssetModel(associationDictionary.values(), environment_name, db_proxy=self.db_proxy,
-                                               fontName=fontName,
-                                               fontSize=fontSize)
+            associationDictionary = self.db_proxy.classModel(environment_name, hideConcerns=(with_concerns is False))
+            associations = GraphicalAssetModel(associationDictionary.values(), environment_name, db_proxy=self.db_proxy, fontName=fontName, fontSize=fontSize)
             dot_code = associations.graph()
             return dot_code
         except ARM.DatabaseProxyException as ex:
@@ -236,6 +235,8 @@ class AssetDAO(CairisDAO):
         except ARM.ARMException as ex:
             self.close()
             raise ARMHTTPError(ex)
+        except Exception as ex:
+            print(ex)
 
     # region Asset Types
     def get_asset_types(self, environment_name=''):

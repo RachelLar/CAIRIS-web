@@ -4,7 +4,7 @@ from flask import request, session, make_response
 from flask_restful_swagger import swagger
 from flask.ext.restful import Resource
 
-from CairisHTTPError import ObjectNotFoundHTTPError, MissingParameterHTTPError
+from CairisHTTPError import ObjectNotFoundHTTPError
 from data.AssetDAO import AssetDAO
 from tools.JsonConverter import json_serialize
 from tools.MessageDefinitions import AssetMessage, AssetEnvironmentPropertiesMessage, ValueTypeMessage
@@ -336,6 +336,15 @@ class AssetModelAPI(Resource):
                 "paramType": "query"
             },
             {
+                "name": "with_concerns",
+                "description": "Defines if concerns should be included in the model",
+                "required": False,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "enum": ['0','1'],
+                "paramType": "query"
+            },
+            {
                 "name": "session_id",
                 "description": "The ID of the user's session",
                 "required": False,
@@ -354,11 +363,17 @@ class AssetModelAPI(Resource):
     # endregion
     def get(self, environment):
         session_id = get_session_id(session, request)
+        with_concerns = request.args.get('with_concerns', True)
+        if with_concerns == '0' or with_concerns == 0:
+            with_concerns = False
         model_generator = get_model_generator()
 
         dao = AssetDAO(session_id)
-        dot_code = dao.get_asset_model(environment)
+        dot_code = dao.get_asset_model(environment, with_concerns=with_concerns)
         dao.close()
+
+        if not isinstance(dot_code, str):
+            raise ObjectNotFoundHTTPError('The model')
 
         resp = make_response(model_generator.generate(dot_code), httplib.OK)
         accept_header = request.headers.get('Accept', 'image/svg+xml')
