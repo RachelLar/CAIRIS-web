@@ -275,7 +275,7 @@ class GoalDAO(CairisDAO):
                     new_goal_refinements.append(list(goal_refinement))
 
                 new_subgoal_refinements = []
-                for subgoal_refinement in real_prop.theGoalRefinements:
+                for subgoal_refinement in real_prop.theSubGoalRefinements:
                     new_subgoal_refinements.append(list(subgoal_refinement))
 
                 real_prop.theConcernAssociations = new_concern_assocs
@@ -295,7 +295,7 @@ class GoalDAO(CairisDAO):
                     new_goal_refinements.append(tuple(goal_refinement))
 
                 new_subgoal_refinements = []
-                for subgoal_refinement in fake_prop['theGoalRefinements']:
+                for subgoal_refinement in fake_prop['theSubGoalRefinements']:
                     new_subgoal_refinements.append(tuple(subgoal_refinement))
 
                 new_prop = GoalEnvironmentProperties(
