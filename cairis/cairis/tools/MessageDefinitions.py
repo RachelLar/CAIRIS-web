@@ -1,8 +1,6 @@
 from flask.ext.restful import fields
 from flask.ext.restful_swagger import swagger
-
-from tools.SessionValidator import get_logger
-
+from tools import PseudoClasses
 
 __author__ = 'Robin Quetin'
 
@@ -59,6 +57,16 @@ class AttackerMessage(DefaultMessage):
 # region Swagger Doc
 @swagger.model
 @swagger.nested(
+    object=ModelDefinitions.CImportParams.__name__
+)
+# endregion
+class CImportMessage(DefaultMessage):
+    resource_fields = gen_message_fields(ModelDefinitions.CImportParams)
+    required = DefaultMessage.required
+
+# region Swagger Doc
+@swagger.model
+@swagger.nested(
     object=ModelDefinitions.EnvironmentModel.__name__
 )
 # endregion
@@ -74,6 +82,16 @@ class EnvironmentMessage(DefaultMessage):
 # endregion
 class GoalMessage(DefaultMessage):
     resource_fields = gen_message_fields(ModelDefinitions.GoalModel)
+    required = DefaultMessage.required
+
+# region Swagger Doc
+@swagger.model
+@swagger.nested(
+    object=PseudoClasses.ProjectSettings.__name__
+)
+# endregion
+class ProjectMessage(DefaultMessage):
+    resource_fields = gen_message_fields(PseudoClasses.ProjectSettings)
     required = DefaultMessage.required
 
 # region Swagger Doc

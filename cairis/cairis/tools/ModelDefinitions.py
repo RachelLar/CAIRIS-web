@@ -134,12 +134,33 @@ class AttackerModel(object):
 @swagger.model
 class CImportParams(object):
     resource_fields = {
-        'session_id': fields.String,
-        'file_contents': fields.String,
+        'urlenc_file_contents': fields.String,
         'type': fields.String,
         'overwrite': fields.Integer
     }
-    required = ['file_contents', 'type']
+    required = resource_fields.keys()
+    required.remove('overwrite')
+    swagger_metadata = {
+        'type': {
+            'enum': [
+                'securitypattern',
+                'attackpattern',
+                'tvtypes',
+                'directory',
+                'requirements',
+                'riskanalysis',
+                'usability',
+                'project',
+                'domainvalues',
+                'architecturalpattern',
+                'associations',
+                'synopses',
+                'processes',
+                'assets',
+                'all'
+            ]
+        }
+    }
 
 @swagger.model
 @swagger.nested(

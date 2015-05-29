@@ -10,8 +10,8 @@ from flask.ext.restful_swagger import swagger
 from Borg import Borg
 from CairisHTTPError import CairisHTTPError, ARMHTTPError
 from ARM import ARMException, DatabaseProxyException
-from controllers import AssetController, AttackerController, CImportController, DimensionController, EnvironmentController, GoalController, RequirementController, \
-    RoleController, ThreatController, UploadController, UserController, VulnerabilityController
+from controllers import AssetController, AttackerController, CImportController, DimensionController, EnvironmentController, GoalController, \
+    RequirementController, RoleController, ThreatController, UploadController, UserController, VulnerabilityController
 
 __author__ = 'Robin Quetin'
 ''' This module uses CherryPy (tested using 3.6.0) & Routes (tested using 1.13) '''
@@ -122,8 +122,9 @@ def start():
     api.add_resource(AttackerController.AttackerMotivationsAPI, '/api/attackers/motivations')
     api.add_resource(AttackerController.AttackerMotivationByNameAPI, '/api/attackers/motivations/name/<string:name>')
 
-    # CImport
-    api.add_resource(CImportController.CImportAPI, '/api/cimport')
+    # Import routes
+    api.add_resource(CImportController.CImportTextAPI, '/api/import/text')
+    api.add_resource(CImportController.CImportFileAPI, '/api/import/file/type/<string:type>')
 
     # DimensionController
     api.add_resource(DimensionController.DimensionsAPI, '/api/dimensions/table/<table>')
@@ -138,6 +139,10 @@ def start():
     api.add_resource(GoalController.GoalsAPI, '/api/goals')
     api.add_resource(GoalController.GoalByNameAPI, '/api/goals/name/<string:name>')
     api.add_resource(GoalController.GoalModelAPI, '/api/goals/model/environment/<string:environment>')
+
+    # Project routes
+    # api.add_resource(ProjectController.ProjectSettingsAPI, '/api/settings')
+    # api.add_resource(ProjectController.ProjectCreateAPI, '/api/settings/create')
 
     # Requirement routes
     api.add_resource(RequirementController.RequirementsAPI, '/api/requirements')
