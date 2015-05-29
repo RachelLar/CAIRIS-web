@@ -5,6 +5,7 @@ from Asset import Asset
 from AssetEnvironmentProperties import AssetEnvironmentProperties
 from Attacker import Attacker
 from AttackerEnvironmentProperties import AttackerEnvironmentProperties
+from Dependency import Dependency
 from Goal import Goal
 from GoalEnvironmentProperties import GoalEnvironmentProperties
 from MisuseCase import MisuseCase
@@ -160,6 +161,24 @@ class CImportParams(object):
                 'all'
             ]
         }
+    }
+
+@swagger.model
+class DependencyModel(object):
+    resource_fields = {
+        obj_id_field: fields.String,
+        'theDependencyType': fields.String,
+        'theRationale': fields.String,
+        'theEnvironmentName': fields.String,
+        'theDepender': fields.String,
+        'theDependee': fields.String,
+        'theDependency': fields.String,
+        'theId': fields.Integer,
+    }
+    required = resource_fields.keys()
+    required.remove(obj_id_field)
+    swagger_metamodel = {
+        obj_id_field : gen_class_metadata(Dependency)
     }
 
 @swagger.model

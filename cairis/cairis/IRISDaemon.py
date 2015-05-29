@@ -10,7 +10,7 @@ from flask.ext.restful_swagger import swagger
 from Borg import Borg
 from CairisHTTPError import CairisHTTPError, ARMHTTPError
 from ARM import ARMException, DatabaseProxyException
-from controllers import AssetController, AttackerController, CImportController, DimensionController, EnvironmentController, GoalController, ProjectController, \
+from controllers import AssetController, AttackerController, CImportController, DependencyController, DimensionController, EnvironmentController, GoalController, ProjectController, \
     RequirementController, RoleController, ThreatController, UploadController, UserController, VulnerabilityController
 
 __author__ = 'Robin Quetin'
@@ -122,13 +122,13 @@ def start():
     api.add_resource(AttackerController.AttackerMotivationsAPI, '/api/attackers/motivations')
     api.add_resource(AttackerController.AttackerMotivationByNameAPI, '/api/attackers/motivations/name/<string:name>')
 
-    # Import routes
-    api.add_resource(CImportController.CImportTextAPI, '/api/import/text')
-    api.add_resource(CImportController.CImportFileAPI, '/api/import/file/type/<string:type>')
+    # Dependency routes
+    api.add_resource(DependencyController.DependenciesAPI, '/api/dependencies')
+    api.add_resource(DependencyController.DependencyByNameAPI, '/api/dependencies/environment/<environment>/depender/<depender>/dependee/<dependee>/dependency/<dependency>')
 
     # DimensionController
-    api.add_resource(DimensionController.DimensionsAPI, '/api/dimensions/table/<table>')
-    api.add_resource(DimensionController.DimensionNamesAPI, '/api/dimensions/table/<table>/environment/<environment>')
+    api.add_resource(DimensionController.DimensionsAPI, '/api/dimensions/table/<string:table>')
+    api.add_resource(DimensionController.DimensionNamesAPI, '/api/dimensions/table/<string:table>/environment/<string:environment>')
 
     # Environment routes
     api.add_resource(EnvironmentController.EnvironmentsAPI, '/api/environments')
@@ -139,6 +139,10 @@ def start():
     api.add_resource(GoalController.GoalsAPI, '/api/goals')
     api.add_resource(GoalController.GoalByNameAPI, '/api/goals/name/<string:name>')
     api.add_resource(GoalController.GoalModelAPI, '/api/goals/model/environment/<string:environment>')
+
+    # Import routes
+    api.add_resource(CImportController.CImportTextAPI, '/api/import/text')
+    api.add_resource(CImportController.CImportFileAPI, '/api/import/file/type/<string:type>')
 
     # Project routes
     api.add_resource(ProjectController.ProjectSettingsAPI, '/api/settings')

@@ -26,7 +26,12 @@ class CairisDAO(object):
         self.logger.debug('Connection closed')
 
     def from_json(self, request):
-        raise NotImplementedError('from_json is not yet implemented by subclass')
+        json = request.get_json(silent=True)
+        if json is False or json is None:
+            self.close()
+            raise MalformedJSONHTTPError(data=request.get_data())
+
+        return json['object']
 
     def type_from_json(self, request):
         json = request.get_json(silent=True)

@@ -67,6 +67,16 @@ class CImportMessage(DefaultMessage):
 # region Swagger Doc
 @swagger.model
 @swagger.nested(
+    object=ModelDefinitions.DependencyModel.__name__
+)
+# endregion
+class DependencyMessage(DefaultMessage):
+    resource_fields = gen_message_fields(ModelDefinitions.DependencyModel)
+    required = DefaultMessage.required
+
+# region Swagger Doc
+@swagger.model
+@swagger.nested(
     object=ModelDefinitions.EnvironmentModel.__name__
 )
 # endregion

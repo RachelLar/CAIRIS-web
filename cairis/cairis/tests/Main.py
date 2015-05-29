@@ -2,6 +2,7 @@ import unittest
 import sys
 from tests.AssetTests import AssetTests
 from tests.CImportTests import CImportTests
+from tests.DependencyTests import DependencyTests
 from tests.EnvironmentTests import EnvironmentTests
 from tests.GoalTests import GoalTests
 from tests.ProjectTests import ProjectTests
@@ -16,6 +17,7 @@ __author__ = 'Robin Quetin'
 
 tests_dict = {
     'asset': [0, AssetTests],
+    'dependency': [0, DependencyTests],
     'environment': [0, EnvironmentTests],
     'goal': [0, GoalTests],
     'import': [0, CImportTests],
