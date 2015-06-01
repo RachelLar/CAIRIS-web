@@ -199,8 +199,8 @@ $(function () {
  *        $.AdminLTE.layout.fixSidebar()
  */
 $.AdminLTE.layout = {
-  activate: function () {
-    var _this = this;
+ activate: function () {
+   var _this = this;
     _this.fix();
     _this.fixSidebar();
     $(window, ".wrapper").resize(function () {

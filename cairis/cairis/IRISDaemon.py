@@ -25,12 +25,33 @@ b = Borg()
 
 @app.route('/')
 def index():
-    if session.has_key('session_id'):
-        return b.template_generator.serve_result('index_page')
-    else:
-        resp = make_response('Moved temporarily', httplib.TEMPORARY_REDIRECT)
-        resp.headers['Location'] = '/user/config.html'
-        return resp
+    return app.send_static_file('index.html')
+    # if session.has_key('session_id'):
+    #     return b.template_generator.serve_result('index_page')
+    # else:
+    #     resp = make_response('Moved temporarily', httplib.TEMPORARY_REDIRECT)
+    #     resp.headers['Location'] = '/user/config.html'
+    #     return resp
+
+
+@app.route('/plugins/<path:path>')
+def plugin_reroute(path):
+    return send_from_directory('static/plugins', path)
+
+
+@app.route('/fastTemplates/<path:path>')
+def fast_templates_reroute(path):
+    return send_from_directory('static/fastTemplates', path)
+
+
+@app.route('/dist/<path:path>')
+def dist_reroute(path):
+    return send_from_directory('static/dist', path)
+
+
+@app.route('/bootstrap/<path:path>')
+def bootstrap_reroute(path):
+    return send_from_directory('static/bootstrap', path)
 
 
 @app.route('/images/<path:path>')
