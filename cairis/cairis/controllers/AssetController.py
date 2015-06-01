@@ -110,6 +110,42 @@ class AssetsAPI(Resource):
         return resp
 
 
+class AssetByEnvironmentNamesAPI(Resource):
+    # region Swagger Doc
+    @swagger.operation(
+        notes='Get all the asset names associated with a specific environment',
+        responseClass=SwaggerAssetModel.__name__,
+        nickname='assets-by-environment-names-get',
+        parameters=[
+            {
+                "name": "session_id",
+                "description": "The ID of the user's session",
+                "required": False,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "paramType": "query"
+            }
+        ],
+        responseMessages=[
+            {
+                "code": httplib.BAD_REQUEST,
+                "message": "The database connection was not properly set up"
+            }
+        ]
+    )
+    # endregion
+    def get(self, environment):
+        session_id = get_session_id(session, request)
+
+        dao = AssetDAO(session_id)
+        assets = dao.get_asset_names(environment=environment)
+        dao.close()
+
+        resp = make_response(json_serialize(assets, session_id=session_id))
+        resp.headers['Content-Type'] = "application/json"
+        return resp
+
+
 class AssetByNameAPI(Resource):
     # region Swagger Doc
     @swagger.operation(

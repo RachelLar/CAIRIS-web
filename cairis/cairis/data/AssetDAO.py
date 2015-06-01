@@ -58,9 +58,9 @@ class AssetDAO(CairisDAO):
 
         return assets
 
-    def get_asset_names(self):
+    def get_asset_names(self, environment=''):
         try:
-            asset_names = self.db_proxy.getDimensionNames('asset')
+            asset_names = self.db_proxy.getDimensionNames('asset', environment)
             return asset_names
         except ARM.DatabaseProxyException as ex:
             self.close()

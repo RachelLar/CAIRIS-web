@@ -105,6 +105,7 @@ def start():
     # Asset routes
     api.add_resource(AssetController.AssetsAPI, '/api/assets')
     api.add_resource(AssetController.AssetByNameAPI, '/api/assets/name/<string:name>')
+    api.add_resource(AssetController.AssetByEnvironmentNamesAPI, '/api/assets/environment/<string:environment>/names')
     api.add_resource(AssetController.AssetByIdAPI, '/api/assets/id/<int:id>')
     api.add_resource(AssetController.AssetNamesAPI, '/api/assets/all/names')
     api.add_resource(AssetController.AssetTypesAPI, '/api/assets/types')
