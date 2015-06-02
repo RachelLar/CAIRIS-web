@@ -36,7 +36,7 @@ class EnvironmentDAO(CairisDAO):
     def get_environment_names(self):
         """
         Get the available environment names.
-        :rtype list
+        :rtype list[str]
         :raise ARMHTTPError:
         """
         try:
@@ -101,6 +101,35 @@ class EnvironmentDAO(CairisDAO):
             found_environment = self.simplify(found_environment)
 
         return found_environment
+
+    def get_environments_by_threat_vulnerability(self, threat_name, vulnerability_name):
+        """
+        :rtype : dict[str, Environment]
+        """
+        env_names = self.get_environment_names_by_threat_vulnerability(threat_name, vulnerability_name)
+        environments = {}
+        for env_name in env_names:
+            try:
+                environment = self.get_environment_by_name(env_name)
+                environments[env_name] = environment
+            except:
+                pass
+
+        return environments
+
+    def get_environment_names_by_threat_vulnerability(self, threat_name, vulnerability_name):
+        """
+        :rtype : list[str]
+        """
+        try:
+            environments = self.db_proxy.riskEnvironments(threat_name, vulnerability_name)
+            return environments
+        except ARM.DatabaseProxyException as ex:
+            self.close()
+            raise ARMHTTPError(ex)
+        except ARM.ARMException as ex:
+            self.close()
+            raise ARMHTTPError(ex)
 
     def add_environment(self, environment):
         """

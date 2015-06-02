@@ -211,6 +211,35 @@ class ProjectSettings(object):
 
 
 @swagger.model
+class RiskScore(object):
+    # region Swagger Docs
+    resource_fields = {
+        obj_id_field: fields.String,
+        'responseName': fields.String,
+        'unmitScore': fields.Integer,
+        'mitScore': fields.Integer,
+        'details': fields.String
+    }
+    required = resource_fields.keys()
+    required.remove(obj_id_field)
+    swagger_metadata = {
+        obj_id_field: { 'enum': [__name__+'.RiskScore'] }
+    }
+    # endregion
+    def __init__(self, response_name, unmit_score, mit_score, details):
+        """
+        :type response_name: str
+        :type unmit_score: int
+        :type mit_score: int
+        :type details: str
+        """
+        self.responseName = response_name
+        self.unmitScore = unmit_score or -1
+        self.mitScore = mit_score or -1
+        self.details = details
+
+
+@swagger.model
 class SecurityAttribute(object):
     def __init__(self, name=None, value=None, rationale=None):
         """

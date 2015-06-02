@@ -243,6 +243,79 @@ class EnvironmentByNameAPI(Resource):
         resp.headers['Content-type'] = 'application/json'
         return resp
 
+
+class EnvironmentsByThreatVulnerability(Resource):
+    #region Swagger Docs
+    @swagger.operation(
+        notes='Get environments in which both the threat as the vulnerability reside in',
+        nickname='environment-by-threat-vulnerability-get',
+        responseClass=EnvironmentModel.__name__,
+        parameters=[
+            {
+                "name": "session_id",
+                "description": "The ID of the user's session",
+                "required": False,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "paramType": "query"
+            }
+        ],
+        responseMessages=[
+            {
+                "code": httplib.BAD_REQUEST,
+                "message": "The database connection was not properly set up"
+            }
+        ]
+    )
+    #endregion
+    def get(self, threat, vulnerability):
+        session_id = get_session_id(session, request)
+
+        dao = EnvironmentDAO(session_id)
+        environments = dao.get_environments_by_threat_vulnerability(threat, vulnerability)
+        dao.close()
+
+        resp = make_response(json_serialize(environments, session_id=session_id), httplib.OK)
+        resp.headers['Content-type'] = 'application/json'
+        return resp
+
+
+class EnvironmentNamesByThreatVulnerability(Resource):
+    #region Swagger Docs
+    @swagger.operation(
+        notes='Get environment names in which both the threat as the vulnerability reside in',
+        nickname='environment-names-by-threat-vulnerability-get',
+        responseClass=list.__name__,
+        parameters=[
+            {
+                "name": "session_id",
+                "description": "The ID of the user's session",
+                "required": False,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "paramType": "query"
+            }
+        ],
+        responseMessages=[
+            {
+                "code": httplib.BAD_REQUEST,
+                "message": "The database connection was not properly set up"
+            }
+        ]
+    )
+    #endregion
+    def get(self, threat, vulnerability):
+        session_id = get_session_id(session, request)
+
+        dao = EnvironmentDAO(session_id)
+        environments = dao.get_environment_names_by_threat_vulnerability(threat, vulnerability)
+        dao.close()
+
+        resp = make_response(json_serialize(environments, session_id=session_id), httplib.OK)
+        resp.headers['Content-type'] = 'application/json'
+        return resp
+
+
 class EnvironmentNamesAPI(Resource):
     #region Swagger Docs
     @swagger.operation(

@@ -12,6 +12,8 @@ class SVGGenerator(object):
         self.extension = 'svg'
 
     def generate(self, dot_code, model_type):
+        if not dot_code:
+            dot_code = ''
         fd, temp_abspath = make_tempfile(suffix=self.extension)
         temp_file = open(temp_abspath, 'wb')
         temp_file.write(dot_code)
@@ -77,8 +79,10 @@ def correctHref(line, model_type):
             old_link = line[start_index+1:end_index]
             parts = old_link.split('#')
             type = parts[0]
+            if type[-1] == 'y':
+                type = type[:-1]+'ie'
             object = ''.join(parts[1:])
-            if model_type == 'goal' and type == 'requirement':
+            if (model_type == 'goal' or model_type == 'risk') and type == 'requirement':
                 new_link = '/api/{0}s/shortcode/{1}'.format(type, object)
             else:
                 new_link = '/api/{0}s/name/{1}'.format(type, object)

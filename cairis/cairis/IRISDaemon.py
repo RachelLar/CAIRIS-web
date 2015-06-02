@@ -2,7 +2,7 @@ import logging
 import os
 import httplib
 
-from flask import Flask, session, make_response, request, send_from_directory
+from flask import Flask, make_response, request, send_from_directory
 from flask.ext.cors import CORS
 from flask.ext.restful import Api
 from flask.ext.restful_swagger import swagger
@@ -11,7 +11,7 @@ from Borg import Borg
 from CairisHTTPError import CairisHTTPError, ARMHTTPError
 from ARM import ARMException, DatabaseProxyException
 from controllers import AssetController, AttackerController, CImportController, DependencyController, DimensionController, EnvironmentController, GoalController, ProjectController, \
-    RequirementController, RoleController, ThreatController, UploadController, UserController, VulnerabilityController
+    RequirementController, RiskController, RoleController, ThreatController, UploadController, UserController, VulnerabilityController
 
 __author__ = 'Robin Quetin'
 ''' This module uses CherryPy (tested using 3.6.0) & Routes (tested using 1.13) '''
@@ -159,8 +159,18 @@ def start():
 
     # Environment routes
     api.add_resource(EnvironmentController.EnvironmentsAPI, '/api/environments')
+    api.add_resource(EnvironmentController.EnvironmentNamesAPI, '/api/environments/names', '/api/environments/all/names')
     api.add_resource(EnvironmentController.EnvironmentByNameAPI, '/api/environments/name/<string:name>')
-    api.add_resource(EnvironmentController.EnvironmentNamesAPI, '/api/environments/all/names')
+    api.add_resource(
+        EnvironmentController.EnvironmentsByThreatVulnerability,
+        '/api/environments/threat/<string:threat>/vulnerability/<string:vulnerability>',
+        '/api/environments/vulnerability/<string:vulnerability>/threat/<string:threat>'
+    )
+    api.add_resource(
+        EnvironmentController.EnvironmentNamesByThreatVulnerability,
+        '/api/environments/threat/<string:threat>/vulnerability/<string:vulnerability>/names',
+        '/api/environments/vulnerability/<string:vulnerability>/threat/<string:threat>/names'
+    )
 
     # Goal routes
     api.add_resource(GoalController.GoalsAPI, '/api/goals')
@@ -184,7 +194,19 @@ def start():
     api.add_resource(RequirementController.RequirementByShortcodeAPI, '/api/requirements/shortcode/<string:shortcode>')
 
     # Risk routes
-    #api.add_resource(RiskController.RisksAPI, '/api/risks')
+    api.add_resource(RiskController.RisksAPI, '/api/risks')
+    api.add_resource(RiskController.RiskByNameAPI, '/api/risks/name/<string:name>')
+    api.add_resource(
+        RiskController.RisksScoreByNameAPI,
+        '/api/risks/name/<string:name>/threat/<string:threat>/vulnerability/<string:vulnerability>/environment/<string:environment>',
+        '/api/risks/name/<string:name>/vulnerability/<string:vulnerability>/threat/<string:threat>/environment/<string:environment>'
+    )
+    api.add_resource(
+        RiskController.RisksRatingByNameAPI,
+        '/api/risks/threat/<string:threat>/vulnerability/<string:vulnerability>/environment/<string:environment>',
+        '/api/risks/vulnerability/<string:vulnerability>/threat/<string:threat>/environment/<string:environment>'
+    )
+    api.add_resource(RiskController.RiskAnalysisModelByNameAPI, '/api/risks/model/environment/<string:environment>')
 
     # Role routes
     api.add_resource(RoleController.RolesAPI, '/api/roles')

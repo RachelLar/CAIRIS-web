@@ -32,14 +32,14 @@ USECASE_TYPE = 0
 MISUSECASE_TYPE = 1
 
 class EnvironmentModel:
-  def __init__(self,tlinks,environmentName,dp):
+  def __init__(self,tlinks,environmentName,dp, fontName=None, fontSize=None):
     self.theTraceLinks = tlinks
     self.theEnvironmentName = environmentName
     self.dbProxy = dp
     self.theGraph = pydot.Dot()
     b = Borg()
-    self.fontSize = b.fontSize
-    self.fontName = b.fontName
+    self.fontSize = fontSize or b.fontSize
+    self.fontName = fontName or b.fontName
     self.theGraphName = b.tmpDir + '/pydotout.dot'
 
     self.theNodeLookup = {}
