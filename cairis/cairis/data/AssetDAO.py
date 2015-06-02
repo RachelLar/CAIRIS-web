@@ -21,12 +21,6 @@ __author__ = 'Robin Quetin'
 class AssetDAO(CairisDAO):
     def __init__(self, session_id):
         CairisDAO.__init__(self, session_id)
-        self.prop_dict = {
-            0: 'None',
-            1: 'Low',
-            2: 'Medium',
-            3: 'High'
-        }
         self.attr_dict = {
             'Confidentiality': armid.C_PROPERTY,
             'Integrity': armid.I_PROPERTY,
@@ -38,11 +32,8 @@ class AssetDAO(CairisDAO):
             'Unobservability': armid.UNO_PROPERTY
         }
         self.rev_attr_dict = {}
-        self.rev_prop_dict = {}
         for key, value in self.attr_dict.items():
             self.rev_attr_dict[value] = key
-        for key, value in self.prop_dict.items():
-            self.rev_prop_dict[value] = key
 
     def get_assets(self, constraint_id=-1, simplify=True):
         try:
@@ -344,6 +335,9 @@ class AssetDAO(CairisDAO):
 
     # region Asset values
     def get_asset_values(self, environment_name=''):
+        """
+        :rtype : list[ValueType]
+        """
         try:
             asset_values = self.db_proxy.getValueTypes('asset_value', environment_name)
             return asset_values
@@ -406,6 +400,11 @@ class AssetDAO(CairisDAO):
             if len(real_props) > 0:
                 for real_prop in real_props:
                     assert isinstance(real_prop, AssetEnvironmentProperties)
+                    asset_values = self.get_asset_values(real_prop.theEnvironmentName)
+                    prop_dict = {}
+                    for asset_value in asset_values:
+                        prop_dict[asset_value.theId] = asset_value.theName
+
                     for idx in range(0, len(real_prop.theAssociations)):
                         real_prop.theAssociations[idx] = list(real_prop.theAssociations[idx])
                     sec_props = real_prop.theProperties
@@ -416,7 +415,7 @@ class AssetDAO(CairisDAO):
                         for idx in range(0, len(sec_props)):
                             try:
                                 attr_name = self.rev_attr_dict[idx]
-                                attr_value = self.prop_dict[sec_props[idx]]
+                                attr_value = prop_dict[sec_props[idx]]
                                 new_sec_attr = SecurityAttribute(attr_name, attr_value, rationales[idx])
                                 new_sec_attrs.append(new_sec_attr)
                             except LookupError:
@@ -429,6 +428,11 @@ class AssetDAO(CairisDAO):
             if len(fake_props) > 0:
                 for fake_prop in fake_props:
                     check_required_keys(fake_prop, AssetEnvironmentPropertiesModel.required)
+                    asset_values = self.get_asset_values(fake_prop['theEnvironmentName'])
+                    rev_prop_dict = {}
+                    for asset_value in asset_values:
+                        rev_prop_dict[asset_value.theName] = asset_value.theId
+
                     assert isinstance(fake_prop['theAssociations'], list)
                     for idx in range(0, len(fake_prop['theAssociations'])):
                         fake_prop['theAssociations'][idx] = tuple(fake_prop['theAssociations'][idx])
@@ -438,7 +442,7 @@ class AssetDAO(CairisDAO):
 
                     for sec_attr in sec_attrs:
                         attr_id = self.attr_dict[sec_attr['name']]
-                        attr_value = self.rev_prop_dict[sec_attr['value']]
+                        attr_value = rev_prop_dict[sec_attr['value']]
                         attr_rationale = sec_attr['rationale']
                         new_syProps[attr_id] = attr_value
                         new_rationale[attr_id] = attr_rationale
