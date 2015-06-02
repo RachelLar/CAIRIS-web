@@ -126,6 +126,8 @@ def dInitialise(configFile):
 
       if cfgKey == 'tmp_dir':
         b.tmpDir = cfgVal
+      elif cfgKey == 'upload_dir':
+        b.uploadDir = cfgVal
       elif cfgKey == 'root':
       	b.cairisRoot = cfgVal
       elif cfgKey == 'web_port':
@@ -158,13 +160,16 @@ def dInitialise(configFile):
   b.configDir = os.path.join(b.cairisRoot, 'cairis/config')
   b.templateDir = os.path.join(b.cairisRoot, 'cairis/templates')
   b.exampleDir = os.path.join(b.cairisRoot, 'examples')
+  if not hasattr(b, 'uploadDir'):
+      b.uploadDir = os.path.join(b.cairisRoot, 'cairis/static')
 
   paths = {
     'root': b.cairisRoot,
     'image': b.imageDir,
     'configuration files': b.configDir,
     'template files': b.templateDir,
-    'examples': b.exampleDir
+    'examples': b.exampleDir,
+    'upload': b.uploadDir
   }
 
   for key, path in paths.items():
@@ -172,6 +177,24 @@ def dInitialise(configFile):
       err_msg = 'The {0} directory of CAIRIS is inaccessible or not existing.{1}Path: {2}'.format(key, os.linesep, path)
       b.logger.error(err_msg)
       exit(6)
+
+  image_upload_dir = os.path.join(b.uploadDir, 'images')
+  if os.path.exists(image_upload_dir):
+    try:
+      test_file = os.path.join(image_upload_dir, 'test.txt')
+      fs_test = open(test_file, 'wb')
+      fs_test.write('test')
+      fs_test.close()
+      os.remove(test_file)
+    except IOError:
+      err_msg = 'The upload directory for images is not writeable. Image uploading will propably not work.'
+      b.logger.warning(err_msg)
+  else:
+    try:
+      os.mkdir(image_upload_dir, 0775)
+    except IOError:
+      err_msg = 'Unable to create directory to store images into. Image uploading will probably not work.'
+      b.logger.warning(err_msg)
 
   b.template_generator = TemplateGenerator()
   b.model_generator = GraphicsGenerator('svg')

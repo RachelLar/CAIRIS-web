@@ -2,6 +2,7 @@ import logging
 import os
 import urllib
 from StringIO import StringIO
+import jsonpickle
 from tests.CairisTests import CairisTests
 
 __author__ = 'Robin Quetin'
@@ -20,6 +21,10 @@ class UploadTests(CairisTests):
                 'file': (StringIO(image_bytes), name),
             })
             self.logger.info('[%s] Response data: %s', method, rv.data)
+            json_dict = jsonpickle.decode(rv.data)
+            self.assertTrue(json_dict.has_key('filename'), 'Image was not saved on the server')
+        else:
+            self.fail('Image could not be downloaded from the Internet.')
 
     def test_big_image_upload(self):
         method = 'test_big_image_upload'

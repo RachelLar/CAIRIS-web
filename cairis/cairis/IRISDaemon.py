@@ -26,12 +26,6 @@ b = Borg()
 @app.route('/')
 def index():
     return app.send_static_file('index.html')
-    # if session.has_key('session_id'):
-    #     return b.template_generator.serve_result('index_page')
-    # else:
-    #     resp = make_response('Moved temporarily', httplib.TEMPORARY_REDIRECT)
-    #     resp.headers['Location'] = '/user/config.html'
-    #     return resp
 
 
 @app.route('/plugins/<path:path>')
@@ -56,10 +50,21 @@ def bootstrap_reroute(path):
 
 @app.route('/images/<path:path>')
 def get_image(path):
-    b = Borg()
-    fixed_img_path = os.path.join(b.imageDir, path)
+    try:
+        image_dir = b.imageDir
+    except AttributeError:
+        image_dir = 'images'
+    try:
+        image_upload_dir = os.path.join(b.uploadDir, 'images')
+    except AttributeError:
+        image_upload_dir = 'static/images'
+
+    fixed_img_path = os.path.join(image_dir, path)
+    upload_img_path = os.path.join(image_upload_dir, path)
     if os.path.exists(fixed_img_path):
-        return send_from_directory('images', path)
+        return send_from_directory(image_dir, path)
+    elif os.path.exists(upload_img_path):
+        return send_from_directory(image_upload_dir, path)
     else:
         return send_from_directory('static/images', path)
 

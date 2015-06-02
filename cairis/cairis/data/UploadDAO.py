@@ -14,16 +14,16 @@ __author__ = 'Robin Quetin'
 
 class UploadDAO(CairisDAO):
     accepted_image_types = ['jpg', 'jpeg', 'png', 'bmp', 'gif']
+
     def __init__(self, session_id):
         CairisDAO.__init__(self, session_id)
         b = Borg()
-        self.image_dir = os.path.join(b.staticDir, 'images')
+        self.image_dir = os.path.join(b.uploadDir, 'images')
 
     def upload_image(self, file):
         """
         :type file: FileStorage
         """
-
         extension = os.path.splitext(file.filename)[1]
         f_name = str(uuid.uuid4()) + extension
         f_path = os.path.join(self.image_dir, f_name)
