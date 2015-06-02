@@ -10,7 +10,6 @@ from ValueType import ValueType
 from ValueTypeParameters import ValueTypeParameters
 import armid
 from data.CairisDAO import CairisDAO
-from kaosxdot import KaosXDotParser
 from tools.JsonConverter import json_serialize, json_deserialize
 from tools.ModelDefinitions import AssetEnvironmentPropertiesModel, SecurityAttribute, AssetModel
 from tools.SessionValidator import check_required_keys, get_fonts
