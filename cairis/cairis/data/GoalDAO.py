@@ -118,7 +118,7 @@ class GoalDAO(CairisDAO):
             self.close()
             raise ARMHTTPError(ex)
 
-    # region Goal Types
+    # region Goal types
     def get_goal_types(self, environment_name=''):
         try:
             goal_types = self.db_proxy.getValueTypes('goal_type', environment_name)
