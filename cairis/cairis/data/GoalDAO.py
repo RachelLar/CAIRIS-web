@@ -3,7 +3,7 @@ from Goal import Goal
 from GoalEnvironmentProperties import GoalEnvironmentProperties
 from GoalParameters import GoalParameters
 from CairisHTTPError import ObjectNotFoundHTTPError, MalformedJSONHTTPError, ARMHTTPError, MissingParameterHTTPError, OverwriteNotAllowedHTTPError
-from KaosModel import KaosModel
+from alternative.KaosModel import KaosModel
 from ValueType import ValueType
 from ValueTypeParameters import ValueTypeParameters
 from data.CairisDAO import CairisDAO

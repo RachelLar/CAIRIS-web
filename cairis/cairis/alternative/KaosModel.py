@@ -16,34 +16,38 @@
 #  under the License.
 
 
-from Borg import Borg
-import DotTrace
 import pydot
-import wx
-import os
+
+from Borg import Borg
 import ARM
-import gtk
 from colourcodes import usabilityColourCode
 from colourcodes import threatColourCode
 from colourcodes import obstacleColourCode
 
 
 class KaosModel:
-  def __init__(self,associations,envName,kaosModelType = 'goal',goalName = ''):
-    self.theAssociations = associations
-    self.theEnvironmentName = envName
-    self.theGoalName = goalName
-    b = Borg()
-    self.dbProxy = b.dbProxy
-    self.fontName = b.fontName
-    self.fontSize = b.fontSize
-    self.theGraph = pydot.Dot()
-    self.theKaosModel = kaosModelType
-    if (self.theKaosModel == 'task'):
-      self.theGraph.set_graph_defaults(rankdir='LR')
-    else:
-      self.theGraph.set_graph_defaults(rankdir='BT')
-    self.theGraphName = b.tmpDir + '/' + self.theKaosModel + '.dot'
+  def __init__(self,associations,envName,kaosModelType = 'goal',goalName = '', db_proxy=None, font_name=None, font_size=None):
+      self.theAssociations = associations
+      self.theEnvironmentName = envName
+      self.theGoalName = goalName
+
+      b = Borg()
+      if db_proxy is None or font_size is None or font_name is None:
+          self.dbProxy = b.dbProxy
+          self.fontName = b.fontName
+          self.fontSize = b.fontSize
+      else:
+          self.dbProxy = db_proxy
+          self.fontName = font_name
+          self.fontSize = font_size
+
+      self.theGraph = pydot.Dot()
+      self.theKaosModel = kaosModelType
+      if (self.theKaosModel == 'task'):
+          self.theGraph.set_graph_defaults(rankdir='LR')
+      else:
+          self.theGraph.set_graph_defaults(rankdir='BT')
+      self.theGraphName = b.tmpDir + '/' + self.theKaosModel + '.dot'
 
   def size(self):
     return len(self.theAssociations)

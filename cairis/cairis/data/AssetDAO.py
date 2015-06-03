@@ -13,7 +13,7 @@ from data.CairisDAO import CairisDAO
 from tools.JsonConverter import json_serialize, json_deserialize
 from tools.ModelDefinitions import AssetEnvironmentPropertiesModel, SecurityAttribute, AssetModel
 from tools.SessionValidator import check_required_keys, get_fonts
-from AssetModel import AssetModel as GraphicalAssetModel
+from alternative.AssetModel import AssetModel as GraphicalAssetModel
 
 __author__ = 'Robin Quetin'
 

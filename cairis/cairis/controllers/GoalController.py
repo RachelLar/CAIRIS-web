@@ -256,14 +256,6 @@ class GoalModelAPI(Resource):
         nickname='goal-by-name-get',
         parameters=[
             {
-                "name": "environment",
-                "description": "The environment to be used for the asset model",
-                "required": True,
-                "allowMultiple": False,
-                "dataType": str.__name__,
-                "paramType": "query"
-            },
-            {
                 "name": "session_id",
                 "description": "The ID of the user's session",
                 "required": False,
