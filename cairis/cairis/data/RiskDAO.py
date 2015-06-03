@@ -5,10 +5,10 @@ from MisuseCaseEnvironmentProperties import MisuseCaseEnvironmentProperties
 from RiskParameters import RiskParameters
 from data.CairisDAO import CairisDAO
 from Risk import Risk
-from EnvironmentModel import EnvironmentModel
+from alternative.EnvironmentModel import EnvironmentModel
 from tools.JsonConverter import json_deserialize
 from tools.ModelDefinitions import RiskModel, MisuseCaseModel, MisuseCaseEnvironmentPropertiesModel
-from tools.PseudoClasses import RiskScore
+from tools.PseudoClasses import RiskScore, RiskRating
 from tools.SessionValidator import check_required_keys, get_fonts
 
 __author__ = 'Robin Quetin'
@@ -18,10 +18,9 @@ class RiskDAO(CairisDAO):
     def __init__(self, session_id):
         CairisDAO.__init__(self, session_id)
 
-    def get_risks(self, constraint_id=-1):
+    def get_risks(self, constraint_id=-1, simplify=True):
         try:
             risks = self.db_proxy.getRisks(constraintId=constraint_id)
-            return risks
         except ARM.DatabaseProxyException as ex:
             self.close()
             raise ARMHTTPError(ex)
@@ -29,19 +28,25 @@ class RiskDAO(CairisDAO):
             self.close()
             raise ARMHTTPError(ex)
 
+        if isinstance(risks, dict) and simplify:
+            for key, value in risks.items():
+                risks[key] = self.simplify(value)
+
+        return risks
+
     def get_risk_names(self):
         risks = self.get_risks()
         risk_names = risks.keys()
         return risk_names
 
-    def get_risk_by_name(self, name):
+    def get_risk_by_name(self, name, simplify=True):
         """
         :rtype : Risk
         """
-        risks = self.get_risks()
+        risks = self.get_risks(simplify=simplify)
         found_risk = risks.get(name, None)
 
-        if found_risk is not None:
+        if found_risk is None:
             raise ObjectNotFoundHTTPError(obj='The provided risk name')
 
         return found_risk
@@ -96,8 +101,10 @@ class RiskDAO(CairisDAO):
             self.close()
             raise ARMHTTPError(ex)
 
-    def update_risk(self, name, risk):
-        found_risk = self.get_risk_by_name(name)
+    def update_risk(self, risk_name, risk):
+        found_risk = self.get_risk_by_name(risk_name)
+        found_mc = self.get_misuse_case_by_risk_name(risk_name)
+        risk.theMisuseCase.theId = found_mc.theId
 
         params = RiskParameters(
             riskName=risk.theName,
@@ -116,6 +123,42 @@ class RiskDAO(CairisDAO):
         except ARM.ARMException as ex:
             self.close()
             raise ARMHTTPError(ex)
+
+    # region Misuse cases
+    def get_misuse_cases(self, constraint_id=-1, simplify=True):
+        try:
+            misuse_cases = self.db_proxy.getMisuseCases(constraintId=constraint_id)
+        except ARM.DatabaseProxyException as ex:
+            self.close()
+            raise ARMHTTPError(ex)
+        except ARM.ARMException as ex:
+            self.close()
+            raise ARMHTTPError(ex)
+
+        if simplify:
+            for key in misuse_cases:
+                misuse_cases[key] = self.simplify(misuse_cases[key])
+
+        return misuse_cases
+
+    def get_misuse_case_by_risk_name(self, risk_name):
+        found_risk = self.get_risk_by_name(risk_name)
+
+        try:
+            misuse_case = self.db_proxy.riskMisuseCase(found_risk.theId)
+        except ARM.DatabaseProxyException as ex:
+            self.close()
+            raise ARMHTTPError(ex)
+        except ARM.ARMException as ex:
+            self.close()
+            raise ARMHTTPError(ex)
+
+        if not misuse_case:
+            self.close()
+            raise ObjectNotFoundHTTPError('The misuse case associated with the risk')
+
+        return misuse_case
+    # endregion
 
     # region Risk scores
     def get_scores_by_rtve(self, risk_name, threat_name, vulnerability_name, environment_name):
@@ -167,11 +210,12 @@ class RiskDAO(CairisDAO):
     # region Risk rating
     def get_risk_rating_by_tve(self, threat_name, vulnerability_name, environment_name):
         """
-        :rtype: str
+        :rtype: RiskRating
         """
         try:
             rating = self.db_proxy.riskRating(threat_name, vulnerability_name, environment_name)
-            return rating
+            risk_rating = RiskRating(threat_name, vulnerability_name, environment_name, rating)
+            return risk_rating
         except ARM.DatabaseProxyException as ex:
             self.close()
             raise ARMHTTPError(ex)
@@ -210,3 +254,23 @@ class RiskDAO(CairisDAO):
             return risk
         else:
             raise MalformedJSONHTTPError()
+
+    def simplify(self, obj):
+        """
+        :type obj: Risk|MisuseCase
+        """
+        misuse_case = None
+        if isinstance(obj, Risk):
+            misuse_case = obj.theMisuseCase
+        elif isinstance(obj, MisuseCase):
+            misuse_case = obj
+
+        misuse_case.theEnvironmentDictionary = {}
+        delattr(misuse_case, 'theEnvironmentDictionary')
+
+        if isinstance(obj, Risk):
+            obj.theMisuseCase = misuse_case
+        elif isinstance(obj, MisuseCase):
+            obj = misuse_case
+
+        return obj

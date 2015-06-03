@@ -16,15 +16,10 @@
 #  under the License.
 
 
-import DotTrace
 import pydot
-import wx
-import os
 import ARM
-import gtk
 from Borg import Borg
 from colourcodes import threatColourCode
-from colourcodes import responseColourCode
 from colourcodes import usabilityColourCode
 from colourcodes import riskTextColourCode
 
@@ -32,14 +27,14 @@ USECASE_TYPE = 0
 MISUSECASE_TYPE = 1
 
 class EnvironmentModel:
-  def __init__(self,tlinks,environmentName,dp):
+  def __init__(self,tlinks,environmentName,dp, fontName=None, fontSize=None):
     self.theTraceLinks = tlinks
     self.theEnvironmentName = environmentName
     self.dbProxy = dp
     self.theGraph = pydot.Dot()
     b = Borg()
-    self.fontSize = b.fontSize
-    self.fontName = b.fontName
+    self.fontSize = fontSize or b.fontSize
+    self.fontName = fontName or b.fontName
     self.theGraphName = b.tmpDir + '/pydotout.dot'
 
     self.theNodeLookup = {}
@@ -139,18 +134,3 @@ class EnvironmentModel:
   def layout(self,renderer = 'fdp'):
     self.theGraph.write_xdot(self.theGraphName,prog=renderer)
     return open(self.theGraphName).read()
-
-  def dimensions(self):
-    return self.listStore(self.dimNameSet)
-
-  def objects(self):
-    return self.listStore(self.nodeNameSet)
-
-  def listStore(self,unsortedSet):
-    modelList = list(unsortedSet)
-    modelList.sort(key=str.lower) 
-    model = gtk.ListStore(str)
-    model.append([''])
-    for dim in modelList:
-      model.append([dim])
-    return model

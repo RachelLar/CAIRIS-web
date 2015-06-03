@@ -5,8 +5,10 @@ from tests.CImportTests import CImportTests
 from tests.DependencyTests import DependencyTests
 from tests.EnvironmentTests import EnvironmentTests
 from tests.GoalTests import GoalTests
+from tests.MisuseCaseTests import MisuseCaseTests
 from tests.ProjectTests import ProjectTests
 from tests.RequirementTests import RequirementTests
+from tests.RiskTests import RiskTests
 from tests.RoleTests import RoleTests
 from tests.ThreatTests import ThreatTests
 from tests.UploadTests import UploadTests
@@ -21,8 +23,10 @@ tests_dict = {
     'environment': [0, EnvironmentTests],
     'goal': [0, GoalTests],
     'import': [0, CImportTests],
+    'misusecase': [0, MisuseCaseTests],
     'project': [0, ProjectTests],
     'requirement': [0, RequirementTests],
+    'risk': [0, RiskTests],
     'role': [0, RoleTests],
     'threat': [0, ThreatTests],
     'upload': [0, UploadTests],

@@ -10,8 +10,10 @@ from flask.ext.restful_swagger import swagger
 from Borg import Borg
 from CairisHTTPError import CairisHTTPError, ARMHTTPError
 from ARM import ARMException, DatabaseProxyException
-from controllers import AssetController, AttackerController, CImportController, DependencyController, DimensionController, EnvironmentController, GoalController, ProjectController, \
-    RequirementController, RiskController, RoleController, ThreatController, UploadController, UserController, VulnerabilityController
+from controllers import AssetController, AttackerController, CImportController, DependencyController, \
+    DimensionController, EnvironmentController, GoalController, MisuseCaseController, ProjectController, \
+    RequirementController, RiskController, RoleController, ThreatController, UploadController, UserController, \
+    VulnerabilityController
 
 __author__ = 'Robin Quetin'
 ''' This module uses CherryPy (tested using 3.6.0) & Routes (tested using 1.13) '''
@@ -180,6 +182,10 @@ def start():
     # Import routes
     api.add_resource(CImportController.CImportTextAPI, '/api/import/text')
     api.add_resource(CImportController.CImportFileAPI, '/api/import/file/type/<string:type>')
+
+    # Misuse case routes
+    api.add_resource(MisuseCaseController.MisuseCasesAPI, '/api/misuse-cases')
+    api.add_resource(MisuseCaseController.MisuseCaseByNameAPI, '/api/misuse-cases/risk/<string:risk_name>')
 
     # Project routes
     api.add_resource(ProjectController.ProjectSettingsAPI, '/api/settings')

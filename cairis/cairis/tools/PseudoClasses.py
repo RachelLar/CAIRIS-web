@@ -240,6 +240,29 @@ class RiskScore(object):
 
 
 @swagger.model
+class RiskRating(object):
+    # region Swagger Doc
+    resource_fields = {
+        obj_id_field: fields.String,
+        'rating': fields.String,
+        'threat': fields.String,
+        'vulnerability': fields.String,
+        'environment': fields.String
+    }
+    required = resource_fields.keys()
+    required.remove(obj_id_field)
+    swagger_metadata = {
+        obj_id_field: { 'enum': [__name__+'.RiskRating'] }
+    }
+    # endregion
+    def __init__(self, threat, vulnerability, environment, rating=None):
+        self.threat = threat
+        self.vulnerability = vulnerability
+        self.environment = environment
+        self.rating = rating
+
+
+@swagger.model
 class SecurityAttribute(object):
     def __init__(self, name=None, value=None, rationale=None):
         """

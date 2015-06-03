@@ -333,6 +333,7 @@ class RiskModel(object):
         obj_id_field : gen_class_metadata(Risk)
     }
 
+
 @swagger.model
 class RoleModel(object):
     resource_fields = {
