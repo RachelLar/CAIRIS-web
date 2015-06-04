@@ -1,5 +1,6 @@
 import ARM
-from CairisHTTPError import ARMHTTPError, ObjectNotFoundHTTPError, MalformedJSONHTTPError, MissingParameterHTTPError
+from CairisHTTPError import ARMHTTPError, ObjectNotFoundHTTPError, MalformedJSONHTTPError, MissingParameterHTTPError, \
+    OverwriteNotAllowedHTTPError
 from MisuseCase import MisuseCase
 from MisuseCaseEnvironmentProperties import MisuseCaseEnvironmentProperties
 from RiskParameters import RiskParameters
@@ -47,6 +48,7 @@ class RiskDAO(CairisDAO):
         found_risk = risks.get(name, None)
 
         if found_risk is None:
+            self.close()
             raise ObjectNotFoundHTTPError(obj='The provided risk name')
 
         return found_risk
@@ -83,6 +85,10 @@ class RiskDAO(CairisDAO):
             raise ARMHTTPError(ex)
 
     def add_risk(self, risk):
+        if self.check_existing_risk(risk.theName):
+            self.close()
+            raise OverwriteNotAllowedHTTPError('The provided risk name')
+
         params = RiskParameters(
             riskName=risk.theName,
             threatName=risk.theThreatName,
@@ -123,6 +129,14 @@ class RiskDAO(CairisDAO):
         except ARM.ARMException as ex:
             self.close()
             raise ARMHTTPError(ex)
+
+    def check_existing_risk(self, risk_name):
+        try:
+            self.get_risk_by_name(risk_name)
+            return True
+        except ObjectNotFoundHTTPError:
+            self.db_proxy.reconnect(self.session_id)
+            return False
 
     # region Misuse cases
     def get_misuse_cases(self, constraint_id=-1, simplify=True):
