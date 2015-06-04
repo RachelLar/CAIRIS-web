@@ -117,6 +117,16 @@ class RequirementMessage(DefaultMessage):
 # region Swagger Doc
 @swagger.model
 @swagger.nested(
+    object=ModelDefinitions.ResponseModel.__name__
+)
+# endregion
+class ResponseMessage(DefaultMessage):
+    resource_fields = gen_message_fields(ModelDefinitions.ResponseModel)
+    required = DefaultMessage.required
+
+# region Swagger Doc
+@swagger.model
+@swagger.nested(
     object=ModelDefinitions.RiskModel.__name__
 )
 # endregion

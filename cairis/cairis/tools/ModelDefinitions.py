@@ -1,5 +1,6 @@
 from flask.ext.restful import fields
 from flask.ext.restful_swagger import swagger
+from AcceptEnvironmentProperties import AcceptEnvironmentProperties
 
 from Asset import Asset
 from AssetEnvironmentProperties import AssetEnvironmentProperties
@@ -10,15 +11,16 @@ from Goal import Goal
 from GoalEnvironmentProperties import GoalEnvironmentProperties
 from MisuseCase import MisuseCase
 from MisuseCaseEnvironmentProperties import MisuseCaseEnvironmentProperties
+from MitigateEnvironmentProperties import MitigateEnvironmentProperties
 from Requirement import Requirement
 from Risk import Risk
 from Role import Role
 from ThreatEnvironmentProperties import ThreatEnvironmentProperties
+from TransferEnvironmentProperties import TransferEnvironmentProperties
 from ValueType import ValueType
 from Vulnerability import Vulnerability
 from VulnerabilityEnvironmentProperties import VulnerabilityEnvironmentProperties
-from tools.PseudoClasses import EnvironmentTensionModel, SecurityAttribute
-
+from tools.PseudoClasses import EnvironmentTensionModel, SecurityAttribute, ValuedRole
 
 __author__ = 'Robin Quetin'
 
@@ -312,6 +314,82 @@ class RequirementModel(object):
     swagger_metadata = {
         obj_id_field : gen_class_metadata(Requirement)
     }
+
+
+@swagger.model
+class AcceptEnvironmentPropertiesModel(object):
+    resource_fields = {
+        obj_id_field: fields.String,
+        'theCost': fields.String,
+        'theRationale': fields.String,
+        'theEnvironmentName': fields.String
+    }
+    required = resource_fields.keys()
+    required.remove(obj_id_field)
+    swagger_metadata = { obj_id_field: gen_class_metadata(AcceptEnvironmentProperties) }
+
+
+@swagger.model
+class MitigateEnvironmentPropertiesModel(object):
+    resource_fields = {
+        obj_id_field: fields.String,
+        'theDetectionMechanisms': fields.List(fields.String),
+        'theDetectionPoint': fields.String,
+        'theType': fields.String,
+        'theEnvironmentName': fields.String,
+    }
+    required = resource_fields.keys()
+    required.remove(obj_id_field)
+    swagger_metadata = { obj_id_field: gen_class_metadata(MitigateEnvironmentProperties) }
+
+
+@swagger.model
+@swagger.nested(
+    theRoles=ValuedRole.__name__
+)
+class TransferEnvironmentPropertiesModel(object):
+    resource_fields = {
+        obj_id_field: fields.String,
+        'theRoles': fields.List(fields.Nested(ValuedRole.resource_fields)),
+        'theRationale': fields.String,
+        'theEnvironmentName': fields.String
+    }
+    required = resource_fields.keys()
+    required.remove(obj_id_field)
+    swagger_metadata = { obj_id_field: gen_class_metadata(TransferEnvironmentProperties) }
+
+
+@swagger.model
+@swagger.nested(
+    accept=AcceptEnvironmentPropertiesModel.__name__,
+    mitigate=MitigateEnvironmentPropertiesModel.__name__,
+    transfer=TransferEnvironmentPropertiesModel.__name__,
+)
+class ResponseEnvironmentPropertiesModel(object):
+    resource_fields = {
+        'accept': fields.List(fields.Nested(AcceptEnvironmentPropertiesModel.resource_fields)),
+        'mitigate': fields.List(fields.Nested(MitigateEnvironmentPropertiesModel.resource_fields)),
+        'transfer': fields.List(fields.Nested(TransferEnvironmentPropertiesModel.resource_fields))
+    }
+    field_names = resource_fields.keys()
+
+
+@swagger.model
+@swagger.nested(
+    theEnvironmentProperties=ResponseEnvironmentPropertiesModel.__name__
+)
+class ResponseModel(object):
+    resource_fields = {
+        obj_id_field: fields.String,
+        'theId': fields.Integer,
+        'theTags': fields.List(fields.String),
+        'theRisk': fields.String,
+        'theName': fields.String,
+        'theEnvironmentProperties': fields.Nested(ResponseEnvironmentPropertiesModel.resource_fields),
+        'theResponseType': fields.String
+    }
+    required = resource_fields.keys()
+    required.remove(obj_id_field)
 
 @swagger.model
 @swagger.nested(

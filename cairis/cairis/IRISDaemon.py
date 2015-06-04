@@ -12,8 +12,8 @@ from CairisHTTPError import CairisHTTPError, ARMHTTPError
 from ARM import ARMException, DatabaseProxyException
 from controllers import AssetController, AttackerController, CImportController, DependencyController, \
     DimensionController, EnvironmentController, GoalController, MisuseCaseController, ProjectController, \
-    RequirementController, RiskController, RoleController, ThreatController, UploadController, UserController, \
-    VulnerabilityController
+    RequirementController, ResponseController, RiskController, RoleController, ThreatController, \
+    UploadController, UserController, VulnerabilityController
 
 __author__ = 'Robin Quetin'
 ''' This module uses CherryPy (tested using 3.6.0) & Routes (tested using 1.13) '''
@@ -198,6 +198,10 @@ def start():
     api.add_resource(RequirementController.RequirementByIdAPI, '/api/requirements/id/<int:id>')
     api.add_resource(RequirementController.RequirementByNameAPI, '/api/requirements/name/<string:name>')
     api.add_resource(RequirementController.RequirementByShortcodeAPI, '/api/requirements/shortcode/<string:shortcode>')
+
+    # Response routes
+    api.add_resource(ResponseController.ResponsesAPI, '/api/responses')
+    api.add_resource(ResponseController.ResponseByNameAPI, '/api/responses/name/<string:name>')
 
     # Risk routes
     api.add_resource(RiskController.RisksAPI, '/api/risks')

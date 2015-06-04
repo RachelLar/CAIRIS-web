@@ -329,3 +329,22 @@ class SecurityAttribute(object):
                     idx += 1
 
         return value
+
+
+@swagger.model
+class ValuedRole(object):
+    # region Swagger Doc
+    resource_fields = {
+        obj_id_field: fields.String,
+        'roleName': fields.String,
+        'cost': fields.String
+    }
+    required = resource_fields.keys()
+    required.remove(obj_id_field)
+    swagger_metadata = {
+        obj_id_field: { 'enum': [__name__+'.ValuedRole'] }
+    }
+    # endregion
+    def __init__(self, role_name, cost):
+        self.role_name = role_name
+        self.cost = cost
