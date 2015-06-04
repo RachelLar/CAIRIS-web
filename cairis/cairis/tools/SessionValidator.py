@@ -13,6 +13,7 @@ __author__ = 'Robin Quetin'
 
 def check_required_keys(json_dict, required):
     """
+    :return:
     :raise MissingParameterHTTPError:
     """
     if not all(reqKey in json_dict for reqKey in required):
@@ -121,18 +122,14 @@ def validate_proxy(session, id, request=None, conf=None):
             message='The session is neither started or no session ID is provided with the request.'
         )
 
-def get_fonts(session=None, request=None, session_id=None):
+def get_fonts(session_id=None):
     """
     Validates that the fonts to output the SVG models are properly set up
-    :param session: The session object of the request
-    :param id: The session ID provided by the user
+    :param session_id: The session ID provided by the user
     :return: The font name, font size and AP font name
     :rtype : str,str,str
     :raise CairisHTTPError: Raises a CairisHTTPError when the database could not be properly set up
     """
-    if session is not None or request is not None:
-        session_id = get_session_id(session, request)
-
     if session_id is not None:
         b = Borg()
         settings = b.get_settings(session_id)
@@ -165,10 +162,8 @@ def get_template_generator():
         assert isinstance(template_generator, TemplateGenerator)
         return template_generator
     else:
-        raise CairisHTTPError(
-            status_code=httplib.CONFLICT,
-            message='The template generator is not properly initialized. Please check if all dependencies are installed correctly.',
-            status='Object not found'
+        raise RuntimeError(
+            message='The template generator is not properly initialized. Please check if all dependencies are installed correctly.'
         )
 
 def get_model_generator():
@@ -178,10 +173,8 @@ def get_model_generator():
         assert isinstance(model_generator, GraphicsGenerator)
         return model_generator
     else:
-        raise CairisHTTPError(
-            status_code=httplib.CONFLICT,
-            message='The model generator is not properly initialized. Please check if all dependencies are installed correctly.',
-            status='Object not found'
+        raise RuntimeError(
+            message='The model generator is not properly initialized. Please check if all dependencies are installed correctly.'
         )
 
 def check_environment(environment_name, session, session_id):

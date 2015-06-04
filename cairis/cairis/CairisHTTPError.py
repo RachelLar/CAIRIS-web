@@ -2,13 +2,10 @@ import httplib
 import logging
 
 from flask import request, make_response
-from jsonpickle import encode
 from werkzeug.exceptions import HTTPException
 
 from ARM import ARMException, DatabaseProxyException
-from Borg import Borg
 from tools.JsonConverter import json_serialize
-
 
 __author__ = 'Robin Quetin'
 
@@ -59,10 +56,11 @@ class CairisHTTPError(HTTPException):
             self.response = make_response(self.handle_exception_json(), self.status_code)
 
     def handle_exception_html(self):
-        b = Borg()
-        message = b.template_generator.prepare_message(self.message)
+        from tools.SessionValidator import get_template_generator
+        templ_gen = get_template_generator()
+        message = templ_gen.prepare_message(self.message)
         self.__setattr__('data', message)
-        return b.template_generator.serve_result('common.error', msg=message, code=self.status_code, title=self.status)
+        return templ_gen.serve_result('common.error', msg=message, code=self.status_code, title=self.status)
 
     def handle_exception_json(self):
         self.__setattr__('data', {'message': self.message, 'code': self.status_code, 'status': self.status})
@@ -92,11 +90,7 @@ class MalformedJSONHTTPError(CairisHTTPError):
 
     def __init__(self, data=None):
         if data is not None:
-            b = Borg()
-            try:
-                b.logger.debug('Data: '+data)
-            except AttributeError:
-                pass
+            logger.debug('Data: %s', data)
 
         CairisHTTPError.__init__(self,
             status_code=httplib.BAD_REQUEST,
