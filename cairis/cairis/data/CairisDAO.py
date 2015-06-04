@@ -2,7 +2,7 @@ import httplib
 import logging
 
 from Borg import Borg
-from CairisHTTPError import CairisHTTPError, MalformedJSONHTTPError
+from CairisHTTPError import CairisHTTPError, MalformedJSONHTTPError, MissingParameterHTTPError
 from MySQLDatabaseProxy import MySQLDatabaseProxy
 from ValueType import ValueType
 from tools.JsonConverter import json_serialize, json_deserialize
@@ -57,10 +57,16 @@ class CairisDAO(object):
     def get_dbproxy(self, session_id):
         """
         Searches the MySQLDatabaseProxy instance associated with the session ID.
-        :param session_id: The session ID
-        :type session_id: str
-        :return The MySQLDatabaseProxy instance associated with the session ID
-        :rtype MySQLDatabaseProxy
+        :param
+            session_id: The session ID
+        :type
+            session_id: str
+        :rtype
+            MySQLDatabaseProxy
+        :return
+            The MySQLDatabaseProxy instance associated with the session ID
+        :raise
+            CairisHTTPError
         """
         if session_id:
             b = Borg()
@@ -80,7 +86,6 @@ class CairisDAO(object):
                     message='The database connection was not properly set up. Please try to reset the connection.'
                 )
         else:
-            raise CairisHTTPError(
-                status_code=httplib.BAD_REQUEST,
-                message='The session is neither started or no session ID is provided with the request.'
+            raise MissingParameterHTTPError(
+                param_names=['session_id']
             )

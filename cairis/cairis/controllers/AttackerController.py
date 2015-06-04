@@ -2,6 +2,7 @@ import httplib
 from flask import request, session, make_response
 from flask.ext.restful import Resource
 from flask_restful_swagger import swagger
+from CairisHTTPError import ARMHTTPError
 from data.AttackerDAO import AttackerDAO
 from tools.JsonConverter import json_serialize
 from tools.MessageDefinitions import AttackerMessage, ValueTypeMessage
@@ -20,9 +21,9 @@ class AttackersAPI(Resource):
         responseContainer='List',
         parameters=[
             {
-                "name": "ordered",
-                "description": "Defines if the list has to be order",
-                "default": 1,
+                "name": "constraint_id",
+                "description": "The constraint to use when querying the database",
+                "default": -1,
                 "required": False,
                 "allowMultiple": False,
                 "dataType": int.__name__,
@@ -91,6 +92,10 @@ class AttackersAPI(Resource):
             {
                 'code': httplib.CONFLICT,
                 'message': 'A database error has occurred'
+            },
+            {
+                'code': ARMHTTPError.status_code,
+                'message': ARMHTTPError.status
             }
         ]
     )

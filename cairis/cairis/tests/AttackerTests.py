@@ -3,9 +3,7 @@ from urllib import quote
 import jsonpickle
 from Attacker import Attacker
 from AttackerEnvironmentProperties import AttackerEnvironmentProperties
-from ValueType import ValueType
 from tests.CairisTests import CairisTests
-from tools.PseudoClasses import SecurityAttribute
 
 __author__ = 'Robin Quetin'
 
