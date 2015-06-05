@@ -65,7 +65,7 @@
                 <ul class="nav navbar-nav">
 
                     <li class="dropdown messages-menu">
-                        <a href="#" class="dropdown-toggle imgwrapper" id="removesessionButton" data-toggle="dropdown">
+                        <a href="#" class="dropdown-toggle imgwrapper" id="startNewProject" data-toggle="dropdown">
                            <img class="menu-image" src="images/new_file2.png" alt="New Project">
                                 <p class="imgPopup">New Project</p>
                         </a>
@@ -83,7 +83,7 @@
                         <p class="imgPopup">Open Project</p>
                     </a>
                     </li>
-                    <li class="dropdown messages-menu">
+                    <li class="dropdown messages-menu" id="editProjectsClick">
                     <a href="#" class="dropdown-toggle imgwrapper" data-toggle="dropdown">
                         <img class="menu-image" src="images/projectSettings.png" alt="Project Settings">
                         <p class="imgPopup">Project Settings</p>
@@ -193,7 +193,7 @@
                         </a>
                     </li>
                  <li class="dropdown messages-menu">
-                        <a href="#" class="dropdown-toggle imgwrapper" data-toggle="dropdown">
+                        <a href="#" class="dropdown-toggle imgwrapper" id="risksClick" data-toggle="dropdown">
                             <img class="menu-image" src="images/risk.png" alt="Edit Risks">
                             <p class="imgPopup">Edit Risks</p>
                         </a>
@@ -514,7 +514,7 @@
            <div id="filtercontent" class="extraContent">
                <label  class="topCombobox" for="assetsbox">Assets</label>
                 <select class="topCombobox" id="assetsbox" ></select>
-               <label  class="topCombobox" for="environmentsbox">Requirements</label>
+               <label  class="topCombobox" for="environmentsbox">Environments</label>
                <select class="topCombobox" id="environmentsbox">
 
                </select>
@@ -535,7 +535,7 @@
     </div><!-- /.content-wrapper -->
     <!-- rightnav -->
     <div id="rightnavGear" class="no-print"
-         style="position: fixed; top: 100px; right: 0px; border-radius: 5px 0px 0px 5px; padding: 10px 15px; font-size: 16px; z-index: 99999; cursor: pointer; color: rgb(60, 141, 188); box-shadow: rgba(0, 0, 0, 0.0980392) 0px 1px 3px; background: rgb(242, 242, 242);">
+         style="position: fixed; top: 100px; right: 0px; border-radius: 5px 0px 0px 5px; padding: 10px 15px; font-size: 16px; z-index: 99999; cursor: pointer; color: rgb(60, 141, 188); box-shadow: rgba(0, 0, 0, 0.0980392) 0px 1px 3px; background: rgb(255, 255, 255);">
         <i class="fa fa-gear"></i></div>
     <div id="rightnavMenu" class="no-print"
          style="padding: 10px; position: fixed; top: 100px; right: -500px; border: 0px solid rgb(221, 221, 221); width: 500px; z-index: 99999; box-shadow: rgba(0, 0, 0, 0.0980392) 0px 1px 3px; background: rgb(255, 255, 255);">
@@ -607,6 +607,11 @@
 
     </select>
 </div>
+<div id="ChooseEnvAssetsDialog" title="Choose a motivation" style="display: none">
+    <select>
+
+    </select>
+</div>
 <script>
    var reqTabl =  $('#reqTable').editableTableWidget({editor: $('<textarea>')});
     /*
@@ -631,7 +636,8 @@
 <script src="plugins/slimScroll/jquery.slimscroll.js" type="text/javascript"></script>
 <script>
     LazyLoad.js(["dist/js/cairis/Cairis-UI.js","dist/js/cairis/buttonclicks.js", "dist/js/cairis/Cairis.js", "dist/js/cairis/readFile.js",
-        "dist/js/cairis/threats.js", "dist/js/cairis/attackers.js", "dist/js/cairis/assets.js", "dist/js/cairis/goals.js",
+        "dist/js/cairis/threats.js", "dist/js/cairis/attackers.js", "dist/js/cairis/assets.js", "dist/js/cairis/goals.js", "dist/js/cairis/projectSettings.js",
+        "dist/js/cairis/risks.js",
         "dist/js/cairis/SVGhandler.js","dist/js/cairis/PutAndPost.js", "plugins/contextMenu/contextMenu.js", "dist/js/objects/jsonDefaultObjects.js"], function () {
 
        console.log("All Cairis JS loaded");
