@@ -25,12 +25,23 @@ The application server of CAIRIS-web should be able to run on most flavours of L
 
 Besides the application dependencies, there are also some Python extensions that are required:
 
-* cherrypy
+* Flask
+* Flask-RESTful
+* Flask-RESTful-swagger
+* Flask-CORS
+* jsonpickle
 * Mako
 * python-numpy
 * python-mysqldb
 * pyparsing 1.5.7
 * pydot
+
+To run the desktop version of CAIRIS within this repository, you will also have to install the original GTK and Glade dependencies:
+
+OS:
+* python-wxglade
+* python-glade2
+* python-wxgtk2.8
 
 A full step-by-step installation guide will be available soon. Please consult the installation guide of the original CAIRIS for the time being.
 
