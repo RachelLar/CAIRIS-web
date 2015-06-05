@@ -101,6 +101,9 @@ class MalformedJSONHTTPError(CairisHTTPError):
         )
 
 class MissingParameterHTTPError(CairisHTTPError):
+    status_code = httplib.BAD_REQUEST
+    status = 'One or more parameters are missing'
+
     def __init__(self, exception=None, param_names=None):
         """
         :param exception: The LookupError instance that was raised
@@ -121,9 +124,9 @@ class MissingParameterHTTPError(CairisHTTPError):
 
         CairisHTTPError.__init__(
             self,
-            status_code=httplib.BAD_REQUEST,
+            status_code=self.status_code,
             message=msg,
-            status='One or more parameters are missing'
+            status=self.status_code
         )
 
 class ObjectNotFoundHTTPError(CairisHTTPError):

@@ -3,6 +3,7 @@ import httplib
 from flask import session, request, make_response
 from flask.ext.restful import Resource
 from flask.ext.restful_swagger import swagger
+from CairisHTTPError import ObjectNotFoundHTTPError, ARMHTTPError, MalformedJSONHTTPError, MissingParameterHTTPError
 
 from data.RequirementDAO import RequirementDAO
 from tools.MessageDefinitions import RequirementMessage
@@ -32,6 +33,15 @@ class RequirementsAPI(Resource):
                 "paramType": "query"
             },
             {
+                "name": "constraint_id",
+                "description": "The constraint used as filter to query the database",
+                "default": "",
+                "required": False,
+                "allowMultiple": False,
+                "dataType": str.__name__,
+                "paramType": "query"
+            },
+            {
                 "name": "session_id",
                 "description": "The ID of the user's session",
                 "required": False,
@@ -44,6 +54,14 @@ class RequirementsAPI(Resource):
             {
                 "code": httplib.BAD_REQUEST,
                 "message": "The database connection was not properly set up"
+            },
+            {
+                'code': ARMHTTPError.status_code,
+                'message': ARMHTTPError.status
+            },
+            {
+                'code': MissingParameterHTTPError.status_code,
+                'message': MissingParameterHTTPError.status
             }
         ]
     )
@@ -102,16 +120,16 @@ class RequirementsAPI(Resource):
         ],
         responseMessages=[
             {
-                'code': httplib.BAD_REQUEST,
-                'message': 'One or more attributes are missing'
+                'code': MissingParameterHTTPError.status_code,
+                'message': MissingParameterHTTPError.status
             },
             {
-                'code': httplib.CONFLICT,
-                'message': 'Some problems were found during the name check'
+                'code': MalformedJSONHTTPError.status_code,
+                'message': MalformedJSONHTTPError.status
             },
             {
-                'code': httplib.CONFLICT,
-                'message': 'A database error has occurred'
+                'code': ARMHTTPError.status_code,
+                'message': ARMHTTPError.status
             }
         ]
     )
@@ -138,29 +156,29 @@ class RequirementsAPI(Resource):
         parameters=[
             {
                 'name': 'body',
-                "description": "Options to be passed to the import tool",
+                "description": "The new updated requirement",
                 "required": True,
                 "allowMultiple": False,
                 'type': RequirementMessage.__name__,
                 'paramType': 'body'
-            },
-            {
-                "name": "session_id",
-                "description": "The ID of the user's session",
-                "required": False,
-                "allowMultiple": False,
-                "dataType": str.__name__,
-                "paramType": "query"
             }
         ],
         responseMessages=[
             {
-                'code': httplib.BAD_REQUEST,
-                'message': 'The provided file is not a valid XML file'
+                'code': ObjectNotFoundHTTPError.status_code,
+                'message': ObjectNotFoundHTTPError.status
             },
             {
-                'code': httplib.BAD_REQUEST,
-                'message': '''Some parameters are missing. Be sure 'requirement' is defined.'''
+                'code': MalformedJSONHTTPError.status_code,
+                'message': MalformedJSONHTTPError.status
+            },
+            {
+                'code': ARMHTTPError.status_code,
+                'message': ARMHTTPError.status
+            },
+            {
+                'code': MissingParameterHTTPError.status_code,
+                'message': MissingParameterHTTPError.status
             }
         ]
     )
@@ -209,6 +227,14 @@ class RequirementsByAssetAPI(Resource):
             {
                 "code": httplib.BAD_REQUEST,
                 "message": "The database connection was not properly set up"
+            },
+            {
+                'code': ARMHTTPError.status_code,
+                'message': ARMHTTPError.status
+            },
+            {
+                'code': MissingParameterHTTPError.status_code,
+                'message': MissingParameterHTTPError.status
             }
         ]
     )
@@ -256,6 +282,14 @@ class RequirementsByEnvironmentAPI(Resource):
             {
                 "code": httplib.BAD_REQUEST,
                 "message": "The database connection was not properly set up"
+            },
+            {
+                'code': ARMHTTPError.status_code,
+                'message': ARMHTTPError.status
+            },
+            {
+                'code': MissingParameterHTTPError.status_code,
+                'message': MissingParameterHTTPError.status
             }
         ]
     )
@@ -272,87 +306,6 @@ class RequirementsByEnvironmentAPI(Resource):
         resp.headers['Content-type'] = 'application/json'
         return resp
 
-
-class RequirementByIdAPI(Resource):
-    # region Swagger Doc
-    @swagger.operation(
-        notes='Get a requirement by ID',
-        nickname='requirement-by-id-get',
-        responseClass=RequirementModel.__name__,
-        parameters=[
-            {
-                "name": "session_id",
-                "description": "The ID of the user's session",
-                "required": False,
-                "allowMultiple": False,
-                "dataType": str.__name__,
-                "paramType": "query"
-            }
-        ],
-        responseMessages=[
-            {
-                "code": httplib.BAD_REQUEST,
-                "message": "The database connection was not properly set up"
-            }
-        ]
-    )
-    # endregion
-    def get(self, id):
-        session_id = get_session_id(session, request)
-
-        dao = RequirementDAO(session_id)
-        req = dao.get_requirement_by_id(id)
-        dao.close()
-
-        resp = make_response(json_serialize(req, session_id=session_id), httplib.OK)
-        resp.headers['Content-type'] = 'application/json'
-        return resp
-
-    # region Swagger Doc
-    @swagger.operation(
-        notes='Deletes an existing requirement',
-        nickname='requirement-by-id-delete',
-        parameters=[
-            {
-                "name": "session_id",
-                "description": "The ID of the user's session",
-                "required": False,
-                "allowMultiple": False,
-                "dataType": str.__name__,
-                "paramType": "query"
-            }
-        ],
-        responseMessages=[
-            {
-                'code': httplib.BAD_REQUEST,
-                'message': 'One or more attributes are missing'
-            },
-            {
-                'code': httplib.CONFLICT,
-                'message': 'Some problems were found during the name check'
-            },
-            {
-                'code': httplib.NOT_FOUND,
-                'message': 'The provided requirement name could not be found in the database'
-            },
-            {
-                'code': httplib.CONFLICT,
-                'message': 'A database error has occurred'
-            }
-        ]
-    )
-    # endregion
-    def delete(self, id):
-        session_id = get_session_id(session, request)
-
-        dao = RequirementDAO(session_id)
-        dao.delete_requirement(req_id=id)
-        dao.close()
-
-        resp_dict = {'message': 'Requirement successfully deleted'}
-        resp = make_response(json_serialize(resp_dict), httplib.OK)
-        resp.headers['Content-type'] = 'application/json'
-        return resp
 
 class RequirementByNameAPI(Resource):
     # region Swagger Doc
@@ -374,6 +327,18 @@ class RequirementByNameAPI(Resource):
             {
                 "code": httplib.BAD_REQUEST,
                 "message": "The database connection was not properly set up"
+            },
+            {
+                'code': ARMHTTPError.status_code,
+                'message': ARMHTTPError.status
+            },
+            {
+                'code': MissingParameterHTTPError.status_code,
+                'message': MissingParameterHTTPError.status
+            },
+            {
+                'code': ObjectNotFoundHTTPError.status_code,
+                'message': ObjectNotFoundHTTPError.status
             }
         ]
     )
@@ -405,20 +370,20 @@ class RequirementByNameAPI(Resource):
         ],
         responseMessages=[
             {
-                'code': httplib.BAD_REQUEST,
-                'message': 'One or more attributes are missing'
+                'code': ARMHTTPError.status_code,
+                'message': ARMHTTPError.status
             },
             {
-                'code': httplib.CONFLICT,
-                'message': 'Some problems were found during the name check'
+                'code': MalformedJSONHTTPError.status_code,
+                'message': MalformedJSONHTTPError.status
             },
             {
-                'code': httplib.NOT_FOUND,
-                'message': 'The provided requirement name could not be found in the database'
+                'code': MissingParameterHTTPError.status_code,
+                'message': MissingParameterHTTPError.status
             },
             {
-                'code': httplib.CONFLICT,
-                'message': 'A database error has occurred'
+                'code': ObjectNotFoundHTTPError.status_code,
+                'message': ObjectNotFoundHTTPError.status
             }
         ]
     )
@@ -453,8 +418,16 @@ class RequirementByShortcodeAPI(Resource):
         ],
         responseMessages=[
             {
-                "code": httplib.BAD_REQUEST,
-                "message": "The database connection was not properly set up"
+                'code': ARMHTTPError.status_code,
+                'message': ARMHTTPError.status
+            },
+            {
+                'code': MissingParameterHTTPError.status_code,
+                'message': MissingParameterHTTPError.status
+            },
+            {
+                'code': ObjectNotFoundHTTPError.status_code,
+                'message': ObjectNotFoundHTTPError.status
             }
         ]
     )
