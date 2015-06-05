@@ -8,3 +8,4 @@ root = /home/irisuser/CAIRIS/cairis
 web_port = 7071
 log_level = debug
 web_static_dir = /home/irisuser/CAIRIS/cairis/cairis/public
+upload_dir = /home/irisuser/CAIRIS/uploads
