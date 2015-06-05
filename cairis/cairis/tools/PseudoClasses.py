@@ -346,5 +346,5 @@ class ValuedRole(object):
     }
     # endregion
     def __init__(self, role_name, cost):
-        self.role_name = role_name
+        self.roleName = role_name
         self.cost = cost

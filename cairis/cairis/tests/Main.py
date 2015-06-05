@@ -8,6 +8,7 @@ from tests.GoalTests import GoalTests
 from tests.MisuseCaseTests import MisuseCaseTests
 from tests.ProjectTests import ProjectTests
 from tests.RequirementTests import RequirementTests
+from tests.ResponseTests import ResponseTests
 from tests.RiskTests import RiskTests
 from tests.RoleTests import RoleTests
 from tests.ThreatTests import ThreatTests
@@ -26,6 +27,7 @@ tests_dict = {
     'misusecase': [0, MisuseCaseTests],
     'project': [0, ProjectTests],
     'requirement': [0, RequirementTests],
+    'response': [0, ResponseTests],
     'risk': [0, RiskTests],
     'role': [0, RoleTests],
     'threat': [0, ThreatTests],
