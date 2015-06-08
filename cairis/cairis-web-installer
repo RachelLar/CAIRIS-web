@@ -102,8 +102,8 @@ function download_cairis() {
 	echo "##############################################"
 	echo "# Downloading CAIRIS                         #"
 	echo "##############################################"
-	read CAIRIS_DIR
 	echo -e "\nWhere do you want to install CAIRIS? [/opt/cairis]\n"
+	read CAIRIS_DIR
 	if [ "$CAIRIS_DIR" == "" ]
 	then
 		CAIRIS_DIR=/opt/cairis
