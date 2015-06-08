@@ -87,7 +87,7 @@ function create_user() {
 	then
 		CAIRIS_USER='cairis'
 		existing_cu=$($PRECMD cat /etc/passwd | grep "$CAIRIS_USER"| wc -l)
-		if [ "$?" == "0" -a "$existing_cu" -lt "0" ]; then
+		if [ "$existing_cu" -lt "0" ]; then
 			echo "User already exists (that's good)"
 		else
 			$PRECMD useradd --no-create-home --system $CAIRIS_USER
