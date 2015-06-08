@@ -54,9 +54,6 @@ class AttackerDAO(CairisDAO):
             self.close()
             raise ObjectNotFoundHTTPError('The provided attacker name')
 
-        if simplify:
-            found_attacker = self.simplify(found_attacker)
-
         return found_attacker
 
     def add_attacker(self, attacker):
