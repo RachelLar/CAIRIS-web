@@ -31,7 +31,7 @@ function check_sudo() {
 }
 
 function install_sys_dep() {
-	echo "##############################################"
+	echo -e "\n##############################################"
 	echo "# Installing system dependencies             #"
 	echo -e "##############################################\n"
 	if [ "$INSTALL_DESKTOP" == "y" ]
@@ -47,12 +47,12 @@ function install_sys_dep() {
 		echo "Please consult the apt-get log to resolve the issue"
 		exit 1
 	else
-		echo -e "System dependencies successfully installed\n\n"
+		echo -e "System dependencies successfully installed\n"
 	fi
 }
 
 function install_python_dep() {
-	echo "##############################################"
+	echo -e "\n##############################################"
 	echo "# Installing Python dependencies             #"
 	echo -e "##############################################\n"
 	$PRECMD pip install numpy mysql-python==1.2.3 pyparsing==1.5.7 pydot flask flask-restful flask-restful-swagger flask-cors jsonpickle Mako
@@ -63,15 +63,15 @@ function install_python_dep() {
 		echo "Please consult the pip log to resolve the issue"
 		exit 1
 	else
-		echo -e "Python dependencies successfully installed\n\n"
+		echo -e "Python dependencies successfully installed\n"
 	fi
 }
 
 function create_user() {
-	echo "##############################################"
+	echo -e "\n##############################################"
 	echo "# Security                                   #"
 	echo "##############################################"
-	echo -e "\nTo ensure proper functioning, it is advised that CAIRIS is run by a specific system user or a user that belongs to a specific group. The installer can create this user and group, and can make the current user member of this group.\n\n"
+	echo -e "\nTo ensure proper functioning, it is advised that CAIRIS is run by a specific system user or a user that belongs to a specific group. The installer can create this user and group, and can make the current user member of this group.\n"
 	echo "Would you like the installer to do this? [Y/n]"
 
 	cu=""
@@ -99,7 +99,7 @@ function create_user() {
 }
 
 function download_cairis() {
-	echo "##############################################"
+	echo -e "\n##############################################"
 	echo "# Downloading CAIRIS                         #"
 	echo "##############################################"
 	echo -e "\nWhere do you want to install CAIRIS? [/opt/cairis]\n"
@@ -126,11 +126,11 @@ function download_cairis() {
 }
 
 function developer_branch() {
-	echo "##############################################"
+	echo -e "\n##############################################"
 	echo "# Experimental branch                        #"
 	echo "##############################################"
 	echo -e "\nCertain features may not be implemented in the master branch yet.\n"
-	echo -e "If you want, you can switch to the develop branch, which contains experimental code.\n\n"
+	echo -e "If you want, you can switch to the develop branch, which contains experimental code.\n"
 	echo "Do you want to switch to this branch? [y/N]"
 	bsw=""
 	while [ "$bsw" != "y" -a "$bsw" != "n" ]
@@ -155,7 +155,7 @@ echo -e "##############################################\n"
 echo -e "\nCAIRIS can also run as a desktop application. However this requires extra dependencies to be installed.\n"
 while [ "$INSTALL_DESKTOP" != "y" -a "$INSTALL_DESKTOP" != "n" ]
 do
-	echo -e "\nDo you want to include the desktop application in the installation? [y/N]\n"
+	echo -e "Do you want to include the desktop application in the installation? [y/N]"
 	read INSTALL_DESKTOP
 	if [ "$INSTALL_DESKTOP" == "" ]; then INSTALL_DESKTOP="n"; fi
 	INSTALL_DESKTOP=${INSTALL_DESKTOP,,}
