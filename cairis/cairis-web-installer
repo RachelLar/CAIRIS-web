@@ -144,10 +144,19 @@ function developer_branch() {
 
 check_sudo
 
+echo "##############################################"
+echo "# CAIRIS desktop application                 #"
+echo -e "##############################################\n"
+echo -e "\nCAIRIS can also run as a desktop application. However this requires extra dependencies to be installed.\n"
 while [ "$INSTALL_DESKTOP" != "y" -a "$INSTALL_DESKTOP" != "n" ]
 do
+	echo -e "\nDo you want to include the desktop application in the installation? [y/N]\n"
 	read INSTALL_DESKTOP
+	if [ "$INSTALL_DESKTOP" == "" ]; then INSTALL_DESKTOP="y"; fi
 	INSTALL_DESKTOP=${INSTALL_DESKTOP,,}
+	if [ "$INSTALL_DESKTOP" != "y" -a "$INSTALL_DESKTOP" != "n" ]; then
+		echo "Invalid input"
+	fi
 done
 
 install_sys_dep
