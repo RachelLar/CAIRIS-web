@@ -1,7 +1,7 @@
 /**
  * Created by Raf on 24/04/2015.
  */
-window.serverIP = "http://127.0.0.1:7071";
+window.serverIP = "http://"+window.location.host;
 window.activeTable ="Requirements";
 window.boxesAreFilled = false;
 window.debug = true;
