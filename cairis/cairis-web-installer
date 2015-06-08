@@ -1,0 +1,157 @@
+#!/bin/bash
+#
+
+INSTALL_DESKTOP='x'
+ORIGINAL_USER=$USER
+CAIRIS_USER=$USER
+CAIRIS_GIT='https://github.com/RobinQuetin/CAIRIS-web.git'
+CAIRIS_DIR=/opt/cairis
+PRECMD=''
+
+function check_sudo() {
+	if [ "$EUID" -ne 0 ]; then
+		sudo_path=$(which sudo)
+		if [ "$sudo_path" == "" ]; then
+			echo "sudo binary not found. Please install the sudo binary or run this script as root"
+			exit
+		fi
+
+		$sudo_path -n true 2>/dev/null
+		if [ "$?" -ne "0" ]; then
+			echo "Please provide your password for root privileges"
+			$sudo_path true
+			if [ "$?" -ne "0" ]; then
+				echo "Root privileges are required to install CAIRIS"
+				echo "The installer will now exit..."
+				exit 1
+			fi
+		fi
+		PRECMD=$sudo_path
+	fi
+}
+
+function install_sys_dep() {
+	echo "##############################################"
+	echo "# Installing system dependencies             #"
+	echo -e "##############################################\n"
+	if [ "$INSTALL_DESKTOP" == "y" ]
+	then
+		$PRECMD apt-get install python-wxglade python-glade2 python-wxgtk2.8 python-dev build-essential mysql-server mysql-client graphviz docbook dblatex python-pip git libmysqlclient-dev --no-install-recommends texlive-latex-extra
+	else
+		$PRECMD apt-get install python-dev build-essential mysql-server mysql-client graphviz docbook dblatex python-pip git libmysqlclient-dev --no-install-recommends texlive-latex-extra
+	fi
+
+	if [ "$?" -ne "0" ]
+	then
+		echo "An error occurred while installing the system dependencies for CAIRIS."
+		echo "Please consult the apt-get log to resolve the issue"
+		exit 1
+	else
+		echo -e "System dependencies successfully installed\n\n"
+	fi
+}
+
+function install_python_dep() {
+	echo "##############################################"
+	echo "# Installing Python dependencies             #"
+	echo -e "##############################################\n"
+	$PRECMD pip install numpy mysql-python==1.2.3 pyparsing==1.5.7 pydot flask flask-restful flask-restful-swagger flask-cors jsonpickle Mako
+
+	if [ "$?" -ne "0" ]
+	then
+		echo "An error occurred while installing the Python dependencies for CAIRIS."
+		echo "Please consult the pip log to resolve the issue"
+		exit 1
+	else
+		echo -e "Python dependencies successfully installed\n\n"
+	fi
+}
+
+function create_user() {
+	echo "##############################################"
+	echo "# Security                                   #"
+	echo "##############################################"
+	echo -e "\nTo ensure proper functioning, it is advised that CAIRIS is run by a specific system user or a user that belongs to a specific group. The installer can create this user and group, and can make the current user member of this group.\n\n"
+	echo "Would you like the installer to do this? [Y/n]"
+
+	cu=""
+	while [ \( "$cu" != "y" -a "$cu" != "n" \) ]
+	do
+		read cu
+		if [ "$cu" == "" ]; then cu="y"; fi
+		cu=${cu,,}
+		if [ "$cu" != "y" -a "$cu" != "n" ]; then echo -e "Invalid input\n\nWould you like the installer to do this? [Y/n]\n"; fi
+	done
+
+	if [ "$cu" == "y" ]
+	then
+		CAIRIS_USER='cairis'
+		$PRECMD useradd --no-create-home --system $CAIRIS_USER
+		if [ "$?" -ne "0" ]; then echo "CAIRIS encountered an error. Exiting..."; exit; fi
+		$PRECMD usermod -a -G "$CAIRIS_USER" "$USER"
+		if [ "$?" -ne "0" ]; then echo "CAIRIS encountered an error. Please check your user's groups after installation."; fi
+	fi	
+}
+
+function download_cairis() {
+	echo "##############################################"
+	echo "# Downloading CAIRIS                         #"
+	echo "##############################################"
+	read CAIRIS_DIR
+	echo -e "\nWhere do you want to install CAIRIS? [/opt/cairis]\n"
+	if [ "$CAIRIS_DIR" == "" ]
+	then
+		CAIRIS_DIR=/opt/cairis
+	else
+		i=$((${#CAIRIS_DIR}-1))
+		last_letter=${CAIRIS_DIR:$i:1}
+		if [ "$last_letter" == "/" ]; then CAIRIS_DIR=${CAIRIS_DIR:0:$i}; fi
+	fi
+	$PRECMD git clone $CAIRIS_GIT $CAIRIS_DIR
+	if [ "$?" -ne "0" ]; then
+		echo "Error retrieving source code for CAIRIS. Please check if Github is reachable."
+		exit 1
+	fi
+	$PRECMD chown -R $CAIRIS_USER:$CAIRIS_USER $CAIRIS_DIR
+	$PRECMD chmod -R 775 $CAIRIS_DIR
+	if [ "$?" -ne "0" ]; then
+		echo "Error while setting up CAIRIS application directory. Exiting..."
+		exit 1
+	fi
+}
+
+function developer_branch() {
+	echo "##############################################"
+	echo "# Experimental branch                        #"
+	echo "##############################################"
+	echo -e "\nCertain features may not be implemented in the master branch yet.\n"
+	echo -e "If you want, you can switch to the develop branch, which contains experimental code.\n\n"
+	echo "Do you want to switch to this branch? [y/N]"
+	bsw=""
+	while [ "$bsw" != "y" -a "$bsw" != "n" ]
+	do
+		read bsw
+		if [ "$bsw" == "" ]; then bsw="n"; fi
+		bsw=${bsw,,}
+		if [ "$bsw" != "y" -a "$bsw" != "n" ]; then echo -e "Invalid input\n\nWould you like the installer to do this? [Y/n]\n"; fi
+	done
+
+	if [ "$bsw" == "y" ]; then
+		cd $CAIRIS_DIR
+		git checkout developer
+	fi
+}
+
+check_sudo
+
+while [ "$INSTALL_DESKTOP" != "y" -a "$INSTALL_DESKTOP" != "n" ]
+do
+	read INSTALL_DESKTOP
+	INSTALL_DESKTOP=${INSTALL_DESKTOP,,}
+done
+
+install_sys_dep
+install_python_dep
+create_user
+download_cairis
+developer_branch
