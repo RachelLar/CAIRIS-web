@@ -86,8 +86,13 @@ function create_user() {
 	if [ "$cu" == "y" ]
 	then
 		CAIRIS_USER='cairis'
-		$PRECMD useradd --no-create-home --system $CAIRIS_USER
-		if [ "$?" -ne "0" ]; then echo "CAIRIS encountered an error. Exiting..."; exit; fi
+		existing_cu=$($PRECMD cat /etc/passwd | grep "$CAIRIS_USER"| wc -l)
+		if [ "$?" == "0" -a "$existing_cu" -lt "0"]; then
+			echo "User already exists (that's good)"
+		else
+			$PRECMD useradd --no-create-home --system $CAIRIS_USER
+			if [ "$?" -ne "0" ]; then echo "CAIRIS encountered an error. Exiting..."; exit; fi
+		fi
 		$PRECMD usermod -a -G "$CAIRIS_USER" "$USER"
 		if [ "$?" -ne "0" ]; then echo "CAIRIS encountered an error. Please check your user's groups after installation."; fi
 	fi	
