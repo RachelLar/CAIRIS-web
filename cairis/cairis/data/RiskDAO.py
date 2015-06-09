@@ -19,20 +19,6 @@ __author__ = 'Robin Quetin'
 class RiskDAO(CairisDAO):
     def __init__(self, session_id):
         CairisDAO.__init__(self, session_id)
-        self.likelihood_dict = {
-            0: 'Incredible',
-            1: 'Improbable',
-            2: 'Remote',
-            3: 'Occasional',
-            4: 'Probable',
-            5: 'Frequent'
-        }
-        self.severity_dict = {
-            0:'Negligible',
-            1:'Marginal',
-            2:'Critical',
-            3:'Catastrophic'
-        }
 
     def get_risks(self, constraint_id=-1, simplify=True, skip_misuse=False):
         """
@@ -178,7 +164,7 @@ class RiskDAO(CairisDAO):
             raise ARMHTTPError(ex)
 
         for key in misuse_cases:
-            misuse_cases[key].theObjective = self.get_misuse_case_objective(misuse_cases)
+            misuse_cases[key].theObjective = self.get_misuse_case_obj_and_assets(misuse_cases)
             if simplify:
                 misuse_cases[key] = self.simplify(misuse_cases[key])
 
@@ -217,7 +203,7 @@ class RiskDAO(CairisDAO):
         try:
             threat_id = self.db_proxy.getDimensionId(threat_name, 'threat')
             environment_id = self.db_proxy.getDimensionId(environment_name, 'environment')
-            attackers = self.dbProxy.threatAttackers(threat_id, environment_id)
+            attackers = self.db_proxy.threatAttackers(threat_id, environment_id)
         except ARM.DatabaseProxyException as ex:
             SilentHTTPError(ex.value)
         except ARM.ARMException as ex:
