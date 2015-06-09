@@ -787,7 +787,6 @@ function postNewProject(callback){
         crossDomain: true,
         processData: false,
         origin: serverIP,
-        data: output,
         url: serverIP + "/api/settings/create" + "?session_id=" + $.session.get('sessionID'),
         success: function (data) {
            callback();

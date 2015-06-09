@@ -87,6 +87,7 @@ $(document).on('click', ".editAttackerButton", function () {
                     $("#theAttackerEnvironments").find(".attackerEnvironment:first").trigger('click');
                     $("#theImages").attr("src",getImagedir(data.theImage));
                     resaleImage($("#theImages"));
+
                 }
             );
         },

@@ -198,7 +198,7 @@
                             <p class="imgPopup">Edit Risks</p>
                         </a>
                     </li>
-                    <li class="dropdown messages-menu">
+                    <li class="dropdown messages-menu" id="responsesTable">
                         <a href="#" class="dropdown-toggle imgwrapper" data-toggle="dropdown">
                             <img class="menu-image" src="images/response.png" alt="Edit Response">
                             <p class="imgPopup">Edit Response</p>
@@ -311,6 +311,9 @@
                             </a></li>
                             <li><a href="#">Save
                             </a></li>
+                            <li><a id="importClick" href="#">Import
+                            </a></li>
+                            <input type="file" id="importFile" style="display:none;"/>
                             <li><a href="#">Export
                             </a></li>
                             <li><a href="#">Documentation
@@ -612,6 +615,29 @@
 
     </select>
 </div>
+<div id="typeOfFile" title="Which type?" style="display: none">
+    <select>
+        <option>Model</option>
+        <option>Project data</option>
+        <option>Requirements</option>
+        <option>Risk Analysis</option>
+        <option>Usability</option>
+        <option>Associations</option>
+        <option>Threat and Vulnerability Types</option>
+        <option>Domain Values</option>
+        <option>Threat and Vulnerability Directory</option>
+        <option>Security Pattern</option>
+        <option>Architectural Pattern</option>
+        <option>Attack Pattern</option>
+        <option>Synopses</option>
+        <option>Assets</option>
+        <option>Processes</option>
+    </select>
+</div>
+<div class="loadingWrapper">
+    <div class="divLoading">
+    </div>
+</div>
 <script>
    var reqTabl =  $('#reqTable').editableTableWidget({editor: $('<textarea>')});
     /*
@@ -637,7 +663,7 @@
 <script>
     LazyLoad.js(["dist/js/cairis/Cairis-UI.js","dist/js/cairis/buttonclicks.js", "dist/js/cairis/Cairis.js", "dist/js/cairis/readFile.js",
         "dist/js/cairis/threats.js", "dist/js/cairis/attackers.js", "dist/js/cairis/assets.js", "dist/js/cairis/goals.js", "dist/js/cairis/projectSettings.js",
-        "dist/js/cairis/risks.js",
+        "dist/js/cairis/risks.js", "dist/js/cairis/fileImport.js", "dist/js/cairis/responses.js",
         "dist/js/cairis/SVGhandler.js","dist/js/cairis/PutAndPost.js", "plugins/contextMenu/contextMenu.js", "dist/js/objects/jsonDefaultObjects.js"], function () {
 
        console.log("All Cairis JS loaded");

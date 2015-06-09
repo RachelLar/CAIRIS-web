@@ -2,6 +2,7 @@
  * Created by Raf on 24/04/2015.
  */
 window.serverIP = "http://"+window.location.host;
+//window.serverIP = "http://192.168.112.131:7071";
 window.activeTable ="Requirements";
 window.boxesAreFilled = false;
 window.debug = true;
@@ -17,7 +18,7 @@ var dialogwindow = $( "#dialogContent" ).dialog({
     modal: true,
     buttons: {
         OK: function() {
-
+            showLoading();
             var json_text = JSON.stringify($('#configForm').serializeObject());
             var portArr  = json_text.match('port":"(.*)","user');
             var port = portArr[1];
@@ -35,6 +36,7 @@ var dialogwindow = $( "#dialogContent" ).dialog({
                    var sessionID = data.session_id;
                     $.session.set("sessionID", sessionID);
                     startingTable();
+                    hideLoading();
 
                 },
                 error: function(data, status, xhr) {
@@ -47,6 +49,7 @@ var dialogwindow = $( "#dialogContent" ).dialog({
             /*$('#response').html('The value entered was ' + $('#myInput').val());
              record.find('.name').html($('#myInput').val());*/
             $( this ).dialog( "close" );
+
         },
         Cancel: function() {
             $( this ).dialog( "close" );
@@ -61,7 +64,8 @@ $(document).ready(function() {
   //  localStorage.removeItem('sessionID');
     var sessionID = $.session.get('sessionID');
     if(!sessionID){
-        dialogwindow.dialog( "open" )
+        dialogwindow.dialog( "open" );
+        hideLoading();
     }
     else{
         //Else we can show the table
@@ -70,6 +74,12 @@ $(document).ready(function() {
 
 
 });
+function showLoading(){
+    $(".loadingWrapper").fadeIn(500);
+}
+function hideLoading(){
+    $(".loadingWrapper").fadeOut(500);
+}
 
 /*
 Filling the asset environment in the HTML
@@ -535,6 +545,30 @@ function assetsDialogBox(haveEnv,callback){
     });
 }
 /*
+ Dialog for choosing a file
+ */
+function fileDialogbox(callback){
+    var dialogwindow = $("#typeOfFile");
+    var select = dialogwindow.find("select");
+    dialogwindow.dialog({
+        modal: true,
+        buttons: {
+            Ok: function () {
+                var text =  select.find("option:selected" ).text();
+                if(jQuery.isFunction(callback)){
+                    callback(text);
+                    $("#importFile").trigger('click')
+                }
+                $(this).dialog("close");
+            }
+        }
+    });
+    $(".comboboxD").css("visibility", "visible");
+
+}
+
+
+/*
  Dialog for choosing an asset in a certain environment
  */
 function assetsInEnvDialogBox(environ, haveEnv, callback){
@@ -906,6 +940,8 @@ function startingTable(){
             setTableHeader("Requirements");
             createRequirementsTable(data);
             activeElement("reqTable");
+            $(".loadingWrapper").fadeOut(500);
+
         },
         error: function(xhr, textStatus, errorThrown) {
             debugLogger(String(this.url));
@@ -986,6 +1022,10 @@ function setTableHeader(){
         case "Risks":
             debugLogger("Is Risk");
             thead = "<th width='120px' id='addnewRisk'><i class='fa fa-plus floatCenter'></i></th><th>Name</th>";
+            break;
+        case "Respones":
+            debugLogger("Is Response");
+            thead = "<th width='120px' id='addNewResponse'><i class='fa fa-plus floatCenter'></i></th><th>Name</th><th>Type</th>";
             break;
     }
     $("#reqTable").find("thead").empty();

@@ -58,9 +58,6 @@ function createThreatsTable(){
             debugLogger("error: " + xhr.responseText +  ", textstatus: " + textStatus + ", thrown: " + errorThrown);
         }
     })
-
-
-
 }
 
 
