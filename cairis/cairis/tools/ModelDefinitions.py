@@ -20,11 +20,13 @@ from TransferEnvironmentProperties import TransferEnvironmentProperties
 from ValueType import ValueType
 from Vulnerability import Vulnerability
 from VulnerabilityEnvironmentProperties import VulnerabilityEnvironmentProperties
-from tools.PseudoClasses import EnvironmentTensionModel, SecurityAttribute, ValuedRole
+from tools.PseudoClasses import EnvironmentTensionModel, SecurityAttribute, ValuedRole, RiskRating
 
 __author__ = 'Robin Quetin'
 
 obj_id_field = "__python_obj__"
+likelihood_metadata = { "enum": ['Incredible', 'Improbable', 'Remote', 'Occasional', 'Probable', 'Frequent'] }
+severity_metadata = { "enum": ['Negligible', 'Marginal', 'Critical', 'Catastrophic'] }
 def gen_class_metadata(class_ref):
     return {
         "enum": [class_ref.__module__+'.'+class_ref.__name__]
@@ -247,21 +249,31 @@ class GoalModel(object):
     }
 
 @swagger.model
+@swagger.nested(
+    theRiskRating=RiskRating.__name__
+)
 class MisuseCaseEnvironmentPropertiesModel(object):
     resource_fields = {
         obj_id_field: fields.String,
+        "theAssets": fields.List(fields.String),
+        "theAttackers": fields.List(fields.String),
         "theDescription": fields.String,
-        "theEnvironmentName": fields.String
+        "theEnvironmentName": fields.String,
+        "theObjective": fields.String,
+        "theLikelihood": fields.String,
+        "theRiskRating": fields.Nested(RiskRating.resource_fields),
+        "theSeverity": fields.String,
     }
-    required = resource_fields.keys()
-    required.remove(obj_id_field)
+    required = ["theDescription", "theEnvironmentName"]
     swagger_metadata = {
-        obj_id_field : gen_class_metadata(MisuseCaseEnvironmentProperties)
+        obj_id_field : gen_class_metadata(MisuseCaseEnvironmentProperties),
+        "theLikelihood": likelihood_metadata,
+        "theSeverity": severity_metadata
     }
 
 @swagger.model
 @swagger.nested(
-    MisuseCaseEnvironmentProperties=MisuseCaseEnvironmentPropertiesModel.__name__
+    theEnvironmentProperties=MisuseCaseEnvironmentPropertiesModel.__name__
 )
 class MisuseCaseModel(object):
     resource_fields = {
@@ -393,7 +405,7 @@ class ResponseModel(object):
 
 @swagger.model
 @swagger.nested(
-    MisuseCaseModel=MisuseCaseModel.__name__
+    theMisuseCase=MisuseCaseModel.__name__
 )
 class RiskModel(object):
     resource_fields = {
@@ -460,9 +472,7 @@ class ThreatEnvironmentPropertiesModel(object):
     required.remove('theRationale')
     swagger_metadata = {
         obj_id_field : gen_class_metadata(ThreatEnvironmentProperties),
-        'theLikelihood' : {
-            "enum": ['Incredible','Improbable','Remote','Occasional','Probable', 'Frequent']
-        }
+        'theLikelihood' : likelihood_metadata
     }
 
 @swagger.model
@@ -539,9 +549,7 @@ class VulnerabilityEnvironmentPropertiesModel(object):
     required.remove(obj_id_field)
     swagger_metadata = {
         obj_id_field : gen_class_metadata(VulnerabilityEnvironmentProperties),
-        "theSeverity": {
-            "enum": ['Negligible', 'Marginal', 'Critical','Catastrophic']
-        }
+        "theSeverity": severity_metadata
     }
 
 @swagger.model

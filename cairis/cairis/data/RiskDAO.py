@@ -1,9 +1,10 @@
 import ARM
 from CairisHTTPError import ARMHTTPError, ObjectNotFoundHTTPError, MalformedJSONHTTPError, MissingParameterHTTPError, \
-    OverwriteNotAllowedHTTPError
+    OverwriteNotAllowedHTTPError, SilentHTTPError
 from MisuseCase import MisuseCase
 from MisuseCaseEnvironmentProperties import MisuseCaseEnvironmentProperties
 from RiskParameters import RiskParameters
+from data.AssetDAO import AssetDAO
 from data.CairisDAO import CairisDAO
 from Risk import Risk
 from alternative.EnvironmentModel import EnvironmentModel
@@ -18,8 +19,27 @@ __author__ = 'Robin Quetin'
 class RiskDAO(CairisDAO):
     def __init__(self, session_id):
         CairisDAO.__init__(self, session_id)
+        self.likelihood_dict = {
+            0: 'Incredible',
+            1: 'Improbable',
+            2: 'Remote',
+            3: 'Occasional',
+            4: 'Probable',
+            5: 'Frequent'
+        }
+        self.severity_dict = {
+            0:'Negligible',
+            1:'Marginal',
+            2:'Critical',
+            3:'Catastrophic'
+        }
 
-    def get_risks(self, constraint_id=-1, simplify=True):
+    def get_risks(self, constraint_id=-1, simplify=True, skip_misuse=False):
+        """
+        :type constraint_id: int
+        :type simplify: bool
+        :rtype: dict[str,Risk]
+        """
         try:
             risks = self.db_proxy.getRisks(constraintId=constraint_id)
         except ARM.DatabaseProxyException as ex:
@@ -29,22 +49,25 @@ class RiskDAO(CairisDAO):
             self.close()
             raise ARMHTTPError(ex)
 
-        if isinstance(risks, dict) and simplify:
+        if isinstance(risks, dict):
             for key, value in risks.items():
-                risks[key] = self.simplify(value)
+                if value.theMisuseCase and not skip_misuse:
+                    risks[key].theMisuseCase = self.get_misuse_case_by_risk_name(value.theName, simplify=False)
+                if simplify:
+                    risks[key] = self.simplify(value)
 
         return risks
 
     def get_risk_names(self):
-        risks = self.get_risks()
+        risks = self.get_risks(skip_misuse=True)
         risk_names = risks.keys()
         return risk_names
 
-    def get_risk_by_name(self, name, simplify=True):
+    def get_risk_by_name(self, name, simplify=True, skip_misuse=False):
         """
         :rtype : Risk
         """
-        risks = self.get_risks(simplify=simplify)
+        risks = self.get_risks(simplify=simplify, skip_misuse=skip_misuse)
         found_risk = risks.get(name, None)
 
         if found_risk is None:
@@ -140,6 +163,11 @@ class RiskDAO(CairisDAO):
 
     # region Misuse cases
     def get_misuse_cases(self, constraint_id=-1, simplify=True):
+        """
+        :type constraint_id: int
+        :type simplify: bool
+        :rtype: dict[str,MisuseCase]
+        """
         try:
             misuse_cases = self.db_proxy.getMisuseCases(constraintId=constraint_id)
         except ARM.DatabaseProxyException as ex:
@@ -149,17 +177,19 @@ class RiskDAO(CairisDAO):
             self.close()
             raise ARMHTTPError(ex)
 
-        if simplify:
-            for key in misuse_cases:
+        for key in misuse_cases:
+            misuse_cases[key].theObjective = self.get_misuse_case_objective(misuse_cases)
+            if simplify:
                 misuse_cases[key] = self.simplify(misuse_cases[key])
 
         return misuse_cases
 
-    def get_misuse_case_by_risk_name(self, risk_name):
-        found_risk = self.get_risk_by_name(risk_name)
+    def get_misuse_case_by_risk_name(self, risk_name, simplify=True):
+        found_risk = self.get_risk_by_name(risk_name, skip_misuse=True)
 
         try:
             misuse_case = self.db_proxy.riskMisuseCase(found_risk.theId)
+
         except ARM.DatabaseProxyException as ex:
             self.close()
             raise ARMHTTPError(ex)
@@ -170,6 +200,131 @@ class RiskDAO(CairisDAO):
         if not misuse_case:
             self.close()
             raise ObjectNotFoundHTTPError('The misuse case associated with the risk')
+        assert isinstance(misuse_case, MisuseCase)
+
+        misuse_case = self.expand_mc_props(misuse_case)
+
+        if simplify:
+            misuse_case = self.simplify(misuse_case)
+
+        return misuse_case
+
+    def get_misuse_case_assets(self, threat_name, environment_name):
+        """
+        :rtype : list[str]
+        """
+        attackers = []
+        try:
+            threat_id = self.db_proxy.getDimensionId(threat_name, 'threat')
+            environment_id = self.db_proxy.getDimensionId(environment_name, 'environment')
+            attackers = self.dbProxy.threatAttackers(threat_id, environment_id)
+        except ARM.DatabaseProxyException as ex:
+            SilentHTTPError(ex.value)
+        except ARM.ARMException as ex:
+            SilentHTTPError(str(ex.value))
+
+        return attackers
+
+    def get_misuse_case_attackers(self, threat_name, environment_name):
+        """
+        :rtype : list[str]
+        """
+        attackers = []
+        try:
+            threat_id = self.db_proxy.getDimensionId(threat_name, 'threat')
+            environment_id = self.db_proxy.getDimensionId(environment_name, 'environment')
+            attackers = self.db_proxy.threatAttackers(threat_id, environment_id)
+        except ARM.DatabaseProxyException as ex:
+            SilentHTTPError(ex.value)
+        except ARM.ARMException as ex:
+            SilentHTTPError(str(ex.value))
+
+        return attackers
+
+    def get_misuse_case_obj_and_assets(self, threat_name, vulnerability_name, environment_name):
+        """
+        :rtype : str, list[Asset]
+        """
+        dao = AssetDAO(self.session_id)
+        threatened_assets = []
+        vulnerable_assets = []
+        try:
+            threatened_assets = dao.get_threatened_assets(threat_name, environment_name)
+            vulnerable_assets = dao.get_vulnerable_assets(vulnerability_name, environment_name)
+        except ObjectNotFoundHTTPError as ex:
+            SilentHTTPError(ex.message)
+
+        objectiveText = 'Exploit vulnerabilities in '
+        for idx,vulAsset in enumerate(vulnerable_assets):
+            objectiveText += vulAsset
+            if (idx != (len(vulnerable_assets) -1)):
+                objectiveText += ','
+        objectiveText += ' to threaten '
+        for idx,thrAsset in enumerate(threatened_assets):
+            objectiveText += thrAsset
+            if (idx != (len(threatened_assets) -1)):
+                objectiveText += ','
+        objectiveText += '.'
+        assets = set(threatened_assets + vulnerable_assets)
+
+        return objectiveText, list(assets)
+
+    def get_misuse_case_likelihood(self, threat_name, environment_name):
+        likelihood_name = 'N/A'
+        try:
+            threat_id = self.db_proxy.getDimensionId(threat_name, 'threat')
+            environment_id = self.db_proxy.getDimensionId(environment_name, 'environment')
+            likelihood_name = self.db_proxy.threatLikelihood(threat_id, environment_id)
+        except ARM.DatabaseProxyException as ex:
+            SilentHTTPError(ex.value)
+        except ARM.ARMException as ex:
+            SilentHTTPError(str(ex.value))
+
+        return likelihood_name
+
+    def get_misuse_case_severity(self, vulnerability_name, environment_name):
+        severity_name = 'N/A'
+        try:
+            vulnerability_id = self.db_proxy.getDimensionId(vulnerability_name, 'vulnerability')
+            environment_id = self.db_proxy.getDimensionId(environment_name, 'environment')
+            severity_name = self.db_proxy.vulnerabilitySeverity(vulnerability_id, environment_id)
+        except ARM.DatabaseProxyException as ex:
+            SilentHTTPError(ex.value)
+        except ARM.ARMException as ex:
+            SilentHTTPError(str(ex.value))
+
+        return severity_name
+
+    def expand_mc_props(self, misuse_case):
+        # Fetch threat and vulnerability name
+        try:
+            threat_name, vuln_name = self.db_proxy.misuseCaseRiskComponents(misuse_case.theName)
+            misuse_case.theThreatName = threat_name
+            misuse_case.theVulnerabilityName = vuln_name
+        except ARM.DatabaseProxyException as ex:
+            self.close()
+            if ex.value.find('Error obtaining risk components associated with Misuse Case'):
+                raise ObjectNotFoundHTTPError('The associated threat and vulnerability name')
+            else:
+                raise ARMHTTPError(ex)
+        except ARM.ARMException as ex:
+            self.close()
+            raise ARMHTTPError(ex)
+
+        # Add objective, likelihood, severity and risk rating
+        for idx in range(0, len(misuse_case.theEnvironmentProperties)):
+            env_prop = misuse_case.theEnvironmentProperties[idx]
+            assert isinstance(env_prop, MisuseCaseEnvironmentProperties)
+            env_prop.theObjective, env_prop.theAssets = self.get_misuse_case_obj_and_assets(
+                misuse_case.theThreatName,
+                misuse_case.theVulnerabilityName,
+                env_prop.theEnvironmentName
+            )
+            env_prop.theLikelihood = self.get_misuse_case_likelihood(threat_name, env_prop.theEnvironmentName)
+            env_prop.theSeverity = self.get_misuse_case_severity(vuln_name, env_prop.theEnvironmentName)
+            env_prop.theRiskRating = self.get_risk_rating_by_tve(threat_name, vuln_name, env_prop.theEnvironmentName)
+            env_prop.theAttackers = self.get_misuse_case_attackers(threat_name, env_prop.theEnvironmentName)
+            misuse_case.theEnvironmentProperties[idx] = env_prop
 
         return misuse_case
     # endregion

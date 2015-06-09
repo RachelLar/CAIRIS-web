@@ -10,6 +10,9 @@ from ValueType import ValueType
 from ValueTypeParameters import ValueTypeParameters
 import armid
 from data.CairisDAO import CairisDAO
+from data.EnvironmentDAO import EnvironmentDAO
+from data.ThreatDAO import ThreatDAO
+from data.VulnerabilityDAO import VulnerabilityDAO
 from tools.JsonConverter import json_serialize, json_deserialize
 from tools.ModelDefinitions import AssetEnvironmentPropertiesModel, SecurityAttribute, AssetModel
 from tools.SessionValidator import check_required_keys, get_fonts
@@ -89,6 +92,9 @@ class AssetDAO(CairisDAO):
         except ARM.DatabaseProxyException as ex:
             self.close()
             raise ARMHTTPError(ex)
+        except ARM.ARMException as ex:
+            self.close()
+            raise ARMHTTPError(ex)
 
         if assets is not None:
             found_asset = assets.get(name)
@@ -101,6 +107,86 @@ class AssetDAO(CairisDAO):
             found_asset = self.simplify(found_asset)
 
         return found_asset
+
+    def get_threatened_assets(self, threat_name, environment_name):
+        """
+        :type threat_name: str
+        :type environment_name: str
+        :rtype: list[Asset]
+        """
+        threat_dao = ThreatDAO(self.session_id)
+
+        try:
+            found_threat = threat_dao.get_threat_by_name(threat_name)
+            threat_id = found_threat.theId
+        except ObjectNotFoundHTTPError as ex:
+            self.close()
+            raise ex
+        except ARMHTTPError as ex:
+            self.close()
+            raise ex
+
+        environment_dao = EnvironmentDAO(self.session_id)
+        try:
+            found_environment = environment_dao.get_environment_by_name(environment_name)
+            environment_id = found_environment.theId
+        except ObjectNotFoundHTTPError as ex:
+            self.close()
+            raise ex
+        except ARMHTTPError as ex:
+            self.close()
+            raise ex
+
+        try:
+            threatened_assets = self.db_proxy.threatenedAssets(threat_id, environment_id)
+        except ARM.DatabaseProxyException as ex:
+            self.close()
+            raise ARMHTTPError(ex)
+        except ARM.ARMException as ex:
+            self.close()
+            raise ARMHTTPError(ex)
+
+        return threatened_assets
+
+    def get_vulnerable_assets(self, vulnerability_name, environment_name):
+        """
+        :type vulnerability_name: str
+        :type environment_name: str
+        :rtype: list[Asset]
+        """
+        vulnerability_dao = VulnerabilityDAO(self.session_id)
+
+        try:
+            found_vulnerability = vulnerability_dao.get_vulnerability_by_name(vulnerability_name)
+            vulnerability_id = found_vulnerability.theVulnerabilityId
+        except ObjectNotFoundHTTPError as ex:
+            self.close()
+            raise ex
+        except ARMHTTPError as ex:
+            self.close()
+            raise ex
+
+        environment_dao = EnvironmentDAO(self.session_id)
+        try:
+            found_environment = environment_dao.get_environment_by_name(environment_name)
+            environment_id = found_environment.theId
+        except ObjectNotFoundHTTPError as ex:
+            self.close()
+            raise ex
+        except ARMHTTPError as ex:
+            self.close()
+            raise ex
+
+        try:
+            vulnerable_assets = self.db_proxy.vulnerableAssets(vulnerability_id, environment_id)
+        except ARM.DatabaseProxyException as ex:
+            self.close()
+            raise ARMHTTPError(ex)
+        except ARM.ARMException as ex:
+            self.close()
+            raise ARMHTTPError(ex)
+
+        return vulnerable_assets
 
     def get_asset_props(self, name, simplify=True):
         asset = self.get_asset_by_name(name, simplify=False)
