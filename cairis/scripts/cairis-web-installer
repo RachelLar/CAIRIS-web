@@ -5,6 +5,7 @@ INSTALL_DESKTOP='x'
 CAIRIS_USER=$USER
 CAIRIS_GIT='https://github.com/RobinQuetin/CAIRIS-web.git'
 CAIRIS_DIR=/opt/cairis
+DBNO="0"
 PRECMD=""
 DDBHOST=""
 DDBPORT=""
@@ -143,25 +144,13 @@ EOM
 		cat <<EOM 
 The provided target directory is not empty.
 Git requires the target directory to be empty.
+Please resolve this before running the installer again, 
+or choose another location to install CAIRIS.
 
-EOM
-		del_f=""
-		while [ "$del_f" != "y" -a "$del_f" != "n" ]; do
-			echo "Would you like the installer to delete the directory? [y/N]"
-			read del_f
-			if [ "$del_f" == "" ]; then del_f="n"; fi
-			del_f=${del_f,,}
-			if [ "$del_f" != "y" -a "$del_f" != "n" ]; then echo -e "Invalid input\n"; fi
-		done
-		if [ "$del_f" == "n" ]; then
-			cat <<EOM
-Installer cannot continue if target directory is not empty.
 Exiting...
 
 EOM
-			exit 1
-		fi
-		$PRECMD rm -r "$CAIRIS_DIR"
+		exit 1
 	fi
 
 	$PRECMD git clone $CAIRIS_GIT $CAIRIS_DIR
@@ -229,23 +218,24 @@ function create_db() {
 	stty "$stty_orig"
 
 	echo -e "\nPlease provide the MySQL root password when asked."
-	mysql -u root -p -h "$dbhost" <<!
-"GRANT USAGE ON *.* TO '$dbuser'@'$dbhost' IDENTIFIED BY '$dbpass' 
+	mysql -u root -p -h "$dbhost" << EOF
+GRANT USAGE ON *.* TO '$dbuser'@'$dbhost' IDENTIFIED BY '$dbpass' 
 WITH MAX_QUERIES_PER_HOUR 0 MAX_CONNECTIONS_PER_HOUR 0 MAX_UPDATES_PER_HOUR 0
 MAX_USER_CONNECTIONS 0;
 CREATE DATABASE IF NOT EXISTS \`$dbname\`;
 GRANT ALL PRIVILEGES ON \`$dbname\`.* TO '$dbuser'@'$dbhost';
-!
+EOF
 	if [ "$?" != "0" ]; then echo -e "\nProblem creating the database.\nExiting..."; return; fi
-	mysql -u "$dbuser" -p "$dbpass" -h "$dbhost" --database="$dbname" < $CAIRIS_DIR/cairis/cairis/sql/procs.sql
+	mysql -u "$dbuser" --password="$dbpass" -h "$dbhost" --database="$dbname" < $CAIRIS_DIR/cairis/cairis/sql/procs.sql
 	if [ "$?" != "0" ]; then echo -e "\nProblem installing stored procedures.\nExiting..."; return; fi
-	mysql -u "$dbuser" -p "$dbpass" -h "$dbhost" --database="$dbname" < $CAIRIS_DIR/cairis/cairis/sql/init.sql
+	mysql -u "$dbuser" --password="$dbpass" -h "$dbhost" --database="$dbname" < $CAIRIS_DIR/cairis/cairis/sql/init.sql
 	if [ "$?" != "0" ]; then echo -e "\nProblem installing base tables and view.\nExiting..."; return; fi
 
 	if [ "$DDBHOST" == "" ]; then db_opt="Y/n"; else db_opt="y/N"; fi
 	set_db=""
 
 	echo -e "\nDatabase successfully installed.\n"
+	DBNO=$(($DBNO+1))
 	
 	while [ "$set_db" != "y" -a "$set_db" != "n" ]; do
 		echo "Do you want CAIRIS to use this database connection as default connection? [$db_opt]"
@@ -281,6 +271,7 @@ EOM
 		if [ "$dbc" == "" ]; then dbc="y"; fi
 		dbc=${dbc,,}
 		if [ "$dbc" != "y" -a "$dbc" != "n" ]; then echo -e "Invalid input\n"; fi
+		if [ "$dbc" == "n" ]; then DBNO=$(($DBNO+1)); fi
 	done
 	while [ "$dbc" == "y" ]; do
 		create_db
@@ -292,6 +283,13 @@ EOM
 			if [ "$dbc" != "y" -a "$dbc" != "n" ]; then echo -e "Invalid input\n"; fi
 		done
 	done
+	if [ "$DBNO" == "0" ]; then cat <<EOM
+
+Database creation failed. 
+
+Make sure that you have at least one working database instance before you continue.
+EOM
+	fi
 }
 
 function conf_setup() {	
@@ -320,15 +318,35 @@ EOM
 	mkdir -p -m 755 "$config_dir"
 	cp "$CAIRIS_DIR/cairis/cairis/config/cairis.cnf" "$config_dir/"
 	if [ "$co" == "y" ]; then
+		mysql -u "$DDBUSER" --password="$DDBPASS" -h "$DDBHOST" --database="$DDBNAME" -e "SHOW TABLES" > /dev/null 2>&1
+		test=$?
+		while [ "$?" != "0" ]; do
+			echo -e "\nPlease provide the proper credentials for an existing CAIRIS database"
+			echo -n "Host: "
+			read DDBHOST
+			echo -n "Database name: "
+			read DDBNAME
+			echo -n "Database user: "
+			read DDBUSER
+			echo -n "Database password: "
+			stty_orig=$(stty -g)
+			stty -echo
+			read DDBPASS
+			stty "$stty_orig"
+			mysql -u "$DDBUSER" --password="$DDBPASS" -h "$DDBHOST" --database="$DDBNAME" -e "SHOW TABLES" > /dev/null 2>&1
+			test=$?
+			if [ "$test" != "0" ]; then echo -e "Invalid credentials. No access allowed...\n"; fi
+		done
+			
 		sed -i -e 's|dbhost = |dbhost = '"$DDBHOST"'|g' "$config_dir/cairis.cnf"
 		sed -i -e 's|dbport = |dbport = '"$DDBPORT"'|g' "$config_dir/cairis.cnf"
 		sed -i -e 's|dbuser = |dbuser = '"$DDBUSER"'|g' "$config_dir/cairis.cnf"
 		sed -i -e 's|dbpass = |dbpass = '"$DDBPASS"'|g' "$config_dir/cairis.cnf"
 		sed -i -e 's|dbname = |dbname = '"$DDBNAME"'|g' "$config_dir/cairis.cnf"
-		sed -i -e 's|root = |root = '"$CAIRIS_DIR"'|g' "$config_dir/cairis.cnf"
+		sed -i -e 's|root = |root = '"$CAIRIS_DIR/cairis"'|g' "$config_dir/cairis.cnf"
 		
 		web_port="0"
-		echo -e "CAIRIS can run on any web port as long as it is available.\n"
+		echo -e "\nCAIRIS can run on any web port as long as it is available.\n"
 		while [ "$web_port" -lt "1" -o "$web_port" -gt "65536" ]; do
 			echo "Which port would you like CAIRIS to run on? [7071]"
 			read web_port
@@ -341,7 +359,7 @@ EOM
 
 CAIRIS uses a predefined directory which contains static files for the web interface
 
-What directory do you want to use? [$CAIRIS_DIR/cairis/cairis/static]
+Which directory do you want to use? [$CAIRIS_DIR/cairis/cairis/static]
 EOM
 		read web_dir
 		if [ "$web_dir" == "" ]; then web_dir="$CAIRIS_DIR/cairis/cairis/static"; fi
@@ -361,7 +379,7 @@ EOM
 
 CAIRIS uses a predefined directory to store uploaded content in.
 
-What directory do you want to use? [$HOME/CAIRIS/uploads]
+Which directory do you want to use? [$HOME/CAIRIS/uploads]
 EOM
 		read upload_dir
 		if [ "$upload_dir" == "" ]; then upload_dir="$HOME/CAIRIS/uploads"; fi
@@ -410,14 +428,20 @@ conf_setup
 
 cat <<EOM
 
+##############################################
+# Desktop application                        #
+##############################################
+
 CAIRIS was successfully installed.
+
 
 To run CAIRIS in web mode, you can use the following command:
 
-	cd $CAIRIS_DIR/cairis/cairis/ && python cairisd.py
+	python $CAIRIS_DIR/cairis/cairis/cairisd.py
 
 To run it in desktop mode, use the following command:
 
-	cd $CAIRIS_DIR/cairis/cairis/ && python cairis.py
+	python $CAIRIS_DIR/cairis/cairis/cairis.py
+
 EOM
 exit 0
