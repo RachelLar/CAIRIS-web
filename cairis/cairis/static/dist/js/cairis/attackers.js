@@ -252,19 +252,21 @@ optionsContent.on("click", "#addAttackerEnv", function () {
     $(".attackerEnvironment").each(function (index, tag) {
         hasEnv.push($(tag).text());
     });
-    environmentDialogBox(hasEnv, function (text) {
-        appendAttackerEnvironment(text);
-        var environment =  jQuery.extend(true, {},attackerEnvDefault );
-        environment.theEnvironmentName = text;
-        var attacker = JSON.parse($.session.get("Attacker"));
-        attacker.theEnvironmentProperties.push(environment);
-        $.session.set("Attacker", JSON.stringify(attacker));
-        $(document).find(".attackerEnvironment").each(function () {
-            if($(this).text() == text){
-                $(this).trigger("click");
-            }
+        environmentDialogBox(hasEnv, function (text) {
+            appendAttackerEnvironment(text);
+            var environment =  jQuery.extend(true, {},attackerEnvDefault );
+            environment.theEnvironmentName = text;
+            var attacker = JSON.parse($.session.get("Attacker"));
+            attacker.theEnvironmentProperties.push(environment);
+            $.session.set("Attacker", JSON.stringify(attacker));
+            $(document).find(".attackerEnvironment").each(function () {
+                if($(this).text() == text){
+                    $(this).trigger("click");
+                }
+            });
         });
-    });
+
+
 });
 
 optionsContent.on('click', '#addRoletoAttacker', function () {
