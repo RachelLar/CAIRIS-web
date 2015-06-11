@@ -84,8 +84,18 @@ optionsContent.on('click', ".removeAssetEnvironment", function () {
         if(env.theEnvironmentName == envi){
             asset.splice( index ,1 );
             $.session.set("AssetProperties", JSON.stringify(asset));
-            $("#theEnvironmentDictionary").find(".clickable-environments:first").trigger('click');
+
             row.remove();
+            var UIenv = $("#theEnvironmentDictionary").find("tbody");
+            if(jQuery(UIenv).has(".removeAssetEnvironment").length){
+                UIenv.find(".goalEnvProperties:first").trigger('click');
+            }else{
+                $("#assetstabsID").hide("fast");
+
+               // $("#definitionTable").find('tbody').empty();
+            }
+            //$("#theEnvironmentDictionary").find(".clickable-environments:first").trigger('click');
+
             return false;
         }
     });
@@ -144,6 +154,81 @@ optionsContent.on('dblclick', '.clickable-properties', function(){
 
 
 });
+/* adding env
+ */
+optionsContent.on('click', '.addEnvironmentPlus',function(){
+
+    $.ajax({
+        type: "GET",
+        dataType: "json",
+        accept: "application/json",
+        data: {
+            session_id: String($.session.get('sessionID'))
+
+        },
+        crossDomain: true,
+        url: serverIP + "/api/environments/all/names",
+        success: function (data) {
+
+            $("#comboboxDialogSelect").empty();
+            var none = true;
+            $.each(data, function(i, item) {
+                var found = false;
+                $(".clickable-environments  td").each(function() {
+                    if(this.innerHTML.trim() == item){
+                        found = true
+                    }
+                });
+                //if not found in environments
+                if(!found) {
+                    $("#comboboxDialogSelect").append("<option value=" + item + ">" + item + "</option>");
+                    none = false;
+                }
+            });
+            if(!none) {
+
+                $("#comboboxDialog").dialog({
+                    modal: true,
+                    buttons: {
+                        Ok: function () {
+                            $(this).dialog("close");
+                            //Created a function, for readability
+                            //$( "#comboboxDialogSelect").find("option:selected" ).text()
+                            forceOpenOptions();
+                            var chosenText = $( "#comboboxDialogSelect").find("option:selected" ).text();
+                            $("#theEnvironmentDictionary").find("tbody").append("<tr><td class='deleteAssetEnv'><i class='fa fa-minus'></i></td><td class='clickable-environments'>" + chosenText +"</td></tr>");
+                            var sessionProps = $.session.get("AssetProperties");
+                            if(! sessionProps) {
+                                var Assetprops = [];
+                                var newProp = jQuery.extend(true, {}, AssetEnvironmentProperty);
+                                newProp.environment = chosenText;
+                                Assetprops.push(newProp);
+
+                            } else {
+                                var Assetprops = JSON.parse($.session.get("AssetProperties"));
+                                var newProp = jQuery.extend(true, {}, AssetEnvironmentProperty);
+                                newProp.environment = chosenText;
+                                Assetprops.push(newProp);
+                            }
+
+                            $.session.set("AssetProperties", JSON.stringify(Assetprops));
+                            $("#theEnvironmentDictionary").find("tbody").find(".goalEnvProperties:first").trigger('click');
+                            $("#assetstabsID").show("fast");
+                        }
+                    }
+                });
+                $(".comboboxD").css("visibility", "visible");
+            }else {
+                alert("All environments are already added");
+            }
+        },
+        error: function (xhr, textStatus, errorThrown) {
+            debugLogger(String(this.url));
+            debugLogger("error: " + xhr.responseText +  ", textstatus: " + textStatus + ", thrown: " + errorThrown);
+        }
+    })
+});
+
 
 /*
  Updating asset

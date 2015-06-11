@@ -391,6 +391,7 @@ $("#reqTable").on("click", "#addNewVulnerability", function () {
     $.session.set("Vulnerability", JSON.stringify(vul));
     fillOptionMenu("fastTemplates/editVulnerabilityOptions.html", "#optionsContent", null, true, true, function () {
         $("#UpdateVulnerability").addClass("newVulnerability");
+        $("#Properties").hide();
     });
     forceOpenOptions();
 });
@@ -409,7 +410,14 @@ optionsContent.on('click', '.deleteVulEnv', function () {
            vuln.theEnvironmentProperties.splice(index,1);
        }
     });
+    $.session.set("Vulnerability", JSON.stringify(vuln));
     $(this).closest("tr").remove();
+    var UIenv = $("#theVulEnvironments").find("tbody");
+    if(jQuery(UIenv).has(".vulEnvProperties").length){
+        UIenv.find(".vulEnvProperties:first").trigger('click');
+    }else{
+        $("#Properties").hide("fast");
+    }
 
 });
 
@@ -743,6 +751,7 @@ optionsContent.on('click', "#addVulEnv", function () {
         theVul.theEnvironmentProperties.push(environment);
         $.session.set("Vulnerability", JSON.stringify(theVul));
         $.session.set("VulnEnvironmentName",text);
+        $("#Properties").show("fast");
     });
 });
 
@@ -815,7 +824,7 @@ $(document).on('click', "#addNewAsset",function(){
                             .attr("value",type.theName)
                             .text(type.theName));
                 });
-
+                $("#assetstabsID").hide();
             },
             error: function (xhr, textStatus, errorThrown) {
                 debugLogger(String(this.url));
@@ -878,67 +887,7 @@ $(document).on('click', "button.deleteAssetButton",function(){
 
 
 
-/* adding env
- */
-optionsContent.on('click', '.addEnvironmentPlus',function(){
 
-    $.ajax({
-        type: "GET",
-        dataType: "json",
-        accept: "application/json",
-        data: {
-            session_id: String($.session.get('sessionID'))
-
-        },
-        crossDomain: true,
-        url: serverIP + "/api/environments/all/names",
-        success: function (data) {
-
-            $("#comboboxDialogSelect").empty();
-            var none = true;
-            $.each(data, function(i, item) {
-                var found = false;
-                $(".clickable-environments  td").each(function() {
-                    if(this.innerHTML.trim() == item){
-                        found = true
-                    }
-                });
-                //if not found in environments
-                if(!found) {
-                    $("#comboboxDialogSelect").append("<option value=" + item + ">" + item + "</option>");
-                    none = false;
-                }
-            });
-            if(!none) {
-
-                $("#comboboxDialog").dialog({
-                    modal: true,
-                    buttons: {
-                        Ok: function () {
-                            $(this).dialog("close");
-                            //Created a function, for readability
-                           //$( "#comboboxDialogSelect").find("option:selected" ).text()
-                            forceOpenOptions();
-                            $("#theEnvironmentDictionary").find("tbody").append("<tr><td class='deleteAssetEnv'><i class='fa fa-minus'></i></td><td class='clickable-environments'>" + $( "#comboboxDialogSelect").find("option:selected" ).text() +"</td></tr>")
-                           var Assetprops =  JSON.parse($.session.get("AssetProperties"));
-                            var newProp = jQuery.extend(true, {},AssetEnvironmentProperty );
-                            newProp.environment = $( "#comboboxDialogSelect").find("option:selected" ).text();
-                            Assetprops.push( newProp);
-                            $.session.set("AssetProperties", JSON.stringify(Assetprops));
-                        }
-                    }
-                });
-                $(".comboboxD").css("visibility", "visible");
-            }else {
-                alert("All environments are already added");
-            }
-        },
-        error: function (xhr, textStatus, errorThrown) {
-            debugLogger(String(this.url));
-            debugLogger("error: " + xhr.responseText +  ", textstatus: " + textStatus + ", thrown: " + errorThrown);
-        }
-    })
-});
 optionsContent.on("click", "#addNewProperty", function(){
     $("#editAssetsOptionsform").hide();
     $("#editpropertiesWindow").show(function(){

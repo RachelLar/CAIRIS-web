@@ -241,7 +241,15 @@ optionsContent.on('click', ".deleteAttackerEnv", function () {
             attacker.theEnvironmentProperties.splice( index ,1 );
             $.session.set("Attacker", JSON.stringify(attacker));
             clearAttackerEnvInfo();
-            $("#theAttackerEnvironments").find(".attackerEnvironment:first").trigger('click');
+           // $("#theAttackerEnvironments").find(".attackerEnvironment:first").trigger('click');
+
+            var UIenv = $("#theAttackerEnvironments").find("tbody");
+            if(jQuery(UIenv).has(".attackerEnvironment").length){
+                UIenv.find(".attackerEnvironment:first").trigger('click');
+            }else{
+                $("#Properties").hide("fast");
+            }
+
              return false;
         }
     });
@@ -262,6 +270,7 @@ optionsContent.on("click", "#addAttackerEnv", function () {
             $(document).find(".attackerEnvironment").each(function () {
                 if($(this).text() == text){
                     $(this).trigger("click");
+                    $("#Properties").show("fast");
                 }
             });
         });
@@ -313,6 +322,7 @@ $(document).on("click", "#addNewAttacker", function () {
     fillOptionMenu("fastTemplates/editAttackerOptions.html", "#optionsContent", null, true, true, function () {
         $("#addAttackerPropertyDiv").hide();
         $("#editAttackerOptionsForm").addClass("new");
+        $("#Properties").hide();
         $.session.set("Attacker", JSON.stringify(jQuery.extend(true, {},attackerDefault )));
         forceOpenOptions();
     });

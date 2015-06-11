@@ -210,6 +210,7 @@ optionsContent.on("click", "#addGoalEnvironment", function () {
         environment.theEnvironmentName = text;
         var goal = JSON.parse($.session.get("Goal"));
         goal.theEnvironmentProperties.push(environment);
+        $("#goalsProperties").show("fast");
         $.session.set("Goal", JSON.stringify(goal));
     });
 });
@@ -221,7 +222,13 @@ optionsContent.on('click', ".deleteGoalEnv", function () {
         if(env.theEnvironmentName == envi){
             goal.theEnvironmentProperties.splice( index ,1 );
             $.session.set("Attacker", JSON.stringify(goal));
-            $("#theAttackerEnvironments").find(".attackerEnvironment:first").trigger('click');
+            var UIenv =  $("#theGoalEnvironments").find("tbody");
+            if(jQuery(UIenv).has(".goalEnvProperties").length){
+                UIenv.find(".goalEnvProperties:first").trigger('click');
+            }else{
+                $("#goalsProperties").hide("fast");
+            }
+
             return false;
         }
     });
@@ -293,6 +300,7 @@ $(document).on('click', '#addNewGoal', function () {
     fillGoalOptionMenu(null, function () {
         $("#editGoalOptionsForm").addClass('new');
         forceOpenOptions();
+        $("#goalsProperties").hide();
     });
 
 });

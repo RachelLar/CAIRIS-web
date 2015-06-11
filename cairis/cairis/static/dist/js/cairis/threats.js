@@ -124,6 +124,7 @@ $(document).on("click", "#addNewThreat", function () {
                         .attr("value", type.theName)
                         .text(type.theName));
             });
+            $("#Properties").hide();
         });
 
         $.session.set("theThreat", JSON.stringify(jQuery.extend(true, {},threatDefault )));
@@ -304,6 +305,7 @@ optionsContent.on("click", "#addThreatEnv", function () {
         $(document).find(".threatEnvironments").each(function () {
            if($(this).text() == text){
                $(this).trigger("click");
+               $("#Properties").show("fast");
            }
         });
     });
@@ -330,6 +332,27 @@ optionsContent.on('click', '#UpdateThreat', function (e) {
         });
     }
 });
+optionsContent.on('click', ".deleteThreatEnv", function () {
+    var envi = $(this).next(".threatEnvironments").text();
+    $(this).closest("tr").remove();
+    var threat = JSON.parse($.session.get("theThreat"));
+    $.each(threat.theEnvironmentProperties, function (index, env) {
+        if(env.theEnvironmentName == envi){
+            threat.theEnvironmentProperties.splice( index ,1 );
+            $.session.set("theThreat", JSON.stringify(threat));
+
+            var UIenv = $("#theThreatEnvironments").find("tbody");
+            if(jQuery(UIenv).has(".threatEnvironments").length){
+                UIenv.find(".threatEnvironments:first").trigger('click');
+            }else{
+                $("#Properties").hide("fast");
+            }
+
+            return false;
+        }
+    });
+});
+
 optionsContent.on('click', ".removeThreatProperty", function () {
     var attacker = $(this).closest(".threatAttackers").text();
     $(this).closest("tr").remove();

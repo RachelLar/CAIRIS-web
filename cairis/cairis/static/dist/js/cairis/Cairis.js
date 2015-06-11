@@ -1,6 +1,7 @@
 /**
  * Created by Raf on 24/04/2015.
  */
+window.serverIP = "http://192.168.112.136:7071";
 window.serverIP = "http://"+ window.location.host;
 
 window.activeTable ="Requirements";
@@ -1010,7 +1011,9 @@ function startingTable(){
         accept:"application/json",
         crossDomain: true,
         url: serverIP + "/api/requirements",
-        data: {session_id: String($.session.get('sessionID'))},
+        data: {session_id: String($.session.get('sessionID')),
+                ordered: "1"
+        },
         success: function(data) {
             // $("#test").append(JSON.stringify(data));
             setTableHeader("Requirements");

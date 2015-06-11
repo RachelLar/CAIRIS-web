@@ -98,10 +98,11 @@ optionsContent.on('click', "#addRespEnv", function () {
         var type =  $.session.get("responseKind");
         appendResponseEnvironment(text);
         resp.theEnvironmentProperties[type.toLowerCase()].push(environment);
+        $("#Properties").show("fast");
         $.session.set("response", JSON.stringify(resp));
     });
 });
-
+//TODO: ADD NEW RESPONSE
 
 optionsContent.on('click', ".deleteRespEnv", function () {
     var envi = $(this).next(".responseEnvironment").text();
@@ -112,7 +113,14 @@ optionsContent.on('click', ".deleteRespEnv", function () {
             if(env.theEnvironmentName == envi){
                 tran.splice( index2 ,1 );
                 $.session.set("response", JSON.stringify(resp));
-                $("#theAttackerEnvironments").find(".attackerEnvironment:first").trigger('click');
+
+
+                var UIenv = $("#theAttackerEnvironments").find("tbody");
+                if(jQuery(UIenv).has(".responseEnvironment").length){
+                    UIenv.find(".responseEnvironment:first").trigger('click');
+                }else{
+                    $("#Properties").hide("fast");
+                }
                 return false;
             }
         });
