@@ -16,7 +16,7 @@ from controllers import AssetController, AttackerController, CImportController, 
     UploadController, UserController, VulnerabilityController
 
 __author__ = 'Robin Quetin'
-''' This module uses CherryPy (tested using 3.6.0) & Routes (tested using 1.13) '''
+''' This module uses Flask (tested using 0.10) & Flask-Restful (tested using 0.3.3) '''
 
 
 app = Flask(__name__)
@@ -85,7 +85,7 @@ def get_image(path):
         return send_from_directory(image_upload_dir, path)
     else:
         try:
-            web_image_dir = os.path.join(b.staticDir, 'image')
+            web_image_dir = os.path.join(b.staticDir, 'images')
             return send_from_directory(web_image_dir, path)
         except AttributeError:
             return send_from_directory('static/images', path)
