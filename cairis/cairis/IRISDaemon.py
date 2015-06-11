@@ -32,22 +32,38 @@ def index():
 
 @app.route('/plugins/<path:path>')
 def plugin_reroute(path):
-    return send_from_directory('static/plugins', path)
+    try:
+        web_image_dir = os.path.join(b.staticDir, 'plugins')
+        return send_from_directory(web_image_dir, path)
+    except AttributeError:
+        return send_from_directory('static/plugins', path)
 
 
 @app.route('/fastTemplates/<path:path>')
 def fast_templates_reroute(path):
-    return send_from_directory('static/fastTemplates', path)
+    try:
+        web_image_dir = os.path.join(b.staticDir, 'fastTemplates')
+        return send_from_directory(web_image_dir, path)
+    except AttributeError:
+        return send_from_directory('static/fastTemplates', path)
 
 
 @app.route('/dist/<path:path>')
 def dist_reroute(path):
-    return send_from_directory('static/dist', path)
+    try:
+        web_image_dir = os.path.join(b.staticDir, 'dist')
+        return send_from_directory(web_image_dir, path)
+    except AttributeError:
+        return send_from_directory('static/dist', path)
 
 
 @app.route('/bootstrap/<path:path>')
 def bootstrap_reroute(path):
-    return send_from_directory('static/bootstrap', path)
+    try:
+        web_image_dir = os.path.join(b.staticDir, 'bootstrap')
+        return send_from_directory(web_image_dir, path)
+    except AttributeError:
+        return send_from_directory('static/bootstrap', path)
 
 
 @app.route('/images/<path:path>')
@@ -68,7 +84,11 @@ def get_image(path):
     elif os.path.exists(upload_img_path):
         return send_from_directory(image_upload_dir, path)
     else:
-        return send_from_directory('static/images', path)
+        try:
+            web_image_dir = os.path.join(b.staticDir, 'image')
+            return send_from_directory(web_image_dir, path)
+        except AttributeError:
+            return send_from_directory('static/images', path)
 
 
 @app.route('/user/config.html', methods=['GET','POST'])
