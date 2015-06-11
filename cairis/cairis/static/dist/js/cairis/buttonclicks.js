@@ -210,9 +210,31 @@ $(document).on('click', "button.editVulnerabilityButton",function(){
         var vul = jQuery.extend(true, {}, vulnerabilityDefault);
         $.session.set("Vulnerability", JSON.stringify(vul));
         fillOptionMenu("fastTemplates/editVulnerabilityOptions.html", "#optionsContent", null, true, true, function () {
-                $("#UpdateVulnerability").addClass("newVulnerability");
+            $("#UpdateVulnerability").addClass("newVulnerability");
+            $.ajax({
+                type: "GET",
+                dataType: "json",
+                accept: "application/json",
+                data: {
+                    session_id: String($.session.get('sessionID'))
+                },
+                crfossDomain: true,
+                url: serverIP + "/api/vulnerabilities/types",
+                success: function (data) {
+                    $.each(data, function (index, type) {
+                        $('#theSeverity')
+                            .append($("<option></option>")
+                                .attr("value", type.theName)
+                                .text(type.theName));
+                    });
+                },
+                error: function (xhr, textStatus, errorThrown) {
+                    debugLogger(String(this.url));
+                    debugLogger("error: " + xhr.responseText + ", textstatus: " + textStatus + ", thrown: " + errorThrown);
+                }
+            });
+            forceOpenOptions();
         });
-        forceOpenOptions();
     }
     else {
         var name = $(this).attr("value");
@@ -256,7 +278,7 @@ $(document).on('click', "button.editVulnerabilityButton",function(){
                                 debugLogger(String(this.url));
                                 debugLogger("error: " + xhr.responseText +  ", textstatus: " + textStatus + ", thrown: " + errorThrown);
                             }
-                        })
+                        });
 
                         var text = "";
                         $.each(newdata.theTags, function (index, tag) {
@@ -364,7 +386,7 @@ $("#reqTable").on("click", "#addNewRole", function () {
 });
 //addNewVulnerability
 $("#reqTable").on("click", "#addNewVulnerability", function () {
-    $("#reqTable").find("tbody").append('<tr><td><button class="editVulnerabilityButton newVulnerability" value="">Edit</button> <button class="deleteVulnerabilityButton" value="">Delete</button></td><td name="theVulnerabilityName"></td><td name="theVulnerabilityType"></td></tr>');
+    //$("#reqTable").find("tbody").append('<tr><td><button class="editVulnerabilityButton newVulnerability" value="">Edit</button> <button class="deleteVulnerabilityButton" value="">Delete</button></td><td name="theVulnerabilityName"></td><td name="theVulnerabilityType"></td></tr>');
     var vul = jQuery.extend(true, {}, vulnerabilityDefault);
     $.session.set("Vulnerability", JSON.stringify(vul));
     fillOptionMenu("fastTemplates/editVulnerabilityOptions.html", "#optionsContent", null, true, true, function () {
@@ -776,6 +798,30 @@ Add an asset
 $(document).on('click', "#addNewAsset",function(){
     fillOptionMenu("fastTemplates/editAssetsOptions.html","#optionsContent",null,true,true,function(){
     forceOpenOptions();
+        $.ajax({
+            type: "GET",
+            dataType: "json",
+            accept: "application/json",
+            data: {
+                session_id: String($.session.get('sessionID'))
+            },
+            crossDomain: true,
+            url: serverIP + "/api/assets/types",
+            success: function (data) {
+                var typeSelect =  $('#theType');
+                $.each(data, function (index, type) {
+                    typeSelect
+                        .append($("<option></option>")
+                            .attr("value",type.theName)
+                            .text(type.theName));
+                });
+
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                debugLogger(String(this.url));
+                debugLogger("error: " + xhr.responseText +  ", textstatus: " + textStatus + ", thrown: " + errorThrown);
+            }
+        });
        // empty it because new environment;
         $.session.set("AssetProperties","");
         $("#editAssetsOptionsform").addClass("new");
@@ -873,7 +919,7 @@ optionsContent.on('click', '.addEnvironmentPlus',function(){
                             //Created a function, for readability
                            //$( "#comboboxDialogSelect").find("option:selected" ).text()
                             forceOpenOptions();
-                            $("#theEnvironmentDictionary").find("tbody").append("<tr><td class='clickable-environments'>" + $( "#comboboxDialogSelect").find("option:selected" ).text() +"</td></tr>")
+                            $("#theEnvironmentDictionary").find("tbody").append("<tr><td class='deleteAssetEnv'><i class='fa fa-minus'></i></td><td class='clickable-environments'>" + $( "#comboboxDialogSelect").find("option:selected" ).text() +"</td></tr>")
                            var Assetprops =  JSON.parse($.session.get("AssetProperties"));
                             var newProp = jQuery.extend(true, {},AssetEnvironmentProperty );
                             newProp.environment = $( "#comboboxDialogSelect").find("option:selected" ).text();

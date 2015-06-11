@@ -123,7 +123,7 @@ optionsContent.on("click", "#addMotivetoAttacker", function () {
     $(".attackerMotive").each(function (index, tag) {
         hasMot.push($(tag).text());
     });
-    motivationDialogBox(theEnvName, function (text) {
+    motivationDialogBox(hasMot, function (text) {
         var attacker = JSON.parse($.session.get("Attacker"));
 
         $.each(attacker.theEnvironmentProperties, function (index, env) {
@@ -240,6 +240,7 @@ optionsContent.on('click', ".deleteAttackerEnv", function () {
         if(env.theEnvironmentName == envi){
             attacker.theEnvironmentProperties.splice( index ,1 );
             $.session.set("Attacker", JSON.stringify(attacker));
+            clearAttackerEnvInfo();
             $("#theAttackerEnvironments").find(".attackerEnvironment:first").trigger('click');
              return false;
         }
@@ -258,6 +259,11 @@ optionsContent.on("click", "#addAttackerEnv", function () {
         var attacker = JSON.parse($.session.get("Attacker"));
         attacker.theEnvironmentProperties.push(environment);
         $.session.set("Attacker", JSON.stringify(attacker));
+        $(document).find(".attackerEnvironment").each(function () {
+            if($(this).text() == text){
+                $(this).trigger("click");
+            }
+        });
     });
 });
 

@@ -46,8 +46,9 @@ $(document).on('click', "button.editAssetsButton",function(){
                                 crossDomain: true,
                                 url: serverIP + "/api/assets/types",
                                 success: function (data) {
+                                    var typeSelect =  $('#theType');
                                     $.each(data, function (index, type) {
-                                        $('#theType')
+                                        typeSelect
                                             .append($("<option></option>")
                                                 .attr("value",type.theName)
                                                 .text(type.theName));
@@ -73,6 +74,22 @@ $(document).on('click', "button.editAssetsButton",function(){
             debugLogger("error: " + xhr.responseText +  ", textstatus: " + textStatus + ", thrown: " + errorThrown);
         }
     });
+});
+//deleteAssetEnv
+optionsContent.on('click', ".removeAssetEnvironment", function () {
+    var envi = $(this).next(".clickable-environments").text();
+    var row =  $(this).closest("tr")
+    var asset = JSON.parse($.session.get("AssetProperties"));
+    $.each(asset, function (index, env) {
+        if(env.theEnvironmentName == envi){
+            asset.splice( index ,1 );
+            $.session.set("AssetProperties", JSON.stringify(asset));
+            $("#theEnvironmentDictionary").find(".clickable-environments:first").trigger('click');
+            row.remove();
+            return false;
+        }
+    });
+
 });
 /*
  Clicking an asset Environment

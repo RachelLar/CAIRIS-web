@@ -1,8 +1,8 @@
 /**
  * Created by Raf on 24/04/2015.
  */
-window.serverIP = "http://"+window.location.host;
-//window.serverIP = "http://192.168.112.131:7071";
+window.serverIP = "http://"+ window.location.host;
+
 window.activeTable ="Requirements";
 window.boxesAreFilled = false;
 window.debug = true;
@@ -89,7 +89,7 @@ function fillEditAssetsEnvironment(){
     var i = 0;
     var textToInsert = [];
     $.each(data, function(arrayindex, value) {
-        textToInsert[i++] = '<tr><td class="removeEnvironment"><i class="fa fa-minus"></i></td><td class="clickable-environments assetEnvironmetRow">';
+        textToInsert[i++] = '<tr><td class="removeAssetEnvironment"><i class="fa fa-minus"></i></td><td class="clickable-environments assetEnvironmetRow">';
         textToInsert[i++] = value.theEnvironmentName;
         textToInsert[i++] = '</td></tr>';
     });
@@ -486,6 +486,50 @@ function createVulnerabilityTable(){
 
 
 }
+function getRisks(callback){
+    $.ajax({
+        type: "GET",
+        dataType: "json",
+        accept: "application/json",
+        data: {
+            session_id: String($.session.get('sessionID'))
+        },
+        crossDomain: true,
+        url: serverIP + "/api/risks",
+        success: function (data) {
+            if(jQuery.isFunction(callback)){
+                callback(data);
+            }
+        },
+        error: function (xhr, textStatus, errorThrown) {
+            debugLogger(String(this.url));
+            debugLogger("error: " + xhr.responseText +  ", textstatus: " + textStatus + ", thrown: " + errorThrown);
+            return null;
+        }
+    });
+}
+function getRoles(callback){
+    $.ajax({
+        type: "GET",
+        dataType: "json",
+        accept: "application/json",
+        data: {
+            session_id: String($.session.get('sessionID'))
+        },
+        crossDomain: true,
+        url: serverIP + "/api/roles",
+        success: function (data) {
+            if(jQuery.isFunction(callback)){
+                callback(data);
+            }
+        },
+        error: function (xhr, textStatus, errorThrown) {
+            debugLogger(String(this.url));
+            debugLogger("error: " + xhr.responseText +  ", textstatus: " + textStatus + ", thrown: " + errorThrown);
+            return null;
+        }
+    });
+}
 /*
 Dialog for choosing an asset
  */
@@ -558,6 +602,38 @@ function fileDialogbox(callback){
                 if(jQuery.isFunction(callback)){
                     callback(text);
                     $("#importFile").trigger('click')
+                }
+                $(this).dialog("close");
+            }
+        }
+    });
+    $(".comboboxD").css("visibility", "visible");
+
+}
+/*
+ Dialog for choosing a new role for the responses
+ */
+function newRoleDialogbox(callback){
+    var dialogwindow = $("#ChooseRoleForResponse");
+    var roleSelect = dialogwindow.find("#theNewRole");
+    var costSelect = dialogwindow.find("#theRoleCost");
+    getRoles(function (roles) {
+        $.each(roles, function (key, obj) {
+            roleSelect.append($('<option>', { value : key })
+                .text(key));
+        });
+    });
+    dialogwindow.dialog({
+        modal: true,
+        buttons: {
+            Ok: function () {
+                var role =  roleSelect.find("option:selected" ).text();
+                var cost =  costSelect.find("option:selected" ).text();
+                if(jQuery.isFunction(callback)){
+                    var newRole =  jQuery.extend(true, {}, respRoleDefault );
+                    newRole.roleName = role;
+                    newRole.cost = cost;
+                    callback(newRole);
                 }
                 $(this).dialog("close");
             }
@@ -683,7 +759,7 @@ function environmentDialogBox(haveEnv,callback){
 /*
  Dialog for choosing an attacker
  */
-function attackerDialogBox(haveEnv, environment ,callback){
+function attackerDialogBox(hassAtt, environment ,callback){
     var dialogwindow = $("#ChooseAssetDialog");
     var select = dialogwindow.find("select");
     $.ajax({
@@ -701,7 +777,7 @@ function attackerDialogBox(haveEnv, environment ,callback){
             var none = true;
             $.each(data, function(key, attacker) {
                 var found = false;
-                $.each(haveEnv,function(index, text) {
+                $.each(hassAtt,function(index, text) {
                     if(text == key){
                         found = true
                     }

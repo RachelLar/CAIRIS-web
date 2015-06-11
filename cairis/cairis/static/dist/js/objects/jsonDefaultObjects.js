@@ -138,3 +138,13 @@ var goalDefault = {
     "theName": "",
     "theEnvironmentProperties": []
 };
+var respRoleDefault = {
+    "__python_obj__": "tools.PseudoClasses.ValuedRole",
+    "roleName": "",
+    "cost": ""
+};
+var respEnvDefault = {"__python_obj__": "TransferEnvironmentProperties.TransferEnvironmentProperties",
+    "theRationale": "",
+    "theRoles": [],
+    "theEnvironmentName": "Stroke"
+};
