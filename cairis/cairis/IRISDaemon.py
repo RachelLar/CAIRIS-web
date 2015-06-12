@@ -2,7 +2,7 @@ import logging
 import os
 import httplib
 
-from flask import Flask, make_response, request, send_from_directory
+from flask import Flask, make_response, send_from_directory
 from flask.ext.cors import CORS
 from flask.ext.restful import Api
 from flask.ext.restful_swagger import swagger
@@ -22,6 +22,9 @@ __author__ = 'Robin Quetin'
 app = Flask(__name__)
 api = swagger.docs(Api(app), apiVersion='0.1', description='CAIRIS API', api_spec_url='/api/cairis')
 cors = CORS(app)
+cors_logger = logging.getLogger(__name__+".cors")
+cors_logger.setLevel(logging.WARNING)
+cors_logger = None
 b = Borg()
 
 @app.route('/api/images/<path:path>')
