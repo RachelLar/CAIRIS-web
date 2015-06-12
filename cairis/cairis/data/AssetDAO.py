@@ -114,28 +114,19 @@ class AssetDAO(CairisDAO):
         :type environment_name: str
         :rtype: list[Asset]
         """
-        threat_dao = ThreatDAO(self.session_id)
-
         try:
-            found_threat = threat_dao.get_threat_by_name(threat_name)
-            threat_id = found_threat.theId
-        except ObjectNotFoundHTTPError as ex:
+            threat_id = self.db_proxy.getDimensionId(threat_name, 'threat')
+            environment_id = self.db_proxy.getDimensionId(environment_name, 'environment')
+        except ARM.DatabaseProxyException as ex:
             self.close()
-            raise ex
+            raise ARMHTTPError(ex)
         except ARMHTTPError as ex:
             self.close()
-            raise ex
+            raise ARMHTTPError(ex)
 
-        environment_dao = EnvironmentDAO(self.session_id)
-        try:
-            found_environment = environment_dao.get_environment_by_name(environment_name)
-            environment_id = found_environment.theId
-        except ObjectNotFoundHTTPError as ex:
+        if not (threat_id and environment_id):
             self.close()
-            raise ex
-        except ARMHTTPError as ex:
-            self.close()
-            raise ex
+            raise ObjectNotFoundHTTPError(obj='The vulnerable assets')
 
         try:
             threatened_assets = self.db_proxy.threatenedAssets(threat_id, environment_id)
@@ -154,28 +145,19 @@ class AssetDAO(CairisDAO):
         :type environment_name: str
         :rtype: list[Asset]
         """
-        vulnerability_dao = VulnerabilityDAO(self.session_id)
-
         try:
-            found_vulnerability = vulnerability_dao.get_vulnerability_by_name(vulnerability_name)
-            vulnerability_id = found_vulnerability.theVulnerabilityId
-        except ObjectNotFoundHTTPError as ex:
+            vulnerability_id = self.db_proxy.getDimensionId(vulnerability_name, 'vulnerability')
+            environment_id = self.db_proxy.getDimensionId(environment_name, 'environment')
+        except ARM.DatabaseProxyException as ex:
             self.close()
-            raise ex
+            raise ARMHTTPError(ex)
         except ARMHTTPError as ex:
             self.close()
-            raise ex
+            raise ARMHTTPError(ex)
 
-        environment_dao = EnvironmentDAO(self.session_id)
-        try:
-            found_environment = environment_dao.get_environment_by_name(environment_name)
-            environment_id = found_environment.theId
-        except ObjectNotFoundHTTPError as ex:
+        if not (vulnerability_id and environment_id):
             self.close()
-            raise ex
-        except ARMHTTPError as ex:
-            self.close()
-            raise ex
+            raise ObjectNotFoundHTTPError(obj='The vulnerable assets')
 
         try:
             vulnerable_assets = self.db_proxy.vulnerableAssets(vulnerability_id, environment_id)
