@@ -20,7 +20,7 @@ import string
 
 import MySQLdb
 import _mysql_exceptions
-from numpy import *
+# from numpy import *
 import os
 
 from Borg import Borg
@@ -1703,7 +1703,9 @@ class MySQLDatabaseProxy(DatabaseProxy.DatabaseProxy):
           raise DatabaseProxyException(exceptionText) 
         properties = []
         row = curs.fetchone()
-        properties =  array((row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7])).astype(int32) 
+        properties =  [row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7]]
+        for idx in range(0, len(properties)):
+            properties[idx] = int(properties[idx])
         pRationale =  [row[8],row[9],row[10],row[11],row[12],row[13],row[14],row[15]]
         curs.close()
         return (properties,pRationale)

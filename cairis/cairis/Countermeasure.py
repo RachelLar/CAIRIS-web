@@ -17,7 +17,7 @@
 
 
 from PropertyHolder import PropertyHolder;
-from numpy import *
+#from numpy import *
 
 class Countermeasure:
   def __init__(self,cmId,cmName,cmDesc,cmType,tags,cProps):
@@ -94,7 +94,7 @@ class Countermeasure:
     if (len(dupProperty) == 0):
       return (self.theCountermeasurePropertyDictionary[environmentName]).propertyList()
     else:
-      workingProperties = array((0,0,0,0))
+      workingProperties = [0,0,0,0]
       for p in self.theEnvironmentProperties:
         environmentName = p.name()
         currentEnvironmentProperties = p.properties()

@@ -17,7 +17,7 @@
 
 
 from AssetParameters import AssetParameters
-from numpy import *
+# from numpy import *
 
 class Response:
   def __init__(self,mitId,mitName,mitType,mitDesc,mitCost,mitProperties,detPoint,detMech,mitRisks,mitTargets):
@@ -43,10 +43,10 @@ class Response:
   def detectionMechanism(self): return self.theDetectionMechanism
   def targets(self): return self.theTargets
   def effectiveness(self):
-    if (self.theMitigatedProperties == array((0,0,0,0,0,0,0,0))): return 'None'
-    elif (self.theMitigatedProperties == array((1,1,1,1,1,1,1,1))): return 'Low'
-    elif (self.theMitigatedProperties == array((2,2,2,2,2,2,2,2))): return 'Medium'
-    elif (self.theMitigatedProperties == array((3,3,3,3,3,3,3,3))): return 'High'
+    if (self.theMitigatedProperties == [0,0,0,0,0,0,0,0]): return 'None'
+    elif (self.theMitigatedProperties == [1,1,1,1,1,1,1,1]): return 'Low'
+    elif (self.theMitigatedProperties == [2,2,2,2,2,2,2,2]): return 'Medium'
+    elif (self.theMitigatedProperties == [3,3,3,3,3,3,3,3]): return 'High'
 
   def assetParameters(self,assetId = -1):
     cMitigated = 1

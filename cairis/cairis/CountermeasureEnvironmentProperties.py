@@ -17,10 +17,10 @@
 
 
 from EnvironmentProperties import EnvironmentProperties
-from numpy import *
+# from numpy import *
 
 class CountermeasureEnvironmentProperties(EnvironmentProperties):
-  def __init__(self,environmentName,requirements = [],targets = [],properties = array((0,0,0,0,0,0,0,0)),rationale = ['None','None','None','None','None','None','None','None'],cost = '', roles = [], personas = {}):
+  def __init__(self,environmentName,requirements = [],targets = [],properties = [0,0,0,0,0,0,0,0],rationale = ['None','None','None','None','None','None','None','None'],cost = '', roles = [], personas = {}):
     EnvironmentProperties.__init__(self,environmentName)
     self.theRequirements = requirements
     self.theTargets = targets

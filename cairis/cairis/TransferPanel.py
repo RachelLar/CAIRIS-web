@@ -20,7 +20,7 @@ import wx
 import armid
 import WidgetFactory
 from Borg import Borg
-from numpy import *
+# from numpy import *
 from ResponseParameters import ResponseParameters
 
 class TransferPanel(wx.Panel):
@@ -76,7 +76,7 @@ class TransferPanel(wx.Panel):
 
   def parameters(self,responseName,responseCost,responseRoles):
    responseType = 'Transfer'
-   responseProperties =  array((0,0,0,3,0,0,0,0))
+   responseProperties =  [0,0,0,3,0,0,0,0]
    detectionPoint = 'none'
    detectionMechanism = -1
    targets = []
