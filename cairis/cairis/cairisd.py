@@ -16,7 +16,9 @@
 #  specific language governing permissions and limitations
 #  under the License.
 import sys
-import IRISDaemon
+from tornado.httpserver import HTTPServer
+from tornado.ioloop import IOLoop
+from tornado.wsgi import WSGIContainer
 import WebConfig
 
 def start(args):
@@ -33,9 +35,28 @@ def start(args):
                 options['unitTesting'] = True
 
     WebConfig.config(options)
-    client = IRISDaemon.start()
-    if client is not None:
-        return client
+    if options['unitTesting']:
+        import IRISDaemon
+        from Borg import Borg
+        b = Borg()
+        b.logger.info('Starting Werkzeug server')
+        client = IRISDaemon.start()
+        if client is not None:
+            return client
+    else:
+        from IRISDaemon import app
+        from Borg import Borg
+        b = Borg()
+        http_server = HTTPServer(WSGIContainer(app))
+        http_server.listen(b.webPort)
+
+        try:
+            b.logger.info('Starting Tornado server')
+            IOLoop.instance().start()
+        except KeyboardInterrupt:
+            print "stop"
+            IOLoop.instance().stop()
+
 
 if __name__ == '__main__':
   start(sys.argv)
