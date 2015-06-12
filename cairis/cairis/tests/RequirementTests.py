@@ -6,7 +6,7 @@ from tests.CairisTests import CairisTests
 
 __author__ = 'Robin Quetin'
 
-
+# TODO: Isolate tests
 class RequirementTests(CairisTests):
     # region Class fields
     logger = logging.getLogger(__name__)
@@ -32,7 +32,7 @@ class RequirementTests(CairisTests):
         'object': new_requirement,
     }
     new_requirement_body = jsonpickle.encode(new_requirement_dict)
-    to_delete_ids = []
+    to_delete_names = []
     # endregion
     logger.info('JSON data: %s', new_requirement_body)
 
@@ -60,19 +60,8 @@ class RequirementTests(CairisTests):
         self.assertIsNotNone(req_id, 'No requirement ID returned')
         self.logger.info('[%s] Requirement ID: %d', method, req_id)
 
-        rv = self.app.get('/api/requirements/id/%d?session_id=test' % req_id)
+        rv = self.app.get('/api/requirements/name/%s?session_id=test' % self.new_requirement.theName)
         requirement = jsonpickle.decode(rv.data)
-        self.logger.info('[%s] Requirement: %s [%d]\n', method, requirement['theName'], requirement['theId'])
-
-    def test_get_id(self):
-        method = 'test_get_id'
-        url = '/api/requirements/id/%d?session_id=test' % self.existing_requirement_id
-        self.logger.info('[%s] URL: %s', method, url)
-        rv = self.app.get(url)
-        self.assertIsNotNone(rv.data, 'No response')
-        self.logger.debug('[%s] Response data: %s', method, rv.data)
-        requirement = jsonpickle.decode(rv.data)
-        self.assertIsNotNone(requirement, 'No results after deserialization')
         self.logger.info('[%s] Requirement: %s [%d]\n', method, requirement['theName'], requirement['theId'])
 
     def test_get_asset_name(self):
@@ -127,8 +116,8 @@ class RequirementTests(CairisTests):
         self.assertIsNotNone(requirement, 'Requirement not updated as expected')
         self.logger.info('[%s] Requirement: %s [%d]\n', method, requirement['theName'], requirement['theId'])
 
-    def test_z_delete_id(self):
-        method = 'test_delete_id'
+    def test_z_delete_name(self):
+        method = 'test_delete_name'
         rv = self.app.get('/api/requirements?session_id=test')
         requirements_dict = jsonpickle.decode(rv.data)
         to_delete_reqs = [
@@ -137,10 +126,10 @@ class RequirementTests(CairisTests):
 
         for to_delete_req in to_delete_reqs:
             if to_delete_req is not None:
-                self.to_delete_ids.append(to_delete_req['theId'])
+                self.to_delete_names.append(to_delete_req['theName'])
 
-        for req_id in self.to_delete_ids:
-            url = '/api/requirements/id/%d?session_id=test' % req_id
+        for req_id in self.to_delete_names:
+            url = '/api/requirements/name/%s?session_id=test' % req_id
             self.logger.info('[%s] URL: %s', method, url)
             rv = self.app.delete(url)
             self.logger.debug('[%s] Response data: %s', method, rv.data)

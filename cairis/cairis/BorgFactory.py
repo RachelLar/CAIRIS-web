@@ -158,7 +158,6 @@ def dInitialise(configFile):
 
   b.imageDir = os.path.join(b.cairisRoot, 'cairis/images')
   b.configDir = os.path.join(b.cairisRoot, 'cairis/config')
-  b.templateDir = os.path.join(b.cairisRoot, 'cairis/templates')
   b.exampleDir = os.path.join(b.cairisRoot, 'examples')
   if not hasattr(b, 'uploadDir'):
       b.uploadDir = os.path.join(b.cairisRoot, 'cairis/static')
@@ -167,7 +166,6 @@ def dInitialise(configFile):
     'root': b.cairisRoot,
     'image': b.imageDir,
     'configuration files': b.configDir,
-    'template files': b.templateDir,
     'examples': b.exampleDir,
     'upload': b.uploadDir
   }
@@ -196,7 +194,6 @@ def dInitialise(configFile):
       err_msg = 'Unable to create directory to store images into. Image uploading will probably not work.'
       b.logger.warning(err_msg)
 
-  b.template_generator = TemplateGenerator()
   b.model_generator = GraphicsGenerator('svg')
 
   b.docBookDir = 'http://www.docbook.org/sgml/4.5'

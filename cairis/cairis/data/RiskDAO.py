@@ -144,7 +144,7 @@ class RiskDAO(CairisDAO):
             self.get_risk_by_name(risk_name)
             return True
         except ObjectNotFoundHTTPError:
-            self.db_proxy.reconnect(self.session_id)
+            self.db_proxy.reconnect(session_id=self.session_id)
             return False
 
     # region Misuse cases
@@ -164,9 +164,9 @@ class RiskDAO(CairisDAO):
             raise ARMHTTPError(ex)
 
         for key in misuse_cases:
-            misuse_cases[key].theObjective = self.get_misuse_case_obj_and_assets(misuse_cases)
+            misuse_case = self.expand_mc_props(misuse_cases[key])
             if simplify:
-                misuse_cases[key] = self.simplify(misuse_cases[key])
+                misuse_cases[key] = self.simplify(misuse_case)
 
         return misuse_cases
 

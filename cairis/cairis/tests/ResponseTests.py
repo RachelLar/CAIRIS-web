@@ -17,7 +17,7 @@ class ResponseTests(CairisTests):
     # region Class fields
     logger = logging.getLogger(__name__)
     existing_response_id = 167
-    existing_response_name = 'Detect Change clinical data using broken workflow'
+    existing_response_name = 'Prevent Unauthorised Certificate Access'
     existing_environment_name = 'Stroke'
     existing_risk_name = 'Change clinical data using broken workflow'
     existing_role_name = 'Developer'

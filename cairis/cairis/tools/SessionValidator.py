@@ -155,17 +155,6 @@ def get_fonts(session_id=None):
             message='The method is not callable without setting up the project settings.'
         )
 
-def get_template_generator():
-    b = Borg()
-    if hasattr(b, 'template_generator'):
-        template_generator = b.template_generator
-        assert isinstance(template_generator, TemplateGenerator)
-        return template_generator
-    else:
-        raise RuntimeError(
-            message='The template generator is not properly initialized. Please check if all dependencies are installed correctly.'
-        )
-
 def get_model_generator():
     b = Borg()
     if hasattr(b, 'model_generator'):

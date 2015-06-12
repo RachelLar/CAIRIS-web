@@ -1,5 +1,5 @@
 import httplib
-import logging
+
 from flask.ext.restful_swagger import swagger
 from flask import request, make_response, session
 from flask.ext.restful import Resource
@@ -9,7 +9,6 @@ from Borg import Borg
 from CairisHTTPError import MissingParameterHTTPError, MalformedJSONHTTPError
 from tools.ModelDefinitions import UserConfigModel
 from tools.SessionValidator import validate_proxy, get_logger
-
 
 __author__ = 'Robin Quetin'
 
@@ -35,37 +34,6 @@ def set_dbproxy(conf):
 
     return b.settings[id]
 
-def serve_user_config_form():
-    b = Borg()
-    resp = make_response(b.template_generator.serve_result('user_config', action_url=request.full_path), httplib.OK)
-    resp.headers['Content-type'] = 'text/html'
-    resp.headers['Access-Control-Allow-Origin'] = "*"
-    return resp
-
-def handle_user_config_form():
-    try:
-        dict_form = request.form
-
-        conf = {
-            'host': dict_form['host'],
-            'port': int(dict_form['port']),
-            'user': dict_form['user'],
-            'passwd': dict_form['passwd'],
-            'db': dict_form['db'],
-            'jsonPrettyPrint': dict_form.get('jsonPrettyPrint', False) == 'on'
-        }
-        s = set_dbproxy(conf)
-        debug = ''
-        '''debug += '{0}\nSession vars:\n{1}\nQuery string:\n'.format(
-            'Configuration successfully updated',
-            json_serialize(s, session_id=s['session_id']))'''
-
-        resp = make_response(debug + 'session_id={0}'.format(s['session_id']), httplib.OK)
-        resp.headers['Content-type'] = 'text/plain'
-        resp.headers['Access-Control-Allow-Origin'] = "*"
-        return resp
-    except KeyError as ex:
-        return MissingParameterHTTPError(exception=ex)
 
 class UserConfigAPI(Resource):
     # region Swagger Doc
@@ -97,13 +65,13 @@ class UserConfigAPI(Resource):
     # endregion
     def post(self):
         try:
-            b = Borg()
             dict_form = request.get_json(silent=True)
 
             if dict_form is False or dict_form is None:
                 raise MalformedJSONHTTPError(data=request.get_data())
 
-            b.logger.info(dict_form)
+            logger = get_logger()
+            logger.info(dict_form)
             s = set_dbproxy(dict_form)
 
             resp_dict = {'session_id': s['session_id'], 'message': 'Configuration successfully applied'}

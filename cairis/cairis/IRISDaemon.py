@@ -49,27 +49,11 @@ def get_image(path):
             return send_from_directory('static/images', path)
 
 
-@app.route('/user/config.html', methods=['GET','POST'])
-def user_config_get():
-    if request.method == 'GET':
-        return UserController.serve_user_config_form()
-    elif request.method == 'POST':
-        return UserController.handle_user_config_form()
-    else:
-        raise CairisHTTPError(httplib.NOT_FOUND, message='Not found')
-
-
 @app.errorhandler(CairisHTTPError)
 def handle_error(error):
-    accept_header = request.headers.get('Accept', 'application/json')
-    if accept_header.find('text/html') > -1:
-        resp = make_response(error.handle_exception_html(), error.status_code)
-        resp.headers['Content-type'] = 'text/html'
-        return resp
-    else:
-        resp = make_response(error.handle_exception_json(), error.status_code)
-        resp.headers['Content-type'] = 'application/json'
-        return resp
+    resp = make_response(error.handle_exception_json(), error.status_code)
+    resp.headers['Content-type'] = 'application/json'
+    return resp
 
 
 @app.errorhandler(AssertionError)

@@ -1,7 +1,7 @@
 import httplib
 import logging
 
-from flask import request, make_response
+from flask import make_response
 from werkzeug.exceptions import HTTPException
 
 from ARM import ARMException, DatabaseProxyException
@@ -46,25 +46,10 @@ class CairisHTTPError(HTTPException):
         self.__setattr__('data', resp_dict)
 
         logger.error('[{0}] {1}: {2}'.format(status_code, status, message))
-
-        accept_header = request.headers.get('Accept', 'application/json')
-        if accept_header.find('text/html') > -1:
-
-            self.response = make_response(self.handle_exception_html(), self.status_code)
-            self.__setattr__('data', resp_dict)
-        else:
-            self.response = make_response(self.handle_exception_json(), self.status_code)
-
-    def handle_exception_html(self):
-        from tools.SessionValidator import get_template_generator
-        templ_gen = get_template_generator()
-        message = templ_gen.prepare_message(self.message)
-        self.__setattr__('data', message)
-        return templ_gen.serve_result('common.error', msg=message, code=self.status_code, title=self.status)
-
-    def handle_exception_json(self):
         self.__setattr__('data', {'message': self.message, 'code': self.status_code, 'status': self.status})
-        return json_serialize({'message': self.message, 'code': self.status_code, 'status': self.status})
+        json_message = json_serialize({'message': self.message, 'code': self.status_code, 'status': self.status})
+        self.response = make_response(json_message, self.status_code)
+
 
 class ARMHTTPError(CairisHTTPError):
     status_code=httplib.CONFLICT
