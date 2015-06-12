@@ -357,26 +357,6 @@ EOM
 		
 		cat <<EOM
 
-CAIRIS uses a predefined directory which contains static files for the web interface
-
-Which directory do you want to use? [$CAIRIS_DIR/cairis/cairis/static]
-EOM
-		read web_dir
-		if [ "$web_dir" == "" ]; then web_dir="$CAIRIS_DIR/cairis/cairis/static"; fi
-		if ! [ -d "$web_dir" ]; then cat <<EOM 
-
-The provided directory does not exist on the system.
-
-Out of security reasons, the installer will not create the directory.
-Make sure that the directory does exist and has the right permission
-when running CAIRIS for the first time.
-
-EOM
-		fi
-		sed -i -e 's|web_static_dir = |web_static_dir = '"$web_dir"'|g' "$config_dir/cairis.cnf"
-	
-		cat <<EOM
-
 CAIRIS uses a predefined directory to store uploaded content in.
 
 Which directory do you want to use? [$HOME/CAIRIS/uploads]
@@ -442,6 +422,13 @@ To run CAIRIS in web mode, you can use the following command:
 To run it in desktop mode, use the following command:
 
 	python $CAIRIS_DIR/cairis/cairis/cairis.py
+
+
+CAIRIS can also be operated via web interface.
+To enable the web interface, please visit
+https://github.com/RafVandelaer/Cairis-web-develop
+and follow the instructions to install the web interface.
+
 
 EOM
 exit 0

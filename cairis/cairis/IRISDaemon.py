@@ -35,19 +35,11 @@ def get_image(path):
     except AttributeError:
         image_upload_dir = 'static/images'
 
-    fixed_img_path = os.path.join(image_dir, path)
     upload_img_path = os.path.join(image_upload_dir, path)
-    if os.path.exists(fixed_img_path):
-        return send_from_directory(image_dir, path)
-    elif os.path.exists(upload_img_path):
+    if os.path.exists(upload_img_path):
         return send_from_directory(image_upload_dir, path)
     else:
-        try:
-            web_image_dir = os.path.join(b.staticDir, 'images')
-            return send_from_directory(web_image_dir, path)
-        except AttributeError:
-            return send_from_directory('static/images', path)
-
+        return send_from_directory(image_dir, path)
 
 @app.errorhandler(CairisHTTPError)
 def handle_error(error):

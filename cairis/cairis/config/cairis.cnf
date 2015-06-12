@@ -7,5 +7,4 @@ tmp_dir = /tmp
 root = 
 web_port = 
 log_level = warning
-web_static_dir = 
 upload_dir = 

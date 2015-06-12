@@ -148,8 +148,6 @@ def dInitialise(configFile):
             b.logLevel = logging.ERROR
         else:
             b.logLevel = logging.WARNING
-      elif cfgKey == 'web_static_dir':
-        b.staticDir = cfgVal
 
     cfgFile.close()
   except IOError as ex:
