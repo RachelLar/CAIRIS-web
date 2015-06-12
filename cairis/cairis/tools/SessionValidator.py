@@ -5,7 +5,6 @@ from ARM import DatabaseProxyException
 from Borg import Borg
 from MySQLDatabaseProxy import MySQLDatabaseProxy
 from CairisHTTPError import MissingParameterHTTPError, CairisHTTPError, ObjectNotFoundHTTPError
-from TemplateGenerator import TemplateGenerator
 from tools.GraphicsGenerator import GraphicsGenerator
 
 __author__ = 'Robin Quetin'

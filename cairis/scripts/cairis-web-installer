@@ -70,7 +70,7 @@ function install_python_dep() {
 ##############################################
 
 EOM
-	$PRECMD pip install numpy mysql-python==1.2.3 pyparsing==1.5.7 pydot flask flask-restful flask-restful-swagger flask-cors jsonpickle Mako
+	$PRECMD pip install numpy mysql-python==1.2.3 pyparsing==1.5.7 pydot flask flask-restful flask-restful-swagger flask-cors tornado jsonpickle
 
 	if [ "$?" -ne "0" ]
 	then

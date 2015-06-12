@@ -23,7 +23,6 @@ from Borg import Borg
 import DatabaseProxyFactory
 from tools.GraphicsGenerator import GraphicsGenerator
 from MySQLDatabaseProxy import MySQLDatabaseProxy
-from TemplateGenerator import TemplateGenerator
 
 
 def initialise():
