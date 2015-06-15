@@ -1,5 +1,3 @@
-import numpy.core
-from numpy.core.multiarray import array
 import ARM
 from CairisHTTPError import ARMHTTPError, ObjectNotFoundHTTPError, MalformedJSONHTTPError, MissingParameterHTTPError, \
     OverwriteNotAllowedHTTPError
@@ -341,7 +339,7 @@ class ThreatDAO(CairisDAO):
                 check_required_keys(fake_props[0], ThreatEnvironmentPropertiesModel.required)
                 for fake_prop in fake_props:
                     check_required_keys(fake_prop, ThreatEnvironmentPropertiesModel.required)
-                    new_ndprops = array([0]*8).astype(numpy.core.int32)
+                    new_ndprops = [0]*8
                     new_ratios = ['None']*8
                     for idx in range(0, len(fake_prop['theProperties'])):
                         new_attr = fake_prop['theProperties'][idx]

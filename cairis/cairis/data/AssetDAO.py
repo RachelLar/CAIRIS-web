@@ -1,6 +1,3 @@
-import numpy
-from numpy.core.multiarray import array
-
 import ARM
 from Asset import Asset
 from AssetEnvironmentProperties import AssetEnvironmentProperties
@@ -10,9 +7,6 @@ from ValueType import ValueType
 from ValueTypeParameters import ValueTypeParameters
 import armid
 from data.CairisDAO import CairisDAO
-from data.EnvironmentDAO import EnvironmentDAO
-from data.ThreatDAO import ThreatDAO
-from data.VulnerabilityDAO import VulnerabilityDAO
 from tools.JsonConverter import json_serialize, json_deserialize
 from tools.ModelDefinitions import AssetEnvironmentPropertiesModel, SecurityAttribute, AssetModel
 from tools.SessionValidator import check_required_keys, get_fonts
@@ -505,7 +499,7 @@ class AssetDAO(CairisDAO):
                     for idx in range(0, len(fake_prop['theAssociations'])):
                         fake_prop['theAssociations'][idx] = tuple(fake_prop['theAssociations'][idx])
                     sec_attrs = fake_prop['theProperties']
-                    new_syProps = array(8 * [0]).astype(numpy.int32)
+                    new_syProps = 8 * [0]
                     new_rationale = ['None'] * 8
 
                     for sec_attr in sec_attrs:
