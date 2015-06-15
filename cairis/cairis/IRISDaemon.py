@@ -2,7 +2,7 @@ import logging
 import os
 import httplib
 
-from flask import Flask, make_response, send_from_directory
+from flask import Flask, send_from_directory
 from flask.ext.cors import CORS
 from flask.ext.restful import Api
 from flask.ext.restful_swagger import swagger
@@ -46,7 +46,7 @@ def get_image(path):
 
 @app.errorhandler(CairisHTTPError)
 def handle_error(error):
-    resp = make_response(error.handle_exception_json(), error.status_code)
+    resp = error.response
     resp.headers['Content-type'] = 'application/json'
     return resp
 
