@@ -1,9 +1,13 @@
 #!/bin/bash
 #
 
+# Fixed values
+CAIRIS_GIT='https://github.com/RobinQuetin/CAIRIS-web.git'
+APTDEP="python-dev build-essential mysql-server mysql-client graphviz docbook dblatex python-pip git libmysqlclient-dev --no-install-recommends texlive-latex-extra"
+PYTHONDEP="mysql-python==1.2.3 pyparsing==1.5.7 pydot flask flask-restful flask-restful-swagger flask-cors tornado jsonpickle"
+# Global variables
 INSTALL_DESKTOP='x'
 CAIRIS_USER=$USER
-CAIRIS_GIT='https://github.com/RobinQuetin/CAIRIS-web.git'
 CAIRIS_DIR=/opt/cairis
 DBNO="0"
 PRECMD=""
@@ -45,10 +49,10 @@ function install_sys_dep() {
 EOM
 	if [ "$INSTALL_DESKTOP" == "y" ]
 	then
-		$PRECMD apt-get install python-wxglade python-glade2 python-wxgtk2.8 python-dev build-essential mysql-server mysql-client graphviz docbook dblatex python-pip git libmysqlclient-dev --no-install-recommends texlive-latex-extra
-	else
-		$PRECMD apt-get install python-dev build-essential mysql-server mysql-client graphviz docbook dblatex python-pip git libmysqlclient-dev --no-install-recommends texlive-latex-extra
+		APTDEP="python-wxglade python-glade2 python-wxgtk2.8 "$APTDEP
 	fi
+
+	$PRECMD apt-get install $APTDEP
 
 	if [ "$?" -ne "0" ]
 	then
@@ -70,7 +74,7 @@ function install_python_dep() {
 ##############################################
 
 EOM
-	$PRECMD pip install numpy mysql-python==1.2.3 pyparsing==1.5.7 pydot flask flask-restful flask-restful-swagger flask-cors tornado jsonpickle
+	$PRECMD pip install $PYTHONDEP
 
 	if [ "$?" -ne "0" ]
 	then
