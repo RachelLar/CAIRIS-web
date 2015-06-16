@@ -121,8 +121,13 @@ EOM
 			$PRECMD useradd --no-create-home --system $CAIRIS_USER
 			if [ "$?" -ne "0" ]; then echo "CAIRIS encountered an error. Exiting..."; exit 1; fi
 		fi
-		$PRECMD usermod -a -G "$CAIRIS_USER" "$USER"
-		if [ "$?" -ne "0" ]; then echo "CAIRIS encountered an error. Please check your user's groups after installation."; else echo "Current user was successfully added to group '$CAIRIS_USER'"; fi
+		$PRECMD usermod -a -G $CAIRIS_USER "$USER"
+		if [ "$?" -ne "0" ]; then 
+			echo "CAIRIS encountered an error. Please check your user's groups after installation."
+		else
+			echo "Current user was successfully added to group '$CAIRIS_USER'"
+			newgrp $CAIRIS_USER
+		fi
 	fi	
 }
 
@@ -345,7 +350,7 @@ EOM
 		sed -i -e 's|dbhost = |dbhost = '"$DDBHOST"'|g' "$config_dir/cairis.cnf"
 		sed -i -e 's|dbport = |dbport = '"$DDBPORT"'|g' "$config_dir/cairis.cnf"
 		sed -i -e 's|dbuser = |dbuser = '"$DDBUSER"'|g' "$config_dir/cairis.cnf"
-		sed -i -e 's|dbpass = |dbpass = '"$DDBPASS"'|g' "$config_dir/cairis.cnf"
+		sed -i -e 's|dbpasswd = |dbpasswd = '"$DDBPASS"'|g' "$config_dir/cairis.cnf"
 		sed -i -e 's|dbname = |dbname = '"$DDBNAME"'|g' "$config_dir/cairis.cnf"
 		sed -i -e 's|root = |root = '"$CAIRIS_DIR/cairis"'|g' "$config_dir/cairis.cnf"
 		
