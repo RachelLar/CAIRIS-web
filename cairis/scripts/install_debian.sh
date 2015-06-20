@@ -36,6 +36,17 @@ function check_sudo() {
 			fi
 		fi
 		PRECMD=$sudo_path
+	else
+		cat <<EOM
+
+WARNING! Running this script using sudo or as root will make CAIRIS
+only runnable under root. If this is not your intention, then
+hit Ctrl+C and re-run the script as the user who will be running CAIRIS 
+and without using the 'sudo' command.
+
+Press any key to continue either way...
+EOM
+	read C_VOID
 	fi
 }
 
@@ -349,7 +360,7 @@ EOM
 			if [ "$test" != "0" ]; then 
 				echo -e "Invalid credentials. No access allowed...\n"
 			else
-				echo -e "\n"
+				echo " "
 			fi
 		done
 			
