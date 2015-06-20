@@ -323,15 +323,18 @@ EOM
 		if [ "$co" != "y" -a "$co" != "n" ]; then echo -e "Invalid input\n"; fi
 	done
 	config_dir="$HOME/CAIRIS/cairis/cairis/config"
-	mkdir -p -m 755 "$config_dir"
+	mkdir -p -m 700 "$config_dir"
 	cp "$CAIRIS_DIR/cairis/cairis/config/cairis.cnf" "$config_dir/"
+	chmod 600 "$config_dir/cairis.cnf"
 	if [ "$co" == "y" ]; then
 		mysql -u "$DDBUSER" --password="$DDBPASS" -h "$DDBHOST" --database="$DDBNAME" -e "SHOW TABLES" > /dev/null 2>&1
 		test=$?
-		while [ "$?" != "0" ]; do
+		while [ "$test" != "0" ]; do
 			echo -e "\nPlease provide the proper credentials for an existing CAIRIS database"
 			echo -n "Host: "
 			read DDBHOST
+			echo -n "Port: "
+			read DDBPORT
 			echo -n "Database name: "
 			read DDBNAME
 			echo -n "Database user: "
@@ -343,7 +346,11 @@ EOM
 			stty "$stty_orig"
 			mysql -u "$DDBUSER" --password="$DDBPASS" -h "$DDBHOST" --database="$DDBNAME" -e "SHOW TABLES" > /dev/null 2>&1
 			test=$?
-			if [ "$test" != "0" ]; then echo -e "Invalid credentials. No access allowed...\n"; fi
+			if [ "$test" != "0" ]; then 
+				echo -e "Invalid credentials. No access allowed...\n"
+			else
+				echo -e "\n"
+			fi
 		done
 			
 		sed -i -e 's|dbhost = |dbhost = '"$DDBHOST"'|g' "$config_dir/cairis.cnf"
@@ -387,7 +394,8 @@ EOM
 
 check_sudo
 
-cat <<EOM
+if [ "$1" == "" ]; then
+	cat <<EOM
 
 ##############################################
 # Desktop application                        #
@@ -396,28 +404,28 @@ cat <<EOM
 CAIRIS can also run as a desktop application. However this requires extra dependencies to be installed.
 
 EOM
-while [ "$INSTALL_DESKTOP" != "y" -a "$INSTALL_DESKTOP" != "n" ]; do
-	echo -e "Do you want to include the desktop application in the installation? [y/N]"
-	read INSTALL_DESKTOP
-	if [ "$INSTALL_DESKTOP" == "" ]; then INSTALL_DESKTOP="n"; fi
-	INSTALL_DESKTOP=${INSTALL_DESKTOP,,}
-	if [ "$INSTALL_DESKTOP" != "y" -a "$INSTALL_DESKTOP" != "n" ]; then
-		echo -e "Invalid input\n"
-	fi
-done
+	while [ "$INSTALL_DESKTOP" != "y" -a "$INSTALL_DESKTOP" != "n" ]; do
+		echo -e "Do you want to include the desktop application in the installation? [y/N]"
+		read INSTALL_DESKTOP
+		if [ "$INSTALL_DESKTOP" == "" ]; then INSTALL_DESKTOP="n"; fi
+		INSTALL_DESKTOP=${INSTALL_DESKTOP,,}
+		if [ "$INSTALL_DESKTOP" != "y" -a "$INSTALL_DESKTOP" != "n" ]; then
+			echo -e "Invalid input\n"
+		fi
+	done
 
-install_sys_dep
-install_python_dep
-create_user
-download_cairis
-developer_branch
-db_install
-conf_setup
+	install_sys_dep
+	install_python_dep
+	create_user
+	download_cairis
+	developer_branch
+	db_install
+	conf_setup
 
-cat <<EOM
+	cat <<EOM
 
 ##############################################
-# Desktop application                        #
+# Installation completed                     #
 ##############################################
 
 CAIRIS was successfully installed.
@@ -441,4 +449,17 @@ https://github.com/RafVandelaer/Cairis-web-develop
 and follow the instructions to install the web interface.
 
 EOM
-exit 0
+	exit 0
+elif [ "$1" == "--config" -o "$1" == "-c" ]; then
+	cat <<EOM
+
+Please provide the path of the CAIRIS directory. 
+(Normally this would be the directory which contains the cloned repository)
+
+EOM
+	echo "CAIRIS directory [/opt/cairis]: "
+	read CAIRIS_DIR
+	if [ "$CAIRIS_DIR" == "" ]; then CAIRIS_DIR=/opt/cairis; fi
+	conf_setup
+	exit 0
+fi
