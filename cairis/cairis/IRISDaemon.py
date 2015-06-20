@@ -22,9 +22,6 @@ __author__ = 'Robin Quetin'
 app = Flask(__name__)
 api = swagger.docs(Api(app), apiVersion='0.1', description='CAIRIS API', api_spec_url='/api/cairis')
 cors = CORS(app)
-cors_logger = logging.getLogger(__name__+".cors")
-cors_logger.setLevel(logging.WARNING)
-cors_logger = None
 b = Borg()
 
 @app.route('/api/images/<path:path>')
@@ -203,12 +200,8 @@ api.add_resource(VulnerabilityController.VulnerabilityTypeByNameAPI,
                  '/api/vulnerabilities/types/name/<string:name>')
 
 # Set server specific settings
-b.logger.setLevel(b.logLevel)
 b.logger.debug('Error handlers: {0}'.format(app.error_handler_spec))
 app.secret_key = os.urandom(24)
-
-logger = logging.getLogger('werkzeug')
-logger.setLevel(b.logLevel)
 enable_debug = b.logLevel == logging.DEBUG
 
 def start():

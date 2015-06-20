@@ -53,6 +53,11 @@ def setPort(port):
     else:
         b.webPort = port
 
+def setUnitTesting(setting=False):
+    logger.info('Setting unit testing property...')
+    b = Borg()
+    b.unit_testing = setting
+
 def logParams():
     b = Borg()
     logger.info('Config: %s/cairis.cnf', b.configDir)
@@ -66,8 +71,13 @@ def logParams():
     logger.info('Port: %d', b.webPort)
     logger.info('Upload directory: %s', b.uploadDir)
     logger.info('Unit testing: %s', str(b.unit_testing).lower())
+    apply_log_level()
 
-def setUnitTesting(setting=False):
-    logger.info('Setting unit testing property...')
+def apply_log_level():
     b = Borg()
-    b.unit_testing = setting
+    b.logger.setLevel(b.logLevel)
+    logging.basicConfig(level=b.logLevel)
+    logging.getLogger('cairisd').setLevel(b.logLevel)
+    logging.getLogger('werkzeug').setLevel(b.logLevel)
+    logging.getLogger('tornado.access').setLevel(b.logLevel)
+    logging.getLogger('IRISDaemon.cors').setLevel(b.logLevel)
