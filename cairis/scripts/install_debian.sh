@@ -431,13 +431,14 @@ To run it in desktop mode, use the following command:
 
 	python $CAIRIS_DIR/cairis/cairis/cairis.py
 
+You might first need to re-login in order for the 
+group assignment to be applied to your session.
+
 
 CAIRIS can also be operated via web interface.
 To enable the web interface, please visit
 https://github.com/RafVandelaer/Cairis-web-develop
 and follow the instructions to install the web interface.
 
-
 EOM
-newgrp $CAIRIS_USER
 exit 0
