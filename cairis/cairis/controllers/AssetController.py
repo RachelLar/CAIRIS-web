@@ -15,8 +15,7 @@ from tools.SessionValidator import get_session_id, get_model_generator
 class AssetsAPI(Resource):
     # region Swagger Doc
     @swagger.operation(
-        notes='Get all assets without the asset environment properties.' +
-              'To get the asset environment properties of an asset, please use /api/assets/{name}/properties',
+        notes='Get all assets',
         responseClass=SwaggerAssetModel.__name__,
         nickname='assets-get',
         parameters=[
